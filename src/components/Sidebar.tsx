@@ -6,14 +6,15 @@ import {
   BeakerIcon,
   ArrowLeftStartOnRectangleIcon,
   ArrowLeftCircleIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  ChevronUpIcon,
 } from "@heroicons/react/24/solid";
 import { Link } from "react-router-dom";
 import Nav from './Nav';
 type Submenu = {
   title:string;
   path:string;
-  icon:React.ElementType;
+ 
 }
 type NavItem = {
   title: string;
@@ -37,9 +38,14 @@ const iconStyle = "size-[32px] group-hover:text-primary ";
 const navItems: NavItem[] = [
   { title: "Dashboard", icon: ChartBarIcon, path: "/dashboard", submenu: false},
   { title: "Request", icon: EnvelopeIcon, path: "/request",  submenu: true, 
-  submenuItems: [{
-    title: "All Requests", icon: EnvelopeIcon, path: "/request/all"
-  }]},
+  submenuItems: [
+    {title: "View Request", path: "/request/all"},
+    {title: "Stock Requisition",  path: "/request/sr"},
+    {title: "Purchase Order Requisition Slip",  path: "/request/pors"},
+    {title: "Cash Disbursement Requisition Slip",  path: "/request/cbrs"},
+    {title: "Application For Cash Advance",  path: "/request/afca"},
+    {title: "Liquidation of Actual Expense",  path: "/request/loae"},
+  ]},
   { title: "Setup", icon: BeakerIcon, path: "/setup", submenu: false},
 ];
 
@@ -109,16 +115,20 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
                   <item.icon className={iconStyle} />
                 </div>
                 <p className={`${pStyle} ${!open && "scale-0"}`}>{item.title}</p>
-                {item.submenu && open &&(
-                  <ChevronDownIcon className="" onClick={() => setSubMenuOpen(!submenuOpen)}/>
-                )}
+                {item.submenu && open && (
+                      submenuOpen ? (
+                        <ChevronUpIcon className="size-[20px]" onClick={() => setSubMenuOpen(false)}/>
+                      ) : (
+                        <ChevronDownIcon className="size-[20px]" onClick={() => setSubMenuOpen(true)}/>
+                      )
+                    )}
               </li>
               {item.submenu && submenuOpen && open &&(
                 <ul>
                   {item.submenuItems?.map((submenuItem, index) => (
-                    <li key={index} className=" hover:bg-[#E0E0F9] group flex ml-10 items-center text-[18px] text-gray-400 font-medium py-2 pr-10 px-2 gap-2  overflow-hidden cursor-pointer  rounded-lg">
+                    <li key={index} className=" hover:bg-[#E0E0F9] group text-sm flex ml-10 items-center text-[18px] text-gray-400 font-medium py-2 pr-10 px-2 gap-2  overflow-hidden cursor-pointer  rounded-lg">
                       <div className="flex flex-row items-center gap-2">
-                       <item.icon className="size-[24px] group-hover:text-primary" />
+                       
                        <p className="group-hover:text-primary ">{submenuItem.title}</p>
                        </div>
                     </li>

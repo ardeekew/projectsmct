@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import Slice from "./assets/Slice.png";
 import building from "./assets/building.jpg";
 import Select from 'react-select';
-import {  useForm } from "react-hook-form";
+import {  useForm, Controller } from "react-hook-form";
 import {z, ZodType} from 'zod';
 import {zodResolver} from '@hookform/resolvers/zod'
 import { error } from "console";
@@ -204,6 +204,7 @@ const Registration : React.FC = () => {
  
 
   const {
+    control,
     register, 
     handleSubmit,
     formState: { errors }
@@ -309,13 +310,19 @@ const Registration : React.FC = () => {
               <h1 className={`${headerStyle}`}>Branch Code</h1>
               <div className="relative">
                 
-              <Select
-                {...register("branchCode")}
-                options={branchOptions.map(option => ({ value: option, label: option }))}
-               
-                placeholder="Select branch"
-                className="w-full lg:max-w-[417px] lg:h-[56px] md:h-10  p-2 bg-gray-300 rounded-lg"
-              />
+              <Controller
+        name="branchCode"
+        control={control}
+        render={({ field }) => (
+          <select {...field}  className="w-full lg:max-w-[417px] lg:h-[56px] md:h-10 p-2 bg-gray-300 rounded-lg">
+            <option value="" disabled>Select branch</option>
+            {branchOptions.map(option => (
+              <option key={option} value={option}>{option}</option>
+            ))}
+            
+          </select>
+        )}
+      />
               {errors.branchCode && <span className="text-red-500 text-xs"> {errors.branchCode.message}</span>}
               </div>
             </div>
