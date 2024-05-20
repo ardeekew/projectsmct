@@ -32,8 +32,15 @@ const Login: React.FC = () => {
 
  
 
-const submitData:SubmitHandler<UserCredentials> =(data) => {
-console.log("it worked", data)
+const submitData:SubmitHandler<UserCredentials> =async (data) => {
+if(data.email === "rd@test.com" && data.password === "12345"){
+  navigate("/dashboard")
+}else if(data.email === "approver@test.com" && data.password === "12345"){
+  navigate("/dashboardapprover")
+}
+else{
+  alert("Invalid email or password");
+}
 }
 
   const inputStyle = "w-full lg:max-w-[417px] lg:h-[56px] md:h-10  p-2 bg-gray-300 rounded-lg";
@@ -88,7 +95,7 @@ console.log("it worked", data)
             </div>
           </div>
           <button
-            className="bg-primary  text-white  px-4 rounded-lg w-full lg:max-w-[417px] lg:h-[56px]  md:h-10 "
+            className="bg-primary  text-white  px-4 rounded-lg w-full lg:max-w-[417px] lg:h-[56px]  h-10 "
             type="submit"
           >
             Log In

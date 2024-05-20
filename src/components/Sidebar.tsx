@@ -39,12 +39,9 @@ const navItems: NavItem[] = [
   { title: "Dashboard", icon: ChartBarIcon, path: "/dashboard", submenu: false},
   { title: "Request", icon: EnvelopeIcon, path: "/request",  submenu: true, 
   submenuItems: [
-    {title: "View Request", path: "/request/all"},
-    {title: "Stock Requisition",  path: "/request/sr"},
-    {title: "Purchase Order Requisition Slip",  path: "/request/pors"},
-    {title: "Cash Disbursement Requisition Slip",  path: "/request/cbrs"},
-    {title: "Application For Cash Advance",  path: "/request/afca"},
-    {title: "Liquidation of Actual Expense",  path: "/request/loae"},
+    {title: "View Request", path: "/request"},
+    {title: "Create Request",  path: "/request/sr"},
+   
   ]},
   { title: "Setup", icon: BeakerIcon, path: "/setup", submenu: false},
 ];
@@ -69,7 +66,7 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
       setOpen(window.innerWidth > 768);
     };
   return (
-    <div className={`${darkMode ? "dark" : "light"}dark:bg-blackD`}>
+    <div className={`${darkMode ? "dark" : "light"}dark:bg-blackD  `}>
       <div
         className={`bg-white dark:bg-blackD h-screen ${
           open ? "w-[240px]" : "w-20"
@@ -126,24 +123,29 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
               {item.submenu && submenuOpen && open &&(
                 <ul>
                   {item.submenuItems?.map((submenuItem, index) => (
+                    <Link to={submenuItem.path}>
                     <li key={index} className=" hover:bg-[#E0E0F9] group text-sm flex ml-10 items-center text-[18px] text-gray-400 font-medium py-2 pr-10 px-2 gap-2  overflow-hidden cursor-pointer  rounded-lg">
                       <div className="flex flex-row items-center gap-2">
                        
                        <p className="group-hover:text-primary ">{submenuItem.title}</p>
                        </div>
                     </li>
+                    </Link>
                   ))}
+                 
                 </ul>
+                
               )}
+              
            </Link>
             ))}
           </ul>
         </div>
         <div className="border-t flex w-full bottom-2 absolute justify-center items-center ">
           <div className=" flex  h-5/6 p-2">
-            <ArrowLeftStartOnRectangleIcon className={`${iconStyle}`} />
+            <ArrowLeftStartOnRectangleIcon className={`${iconStyle}dark:text-white`} />
           </div>
-          <p className={`${pStyle} ${!open ? "hidden" : ""}`}>Logout</p>
+          <p className={`${pStyle} ${!open ? "hidden" : ""} dark:text-white`}>Logout</p>
         </div>
       </div>
     </div>

@@ -6,10 +6,9 @@ import {
   faCheck,
   faEnvelope,
 } from "@fortawesome/free-solid-svg-icons";
-import { CheckIcon } from "@heroicons/react/24/solid";
+import { CheckIcon,ChartBarIcon } from "@heroicons/react/24/solid";
 import { Link } from "react-router-dom";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-
+import { BarChart, Bar,Rectangle, Legend, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 type Props = {};
 
@@ -27,52 +26,47 @@ const data: { [key: string]: string } = {
   Status: "Pending",
 };
 
-
 const linechartData = [
-  {
-    name: 'Page A',
-    uv: 4000,
-    pv: 2400,
-    amt: 2400,
-  },
-  {
-    name: 'Page B',
-    uv: 3000,
-    pv: 1398,
-    amt: 2210,
-  },
-  {
-    name: 'Page C',
-    uv: 2000,
-    pv: 9800,
-    amt: 2290,
-  },
-  {
-    name: 'Page D',
-    uv: 2780,
-    pv: 3908,
-    amt: 2000,
-  },
-  {
-    name: 'Page E',
-    uv: 1890,
-    pv: 4800,
-    amt: 2181,
-  },
-  {
-    name: 'Page F',
-    uv: 2390,
-    pv: 3800,
-    amt: 2500,
-  },
-  {
-    name: 'Page G',
-    uv: 3490,
-    pv: 4300,
-    amt: 2100,
-  },
-];
-const Dashboard: React.FC<Props> = ({}) => {
+    {
+      name: 'Jan',
+      pv: 0,
+     
+    },
+    {
+      name: 'Feb',
+    
+      pv: 60,
+     
+    },
+    {
+      name: 'Mar',
+    
+      pv: 4,
+     
+    },
+    {
+      name: 'Apr',
+    
+      pv: 5,
+   
+    },
+    {
+      name: 'Jun',
+      
+      pv: 9,
+     
+    },
+    {
+      name: 'Jul',
+     
+      pv: 65,
+   
+    },
+   
+  ];
+
+
+const ApproverDashboard: React.FC<Props> = ({}) => {
   const [darkMode, setDarkMode] = useState(true);
   return (
     <div className="bg-graybg dark:bg-blackbg  h-full pt-[26px]  px-[30px] ">
@@ -87,7 +81,7 @@ const Dashboard: React.FC<Props> = ({}) => {
           </p>
           <div>
             <Link to="/request">
-            <button className="bg-[#FF947D] text-[10px] w-full lg:h-[57px] h-[40px] rounded-[12px] font-semibold ">Raise a Request</button>
+            <button className="bg-[#FF947D] text-[10px] w-full lg:h-[57px] h-[40px] rounded-[12px] font-semibold ">Approve Requests</button>
             </Link>
           </div>
         </div>
@@ -96,21 +90,19 @@ const Dashboard: React.FC<Props> = ({}) => {
         </div>
       </div>
 
-      <div className="w-full sm:w-full grid grid-cols-1 md:grid-cols-3 space-y-2 md:space-y-0 gap-8 mt-4">
-        <div className={`${boxWhite} hover:-translate-y-1 hover:scale-110`}>
-          <div className={`${boxPink} bg-pink`}>
-            <FontAwesomeIcon
-              icon={faPaperPlane}
-              className={`${outerLogo} text-[#C22158]`}
+      <div className="w-full sm:w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 space-y-2 md:space-y-0 gap-8 mt-4">
+      <div className={`${boxWhite} hover:-translate-y-1 hover:scale-110`}>
+          <div className={`${boxPink} bg-primary`}>
+            <ChartBarIcon
+              className={`${outerLogo} text-[#298DDE]`}
             />
             <div className={`${innerBox}`}>
-              <FontAwesomeIcon
-                icon={faPaperPlane}
-                className={`${innerLogo} text-pink`}
-              />
+            <ChartBarIcon
+              className={`${innerLogo} text-primary`}
+            />
             </div>
           
-              <p className="text-[16px] font-semibold mt-[30px]   ml-[17px] absolute" >Request Sent</p>
+              <p className="text-[16px] font-semibold mt-[30px]   ml-[17px] absolute" >Total Requests</p>
               <p className="text-[40px] font-bold bottom-6 mx-5 absolute"> 3</p>
           </div>
         </div>
@@ -149,30 +141,68 @@ const Dashboard: React.FC<Props> = ({}) => {
               <p className="text-[40px] font-bold bottom-6 mx-5 absolute"> 3</p>
           </div>
         </div>
+        <div className={`${boxWhite} hover:-translate-y-1 hover:scale-110`}>
+          <div className={`${boxPink} bg-pink`}>
+            <FontAwesomeIcon
+              icon={faPaperPlane}
+              className={`${outerLogo} text-[#C22158]`}
+            />
+            <div className={`${innerBox}`}>
+              <FontAwesomeIcon
+                icon={faPaperPlane}
+                className={`${innerLogo} text-pink`}
+              />
+            </div>
+          
+              <p className="text-[16px] font-semibold mt-[30px]   ml-[17px] absolute" >Request Sent</p>
+              <p className="text-[40px] font-bold bottom-6 mx-5 absolute"> 3</p>
+          </div>
+        </div>
       </div>
-      <div>
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart
-          width={500}
-          height={300}
-          data={linechartData}
-          margin={{
-            top: 5,
-            right: 30,
-            left: 20,
-            bottom: 5,
-          }}
-        >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Tooltip />
-          <Legend />
-          <Line type="monotone" dataKey="pv" stroke="#8884d8" activeDot={{ r: 8 }} />
-          <Line type="monotone" dataKey="uv" stroke="#82ca9d" />
-        </LineChart>
-      </ResponsiveContainer>
-      </div>
+      <div className="flex  gap-4">
+  <div className="flex-7 py-10 bg-white w-full rounded-[12px] h-[327px] mt-4">
+    <ResponsiveContainer width="100%" height="100%">
+      <AreaChart
+        width={500}
+        height={400}
+        data={linechartData}
+        margin={{
+          top: 10,
+          right: 30,
+          left: 0,
+          bottom: 0,
+        }}
+      >
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="name" />
+        <YAxis />
+        <Tooltip />
+        <Area type="monotone" dataKey="pv" stroke="#1E9AFF" fill="#389DF1" />
+      </AreaChart>
+    </ResponsiveContainer>
+  </div>
+  <div className="flex-3 py-10 bg-white w-full lg:w-2/4 rounded-[12px] h-[327px] mt-4 ">
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart
+        width={500}
+        height={300}
+        data={linechartData}
+        margin={{
+          top: 5,
+          right: 30,
+          left: 20,
+          bottom: 5,
+        }}
+      >
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="name" />
+        <YAxis />
+        <Tooltip />
+        <Bar dataKey="pv" fill="#68B5F4" activeBar={<Rectangle stroke="blue" />} />
+      </BarChart>
+    </ResponsiveContainer>
+  </div>
+</div>
       <div className="mt-[20px] mb-10 bg-white w-full h-[210px] drop-shadow-lg rounded-[12px] px-4 relative sm:w-full overflow-x-auto">
         <h1 className="py-[16px] px-[25px] font-bold text-[20px]  ">
           Recent request
@@ -192,4 +222,4 @@ const Dashboard: React.FC<Props> = ({}) => {
   );
 };
 
-export default Dashboard;
+export default ApproverDashboard;

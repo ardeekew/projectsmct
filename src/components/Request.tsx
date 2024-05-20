@@ -14,34 +14,35 @@ const Request = (props: Props) => {
     const titles = ['Request ID', 'Type of Request', 'Date', 'Branch', 'Status', 'Action'];
 
     return (
-        <div className="bg-graybg dark:bg-blackbg  h-full pt-[15px] px-[30px]  ">
-            <div className='flex justify-end mb-2 '>
-            <button className='bg-primary w-[151px] h-[34] rounded-[12px] text-white p-1 '>Send a Request</button>
-            </div>
-            <div className="bg-white w-full h-[210px] rounded-[12px] pl-[30px] flex flex-col  items-center">
-                <div className="w-full px-4">
-                    <ul className="flex justify-start items-center space-x-6 py-4 font-medium">
-                        {items.map((item, index) => (
-                            <li
-                                key={index}
-                                onClick={() => handleClick(index)}
-                                className={`cursor-pointer hover:text-primary ${selected === index ? 'underline text-primary' : ''} underline-offset-8 decoration-primary decoration-2`}
-                            >
-                                {item}
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-                <div className='w-full px-4'>
-                    <ul className='flex justify-evenly items-center space-x-6 py-4 font-bold'>
-                        {titles.map((title, index) => (
-                            <li
-                                key={index}>
-                                {title}
-
-                            </li>
-                        ))}
-                    </ul>
+        <div className="bg-graybg dark:bg-blackbg w-full h-screen pt-4 px-10 md:px-10 lg:px-30">
+              <button className='bg-primary text-white rounded-[12px] mb-2 w-[120px] sm:w-[151px] h-[34px]'>Send Request</button>
+            <div className='w-full  h-auto  drop-shadow-lg rounded-lg  md:mr-4 relative '>
+            
+                <div className="bg-white   rounded-lg  w-full flex flex-col items-center overflow-x-auto">
+                    <div className="w-full border-b-2  md:px-30">
+                        <ul className=" px-2 md:px-30 flex justify-start items-center space-x-4 md:space-x-6 py-4 font-medium overflow-x-auto">
+                            {items.map((item, index) => (
+                                <li
+                                    key={index}
+                                    onClick={() => handleClick(index)}
+                                    className={`cursor-pointer hover:text-primary px-2 ${selected === index ? 'underline text-primary' : ''} underline-offset-8 decoration-primary decoration-2`}
+                                >
+                                    {item}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                    <div className='w-full  overflow-x-auto '>
+                        <ul className='flex  justify-between space-x-4 py-4 font-bold px-4 md:px-30 overflow-x-auto' >
+                            {titles.map((title, index) => (
+                                <li key={index} 
+                                >
+                                    {title}
+                                   
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
