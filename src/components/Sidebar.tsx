@@ -26,6 +26,7 @@ type NavItem = {
 
 interface SidebarProps {
   darkMode: boolean;
+  role: string;
 }
 
 type Props = {};
@@ -35,20 +36,43 @@ const listStyle =
 const pStyle = "group-hover:text-primary  font text-[20px]";
 const iconStyle = "size-[32px] group-hover:text-primary ";
 
-const navItems: NavItem[] = [
-  { title: "Dashboard", icon: ChartBarIcon, path: "/dashboard", submenu: false},
-  { title: "Request", icon: EnvelopeIcon, path: "/request",  submenu: true, 
-  submenuItems: [
-    {title: "View Request", path: "/request"},
-    {title: "Create Request",  path: "/request/sr"},
-   
-  ]},
-  { title: "Setup", icon: BeakerIcon, path: "/setup", submenu: false},
-];
 
-const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
+
+const Sidebar: React.FC<SidebarProps> = ({ darkMode, role }) => {
   const [open, setOpen] = useState(window.innerWidth > 1024);
-  const [submenuOpen, setSubMenuOpen] = useState(false);
+  const [submenuOpen, setSubMenuOpen] = useState<string | null>(null);
+
+
+  const handleDropdownClick = (title: string) => {
+    setSubMenuOpen(submenuOpen === title ? null : title);
+  };
+
+
+  const navItems: NavItem[] = role === 'approver' ? [
+    { title: "Dashboard", icon: ChartBarIcon, path: "/dashboardapprover", submenu: false},
+    { title: "Request", icon: EnvelopeIcon, path: "/requestapprover",  submenu: true, 
+    submenuItems: [
+      {title: "View Request", path: "/requestapprover"},
+      
+    ]},
+    { title: "Setup", icon: BeakerIcon, path: "/setup", submenu: false},
+  ] : [
+    { title: "Dashboard", icon: ChartBarIcon, path: "/dashboard", submenu: false},
+    { title: "Request", icon: EnvelopeIcon, path: "/request",  submenu: true, 
+    submenuItems: [
+      {title: "View Request", path: "/request"},
+      {title: "Create Request",  path: "/request/sr"},
+     
+    ]},
+    { title: "Setup", icon: BeakerIcon, path: "/setup/User", submenu: true,
+      submenuItems: [
+      {title: "User", path: "/setup/User"},
+
+      {title: "Branch", path: "/setup/Branch"},
+      ]
+    },
+  ];
+
 
   useEffect(() => {
     const handleResize = () => {
@@ -113,14 +137,14 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
                 </div>
                 <p className={`${pStyle} ${!open && "scale-0"}`}>{item.title}</p>
                 {item.submenu && open && (
-                      submenuOpen ? (
-                        <ChevronUpIcon className="size-[20px]" onClick={() => setSubMenuOpen(false)}/>
+                      submenuOpen === item.title ? (
+                        <ChevronUpIcon className="size-[20px]" onClick={() => handleDropdownClick(item.title)}/>
                       ) : (
-                        <ChevronDownIcon className="size-[20px]" onClick={() => setSubMenuOpen(true)}/>
+                        <ChevronDownIcon className="size-[20px]" onClick={() => handleDropdownClick(item.title)}/>
                       )
                     )}
               </li>
-              {item.submenu && submenuOpen && open &&(
+              {item.submenu && submenuOpen === item.title && open &&(
                 <ul>
                   {item.submenuItems?.map((submenuItem, index) => (
                     <Link to={submenuItem.path}>

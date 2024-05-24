@@ -9,10 +9,18 @@ import Request from '../components/Request';
 import CreateStockRequistion from '../components/CreateStockRequistion';
 import CreatePurchaseOrder from '../components/CreatePurchaseOrder';
 import CreateCashDisbursement from '../components/CreateCashDisbursement';
-import CreateApplicationCash from '../CreateApplicationCash';
+import CreateApplicationCash from '../components/CreateApplicationCash';
 import CreateLiquidation from '../components/CreateLiquidation';
 import ApproverDashBoard from '../components/ApproverDashBoard';
 import ApproverViewRequest from '../components/ApproverViewRequest';
+import Profile from '../components/Profile';
+import UpdateInformation from '../components/UpdateInformation';
+import CreateRefund from '../components/CreateRefund';
+import SetupUser from '../components/SetupUser';
+import SetupBranch from '../components/SetupBranch';
+
+
+
 interface RouterProps {
   isdarkMode: boolean;
 }
@@ -48,11 +56,26 @@ const Router: React.FC<RouterProps> = ({isdarkMode}) => {
           <Route path='request/loae' element={<App isdarkMode={isdarkMode} />}>
             <Route index element={<CreateLiquidation />} />
           </Route>
-          <Route path='dashboard/approver' element={<App isdarkMode={isdarkMode} />}>
+          <Route path='request/rfr' element={<App isdarkMode={isdarkMode} />}>
+            <Route index element={<CreateRefund />} />
+          </Route>
+          <Route path='/dashboardapprover' element={<App isdarkMode={isdarkMode} />}>
             <Route index element={<ApproverDashBoard />} />
           </Route>
-          <Route path='request/viewrequest' element={<App isdarkMode={isdarkMode} />}>
+          <Route path='/requestapprover' element={<App isdarkMode={isdarkMode} />}>
             <Route index element={<ApproverViewRequest />} />
+          </Route>
+          <Route path='/profile' element={<App isdarkMode={isdarkMode} />}>
+            <Route index element={<Profile />} />
+          </Route>
+          <Route path='/Update_Profile' element={<App isdarkMode={isdarkMode} />}>
+            <Route index element={<UpdateInformation />} />
+          </Route>
+          <Route path='/setup/User' element={<App isdarkMode={isdarkMode} />}>
+            <Route index element={<SetupUser />} />
+          </Route>
+          <Route path='/setup/Branch' element={<App isdarkMode={isdarkMode} />}>
+            <Route index element={<SetupBranch />} />
           </Route>
         </Routes>
       </BrowserRouter>

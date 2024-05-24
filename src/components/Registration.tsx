@@ -196,7 +196,7 @@ const branchOptions = [
 const fieldStyle = "flex flex-row gap-4";
 const headerStyle = "lg:text-lg text-base mb-2";
 const inputStyle =
-  "w-full lg:max-w-[417px] lg:h-[56px] md:h-10  p-2 bg-gray-300 rounded-lg";
+  "w-full  lg:h-[56px] md:h-10  p-2 bg-gray-300 rounded-lg";
 
 
 const Registration : React.FC = () => {
@@ -224,7 +224,7 @@ const Registration : React.FC = () => {
           src={building}
           alt="photo"
         />
-        <div className="w-full bg-white bg-opacity-90 lg:p-8 p-4  lg:mt-0  mt-20 rounded-lg z-10 lg:m-0 m-10">
+        <div className="w-full  bg-opacity-90 lg:p-8 p-4  lg:mt-0  mt-20 rounded-lg z-10 lg:m-0 m-10">
           <h1 className="text-primary font-bold lg:text-[32px] md:text-2xl mb-6 text-left">
             ACCOUNT REGISTRATION
           </h1>
@@ -238,7 +238,9 @@ const Registration : React.FC = () => {
                 placeholder="Enter first name"
                 className={`${inputStyle}`}
               />
+              <div>
               {errors.firstName && <span className="text-red-500 text-xs"> {errors.firstName.message}</span>}
+            </div>
             </div>
             <div className="w-1/2 mb-4">
               <h1 className={`${headerStyle}`}>Last Name</h1>
@@ -260,8 +262,11 @@ const Registration : React.FC = () => {
                 placeholder="Enter username"
                 className={`${inputStyle}`}
               />
+              <div>
               {errors.userName && <span className="text-red-500 text-xs"> {errors.userName.message}</span>}
+              </div>
             </div>
+
             <div className="w-1/2 mb-4">
               <h1 className={`${headerStyle}`}>Email</h1>
               <input
@@ -270,7 +275,9 @@ const Registration : React.FC = () => {
                 placeholder="Enter email"
                 className={`${inputStyle}`}
               />
+              <div>
               {errors.email && <span className="text-red-500 text-xs"> {errors.email.message}</span>}
+              </div>
             </div>
           </div>
           <div className={`${fieldStyle}`}>
@@ -282,7 +289,9 @@ const Registration : React.FC = () => {
                 placeholder="Enter password"
                 className={`${inputStyle}`}
               />
+              <div>
               {errors.password && <span className="text-red-500 text-xs"> {errors.password.message}</span>}
+              </div>
             </div>
             <div className="w-1/2 mb-4">
               <h1 className={`${headerStyle}`}>Confirm Password</h1>
@@ -292,7 +301,9 @@ const Registration : React.FC = () => {
                 placeholder="Confirm password"
                 className={`${inputStyle}`}
               />
+              <div>
               {errors.confirmPassword && <span className="text-red-500 text-xs"> {errors.confirmPassword.message}</span>}
+              </div>
             </div>
           </div>
           <div className={`${fieldStyle}`}>
@@ -304,7 +315,9 @@ const Registration : React.FC = () => {
                 placeholder="Enter contact number"
                 className={`${inputStyle}`}
               />
+              <div>
               {errors.contact && <span className="text-red-500 text-xs"> {errors.contact.message}</span>}
+            </div>
             </div>
             <div className="w-1/2 mb-4">
               <h1 className={`${headerStyle}`}>Branch Code</h1>
@@ -314,7 +327,7 @@ const Registration : React.FC = () => {
         name="branchCode"
         control={control}
         render={({ field }) => (
-          <select {...field}  className="w-full lg:max-w-[417px] lg:h-[56px] md:h-10 p-2 bg-gray-300 rounded-lg">
+          <select {...field}  className="w-full  lg:h-[56px] md:h-10 p-2 bg-gray-300 rounded-lg">
             <option value="" disabled>Select branch</option>
             {branchOptions.map(option => (
               <option key={option} value={option}>{option}</option>
@@ -322,12 +335,13 @@ const Registration : React.FC = () => {
             
           </select>
         )}
-      />
+      />        <div>
               {errors.branchCode && <span className="text-red-500 text-xs"> {errors.branchCode.message}</span>}
+              </div>
               </div>
             </div>
           </div>
-          <button className="bg-primary  text-white py-2 px-4 rounded-lg w-full lg:max-w-[744px] lg:h-[56px]  md:h-10 " type="submit">
+          <button className="bg-primary  text-white py-2 px-4 rounded-lg w-full  lg:h-[56px]  md:h-10 " type="submit">
             Register
           </button>
           </form>

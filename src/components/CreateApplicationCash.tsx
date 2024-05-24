@@ -3,16 +3,16 @@ import Select from "react-select/dist/declarations/src/Select";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { CalendarIcon } from "@heroicons/react/24/solid";
-import TextareaAutosize from 'react-textarea-autosize';
-
-
+import TextareaAutosize from "react-textarea-autosize";
+import { useNavigate } from "react-router-dom";
 type Props = {};
 const requestType = [
-  { title: "Stock Requisition", path: "/request/sr" },
-  { title: "Purchase Order Requisition Slip", path: "/request/pors" },
-  { title: "Cash Disbursement Requisition Slip", path: "/request/cdrs" },
-  { title: "Application For Cash Advance", path: "/request/afca" },
-  { title: "Liquidation of Actual Expense", path: "/request/loae" },
+  {title:"Stock Requisition", path:"/request/sr"},
+ { title: "Purchase Order Requisition Slip", path:"/request/pors"},
+ { title: "Cash Disbursement Requisition Slip", path:"/request/cdrs"},
+ {title: "Application For Cash Advance", path:"/request/afca"},
+ {title: "Liquidation of Actual Expense", path:"/request/loae"},
+ {title: "Request for Refund", path:"/request/rfr"},
 ];
 const brancheList = [
   "Branch A",
@@ -45,14 +45,14 @@ const initialTableData: TableDataItem[] = Array.from({ length: 5 }, () => ({
   remarks: "",
 }));
 
-
-const tableStyle="border border-black p-2";
+const tableStyle = "border border-black p-2";
 const inputStyle = "w-full  border-2 border-black rounded-[12px] pl-[10px]";
 const tableInput = "w-full h-full bg-white px-2 py-1";
 const itemDiv = "flex flex-col ";
 const buttonStyle = "h-[45px] w-[150px] rounded-[12px] text-white";
 const CreateApplicationCash = (props: Props) => {
   const [startDate, setStartDate] = useState(new Date());
+  const navigate = useNavigate(); 
   const [items, setItems] = useState<
     {
       quantity: string;
@@ -70,6 +70,9 @@ const CreateApplicationCash = (props: Props) => {
       remarks: "",
     },
   ]);
+  const inputStyle =
+    "w-full max-w-[300px] border-2 border-black rounded-[12px] pl-[10px]";
+
   const [tableData, setTableData] = useState<TableDataItem[]>(initialTableData);
   const [selectedRequestType, setSelectedRequestType] =
     useState("/request/afca");
@@ -138,24 +141,26 @@ const CreateApplicationCash = (props: Props) => {
 
   return (
     <div className="bg-graybg dark:bg-blackbg w-full h-full pt-[15px] inline-flex flex-col px-[30px] pb-[15px]">
-      <h1 className="text-primary text-[32px] font-bold inline-block">Create Request</h1>
+      <h1 className="text-primary text-[32px] font-bold inline-block">
+        Create Request
+      </h1>
       <select
-        className="max-w-2/5 lg:h-[56px] md:h-10 p-2 bg-gray-200 pl-[30px] border-2 border-black rounded-xl mb-2"
-        value={selectedRequestType}
-        onChange={(e) => {
-          setSelectedRequestType(e.target.value);
-          window.location.href = e.target.value;
-        }}
-      >
-        <option value="" disabled>
-          Type of request
-        </option>
-        {requestType.map((item) => (
-          <option key={item.title} value={item.path}>
-            {item.title}
-          </option>
-        ))}
-      </select>
+  className="w-2/5 lg:h-[56px] md:h-10 p-2 bg-gray-200 pl-[30px] border-2 border-black rounded-xl mb-2"
+  value={selectedRequestType}
+  onChange={(e) => {
+    setSelectedRequestType(e.target.value);
+    navigate(e.target.value);
+  }}
+>
+  <option value="" disabled>
+    Type of request
+  </option>
+  {requestType.map((item) => (
+    <option key={item.title} value={item.path}>
+      {item.title}
+    </option>
+  ))}
+</select>
       <div className="bg-white w-full   mb-5 rounded-[12px] flex flex-col">
         <div className="border-b">
           <h1 className="pl-[30px] text-[24px] text-left py-4 text-primary font-bold flex mr-2">
@@ -184,16 +189,15 @@ const CreateApplicationCash = (props: Props) => {
               <input type="date" className={`${inputStyle} h-[44px]`} />
             </div>
           </div>
-          <div>
-            <div className="lg:flex flex-row mt-5 sm:inline-flex w-full">
-              <div className={`${itemDiv}`}>
-                <p>Usage/Remarks</p>
-                <textarea className={`${inputStyle} h-[100px]`} />
-              </div>
+
+          <div className="flex flex-col mt-4 w-4/6 sm:w-3/6 ">
+            <div className={`${itemDiv}`}>
+              <p>Usage/Remarks</p>
+              <textarea className={`${inputStyle} h-[100px]`} />
             </div>
           </div>
-          <div className="mt-4 w-full overflow-x-auto">
 
+          <div className="mt-4 w-full overflow-x-auto">
             <div className="w-full border-collapse border border-black">
               <div className="table-container">
                 <table className="border-collapse border border-black ">
@@ -322,36 +326,61 @@ const CreateApplicationCash = (props: Props) => {
             <table className="border border-black  mt-10">
               <tr>
                 <th colSpan={2} className="bg-[#8EC7F7] ">
-                  <p className="font-semibold text-[12px] p-2">SUMMARY OF EXPENSES TO BE INCURRED (for C/A)</p>
+                  <p className="font-semibold text-[12px] p-2">
+                    SUMMARY OF EXPENSES TO BE INCURRED (for C/A)
+                  </p>
                 </th>
               </tr>
               <tr className="bg-[#8EC7F7]">
-                <th className={`${tableStyle}`}><p className="font-semibold  ">CATEGORY</p></th>
-                <th className={`${tableStyle}`}><p className="font-semibold  ">CATEGORY</p></th>
+                <th className={`${tableStyle}`}>
+                  <p className="font-semibold  ">CATEGORY</p>
+                </th>
+                <th className={`${tableStyle}`}>
+                  <p className="font-semibold  ">CATEGORY</p>
+                </th>
               </tr>
               <tr>
-                <td className={`${tableStyle}`}><p className="font-semibold  ">BOAT FARE</p></td>
-
+                <td className={`${tableStyle}`}>
+                  <p className="font-semibold  ">BOAT FARE</p>
+                </td>
               </tr>
               <tr>
-                <td className={`${tableStyle}`}><p className="font-semibold  ">HOTEL</p></td>
-                <td className={`${tableStyle}`}><p className="font-semibold  ">$50</p></td>
+                <td className={`${tableStyle}`}>
+                  <p className="font-semibold  ">HOTEL</p>
+                </td>
+                <td className={`${tableStyle}`}>
+                  <p className="font-semibold  ">$50</p>
+                </td>
               </tr>
               <tr>
-                <td className={`${tableStyle}`}><p className="font-semibold  ">PER DIEM</p></td>
-                <td className={`${tableStyle}`}><p className="font-semibold  ">$50</p></td>
+                <td className={`${tableStyle}`}>
+                  <p className="font-semibold  ">PER DIEM</p>
+                </td>
+                <td className={`${tableStyle}`}>
+                  <p className="font-semibold  ">$50</p>
+                </td>
               </tr>
               <tr>
-                <td className={`${tableStyle}`}><p className="font-semibold  ">FARE</p></td>
-                <td className={`${tableStyle}`}><p className="font-semibold  ">$50</p></td>
+                <td className={`${tableStyle}`}>
+                  <p className="font-semibold  ">FARE</p>
+                </td>
+                <td className={`${tableStyle}`}>
+                  <p className="font-semibold  ">$50</p>
+                </td>
               </tr>
               <tr>
-                <td className={`${tableStyle}`}><p className="font-semibold  ">CONTINGENCY</p></td>
-                <td className={`${tableStyle}`}><p className="font-semibold  ">$50</p></td>
+                <td className={`${tableStyle}`}>
+                  <p className="font-semibold  ">CONTINGENCY</p>
+                </td>
+                <td className={`${tableStyle}`}>
+                  <p className="font-semibold  ">$50</p>
+                </td>
               </tr>
               <tr>
                 <td className={`${tableStyle} h-8`}></td>
-                <td className={`${tableStyle}`}><p className="font-semibold  ">$50</p></td>
+                <td className={`${tableStyle}`}>
+                  <p className="font-semibold  ">$50</p>
+                </td>
               </tr>
               <tr>
                 <td className={`${tableStyle} h-14 font-bold`}>TOTAL</td>

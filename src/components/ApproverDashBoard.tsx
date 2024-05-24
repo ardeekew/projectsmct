@@ -160,7 +160,7 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
         </div>
       </div>
       <div className="flex  gap-4">
-  <div className="flex-7 py-10 bg-white w-full rounded-[12px] h-[327px] mt-4">
+  <div className="flex-7 py-10 bg-white drop-shadow-lg w-full rounded-[12px] h-[327px] mt-4">
     <ResponsiveContainer width="100%" height="100%">
       <AreaChart
         width={500}
@@ -181,7 +181,7 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
       </AreaChart>
     </ResponsiveContainer>
   </div>
-  <div className="flex-3 py-10 bg-white w-full lg:w-2/4 rounded-[12px] h-[327px] mt-4 ">
+  <div className="flex-3 py-10 bg-white w-full  drop-shadow-lg lg:w-2/4 rounded-[12px] h-[327px] mt-4 ">
     <ResponsiveContainer width="100%" height="100%">
       <BarChart
         width={500}

@@ -15,7 +15,7 @@ const Request = (props: Props) => {
 
     return (
         <div className="bg-graybg dark:bg-blackbg w-full h-screen pt-4 px-10 md:px-10 lg:px-30">
-              <button className='bg-primary text-white rounded-[12px] mb-2 w-[120px] sm:w-[151px] h-[34px]'>Send Request</button>
+              <button className='bg-primary text-white rounded-[12px] mb-2 w-[120px] sm:w-[151px] h-[34px] z-10'>Send Request</button>
             <div className='w-full  h-auto  drop-shadow-lg rounded-lg  md:mr-4 relative '>
             
                 <div className="bg-white   rounded-lg  w-full flex flex-col items-center overflow-x-auto">

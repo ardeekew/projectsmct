@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import Slice from "./assets/Slice.png";
 import building from "./assets/building.jpg";
 import {useNavigate} from 'react-router-dom'
-import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid";
+import { EyeIcon, EyeSlashIcon, CheckCircleIcon } from "@heroicons/react/24/solid";
 import {  SubmitHandler, useForm } from "react-hook-form";
 import {z, ZodType} from 'zod';
 import {zodResolver} from '@hookform/resolvers/zod'
@@ -22,6 +22,7 @@ const Login: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
 
 
+
   const {
     register, 
     handleSubmit,
@@ -32,16 +33,17 @@ const Login: React.FC = () => {
 
  
 
-const submitData:SubmitHandler<UserCredentials> =async (data) => {
-if(data.email === "rd@test.com" && data.password === "12345"){
-  navigate("/dashboard")
-}else if(data.email === "approver@test.com" && data.password === "12345"){
-  navigate("/dashboardapprover")
-}
-else{
-  alert("Invalid email or password");
-}
-}
+  const submitData:SubmitHandler<UserCredentials> = async (data) => {
+    if(data.email === "rd@test.com" && data.password === "12345"){
+      localStorage.setItem('role', 'employee');
+      navigate("/dashboard");
+    } else if(data.email === "approver@test.com" && data.password === "12345"){
+      localStorage.setItem('role', 'approver');
+      navigate("/dashboardapprover");
+    } else {
+      alert("Invalid email or password");
+    }
+  }
 
   const inputStyle = "w-full lg:max-w-[417px] lg:h-[56px] md:h-10  p-2 bg-gray-300 rounded-lg";
   return (
@@ -49,7 +51,7 @@ else{
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-cover bg-center relative">
         <img className="absolute inset-0 object-cover w-full h-screen lg:hidden z-0" src={building} alt="photo" />
       
-        <div className="lg:max-w-[481px] md:max-w-sm max-w-xs w-full lg:mt-0  mt-20 bg-white bg-opacity-90 p-8 rounded-lg z-10 lg:m-0 m-10 ">
+        <div className="lg:max-w-[481px] md:max-w-sm max-w-xs w-full lg:mt-0  mt-20  bg-opacity-90 p-8 rounded-lg z-10 lg:m-0 m-10 ">
           <h1 className="text-primary font-bold lg:text-[32px] md:text-2xl  mb-6 text-left lg:mt-0 ">
             ACCOUNT LOGIN
           </h1>

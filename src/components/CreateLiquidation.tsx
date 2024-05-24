@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate} from "react-router-dom";
 import Select from "react-select/dist/declarations/src/Select";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -12,6 +13,7 @@ const requestType = [
   { title: "Cash Disbursement Requisition Slip", path: "/request/cdrs" },
   { title: "Application For Cash Advance", path: "/request/afca" },
   { title: "Liquidation of Actual Expense", path: "/request/loae" },
+  { title: "Request for Refund", path: "/request/rfr" },
 ];
 const brancheList = [
   "Branch A",
@@ -75,7 +77,8 @@ const CreateLiquidation = (props: Props) => {
   const [tableData, setTableData] = useState<TableDataItem[]>(initialTableData);
   const [selectedRequestType, setSelectedRequestType] =
     useState("/request/loae");
-
+  
+  
   const handleChange = (
     index: number,
     field: keyof TableDataItem,
@@ -141,27 +144,28 @@ const CreateLiquidation = (props: Props) => {
     updatedItems[index][field] = value;
     setItems(updatedItems);
   };
-
+  const navigate = useNavigate();
   return (
     <div className="bg-graybg dark:bg-blackbg h-full pt-[15px] px-[30px] pb-[15px]">
       <h1 className="text-primary text-[32px] font-bold">Create Request</h1>
+
       <select
-        className="max-w-2/5 lg:h-[56px] md:h-10 p-2 bg-gray-200 pl-[30px] border-2 border-black rounded-xl mb-2"
-        value={selectedRequestType}
-        onChange={(e) => {
-          setSelectedRequestType(e.target.value);
-          window.location.href = e.target.value;
-        }}
-      >
-        <option value="" disabled>
-          Type of request
-        </option>
-        {requestType.map((item) => (
-          <option key={item.title} value={item.path}>
-            {item.title}
-          </option>
-        ))}
-      </select>
+  className="w-2/5 lg:h-[56px] md:h-10 p-2 bg-gray-200 pl-[30px] border-2 border-black rounded-xl mb-2"
+  value={selectedRequestType}
+  onChange={(e) => {
+    setSelectedRequestType(e.target.value);
+    navigate(e.target.value);
+  }}
+>
+  <option value="" disabled>
+    Type of request
+  </option>
+  {requestType.map((item) => (
+    <option key={item.title} value={item.path}>
+      {item.title}
+    </option>
+  ))}
+</select>
       <div className="bg-white w-full mb-5 rounded-[12px] flex flex-col">
         <div className="border-b">
           <h1 className="pl-[30px] text-[24px] text-left py-4 text-primary font-bold flex mr-2">
@@ -173,7 +177,7 @@ const CreateLiquidation = (props: Props) => {
         </div>
         <div className="px-[35px] mt-4 ">
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2 md:flex md:justify-start md:space-x-8">
-            <div className="">
+            <div className={`${itemDiv}`}>
               <p className="font-semibold text-start mr-40">Date:</p>
               <input type="date" className={`${inputStyle} h-[44px]`} />
             </div>
@@ -182,174 +186,175 @@ const CreateLiquidation = (props: Props) => {
               <textarea className={`${inputStyle} h-20`}></textarea>
             </div>
           </div>
-        
+
           <div className=" mt-20 px-4 w-full ">
             <h1 className="text-[24px] font-semibold">
               Liquidation of Actual Expense
             </h1>
-            </div>
-            <div className="mt-4 w-full overflow-x-auto">
-
-<div className="w-full border-collapse border border-black ">
-  <div className="table-container">
-              <table className="border-collapse border w-full border-black ">
-                <thead className="bg-[#8EC7F7]">
-                  <tr>
-                    <th>Date</th>
-                    <th colSpan={3} className="border border-black">
-                      Transportation
-                    </th>
-                    <th colSpan={3} className="border border-black">
-                      Hotel
-                    </th>
-                    <th colSpan={3} className="border border-black">
-                      PER DIEM OTHER RELATED EXPENSES
-                    </th>
-                    <th></th>
-                  </tr>
-                  <tr>
-                    <th className={`${tableStyle}`}>Day</th>
-                    <th className={`${tableStyle}`}>Destination</th>
-                    <th className={`${tableStyle}`}>Type of Transportation</th>
-                    <th className={`${tableStyle}`}>Amount</th>
-                    <th className={`${tableStyle}`}>Hotel</th>
-                    <th className={`${tableStyle}`}>Place</th>
-                    <th className={`${tableStyle}`}>Amount</th>
-                    <th className={`${tableStyle}`}>Per Diem</th>
-                    <th className={`${tableStyle}`}>Particulars</th>
-                    <th className={`${tableStyle}`}>Amount</th>
-                    <th className={`${tableStyle}`}>Grand Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tableData.map((rowData, index) => (
-                    <tr key={index} className="border border-black">
-                      <td className="p-1 border border-black">
-                        <input
-                          type="date"
-                          value={rowData.date}
-                          onChange={(e) =>
-                            handleChange(index, "date", e.target.value)
-                          }
-                          className={`${tableInput}`}
-                        />
-                      </td>
-                      <td className="p-1 border border-black">
-                        <textarea
-                          value={rowData.destination}
-                          onChange={(e) =>
-                            handleChange(index, "destination", e.target.value)
-                          }
-                          className={`${tableInput}`}
-                        ></textarea>
-                      </td>
-                      <td className="p-1 border border-black">
-                        <input
-                          type="text"
-                          value={rowData.transportation}
-                          onChange={(e) =>
-                            handleChange(
-                              index,
-                              "transportation",
-                              e.target.value
-                            )
-                          }
-                          className={`${tableInput}`}
-                        />
-                      </td>
-                      <td className="p-1 border border-black">
-                        <input
-                          type="number"
-                          value={rowData.transportationAmount}
-                          onChange={(e) =>
-                            handleChange(
-                              index,
-                              "transportationAmount",
-                              e.target.value
-                            )
-                          }
-                          className={`${tableInput}`}
-                        />
-                      </td>
-                      <td className="p-1 border border-black">
-                        <textarea
-                          value={rowData.hotel}
-                          onChange={(e) =>
-                            handleChange(index, "hotel", e.target.value)
-                          }
-                          className={`${tableInput}`}
-                        ></textarea>
-                      </td>
-                      <td className="p-1 border border-black">
-                        <input
-                          type="text"
-                          value={rowData.place}
-                          onChange={(e) =>
-                            handleChange(index, "place", e.target.value)
-                          }
-                          className={`${tableInput}`}
-                        />
-                      </td>
-                      <td className="p-1 border border-black">
-                        <input
-                          type="number"
-                          value={rowData.placeAmount}
-                          onChange={(e) =>
-                            handleChange(index, "placeAmount", e.target.value)
-                          }
-                          className={`${tableInput}`}
-                        />
-                      </td>
-                      <td className="p-1 border border-black">
-                        <input
-                          type="number"
-                          value={rowData.perDiem}
-                          onChange={(e) =>
-                            handleChange(index, "perDiem", e.target.value)
-                          }
-                          className={`${tableInput}`}
-                        />
-                      </td>
-                      <td className="p-1 border border-black">
-                        <input
-                          type="number"
-                          value={rowData.particulars}
-                          onChange={(e) =>
-                            handleChange(index, "particulars", e.target.value)
-                          }
-                          className={`${tableInput}resize-none h-[100px]  `}
-                        />
-                      </td>
-                      <td className="p-1 border border-black">
-                        <input
-                          type="number"
-                          value={rowData.particularsAmount}
-                          onChange={(e) =>
-                            handleChange(
-                              index,
-                              "particularsAmount",
-                              e.target.value
-                            )
-                          }
-                          className={`${tableInput}`}
-                        />
-                      </td>
-                      <td className="p-1 border border-black">
-                        <input
-                          type="number"
-                          value={rowData.grandTotal}
-                          readOnly
-                          className={`${tableInput}`}
-                        />
-                      </td>
+          </div>
+          <div className="mt-4 w-full overflow-x-auto">
+            <div className="w-full border-collapse border border-black ">
+              <div className="table-container">
+                <table className="border-collapse border w-full border-black ">
+                  <thead className="bg-[#8EC7F7]">
+                    <tr>
+                      <th>Date</th>
+                      <th colSpan={3} className="border border-black">
+                        Transportation
+                      </th>
+                      <th colSpan={3} className="border border-black">
+                        Hotel
+                      </th>
+                      <th colSpan={3} className="border border-black">
+                        PER DIEM OTHER RELATED EXPENSES
+                      </th>
+                      <th></th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                    <tr>
+                      <th className={`${tableStyle}`}>Day</th>
+                      <th className={`${tableStyle}`}>Destination</th>
+                      <th className={`${tableStyle}`}>
+                        Type of Transportation
+                      </th>
+                      <th className={`${tableStyle}`}>Amount</th>
+                      <th className={`${tableStyle}`}>Hotel</th>
+                      <th className={`${tableStyle}`}>Place</th>
+                      <th className={`${tableStyle}`}>Amount</th>
+                      <th className={`${tableStyle}`}>Per Diem</th>
+                      <th className={`${tableStyle}`}>Particulars</th>
+                      <th className={`${tableStyle}`}>Amount</th>
+                      <th className={`${tableStyle}`}>Grand Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tableData.map((rowData, index) => (
+                      <tr key={index} className="border border-black">
+                        <td className="p-1 border border-black">
+                          <input
+                            type="date"
+                            value={rowData.date}
+                            onChange={(e) =>
+                              handleChange(index, "date", e.target.value)
+                            }
+                            className={`${tableInput}`}
+                          />
+                        </td>
+                        <td className="p-1 border border-black">
+                          <textarea
+                            value={rowData.destination}
+                            onChange={(e) =>
+                              handleChange(index, "destination", e.target.value)
+                            }
+                            className={`${tableInput}`}
+                          ></textarea>
+                        </td>
+                        <td className="p-1 border border-black">
+                          <input
+                            type="text"
+                            value={rowData.transportation}
+                            onChange={(e) =>
+                              handleChange(
+                                index,
+                                "transportation",
+                                e.target.value
+                              )
+                            }
+                            className={`${tableInput}`}
+                          />
+                        </td>
+                        <td className="p-1 border border-black">
+                          <input
+                            type="number"
+                            value={rowData.transportationAmount}
+                            onChange={(e) =>
+                              handleChange(
+                                index,
+                                "transportationAmount",
+                                e.target.value
+                              )
+                            }
+                            className={`${tableInput}`}
+                          />
+                        </td>
+                        <td className="p-1 border border-black">
+                          <textarea
+                            value={rowData.hotel}
+                            onChange={(e) =>
+                              handleChange(index, "hotel", e.target.value)
+                            }
+                            className={`${tableInput}`}
+                          ></textarea>
+                        </td>
+                        <td className="p-1 border border-black">
+                          <input
+                            type="text"
+                            value={rowData.place}
+                            onChange={(e) =>
+                              handleChange(index, "place", e.target.value)
+                            }
+                            className={`${tableInput}`}
+                          />
+                        </td>
+                        <td className="p-1 border border-black">
+                          <input
+                            type="number"
+                            value={rowData.placeAmount}
+                            onChange={(e) =>
+                              handleChange(index, "placeAmount", e.target.value)
+                            }
+                            className={`${tableInput}`}
+                          />
+                        </td>
+                        <td className="p-1 border border-black">
+                          <input
+                            type="number"
+                            value={rowData.perDiem}
+                            onChange={(e) =>
+                              handleChange(index, "perDiem", e.target.value)
+                            }
+                            className={`${tableInput}`}
+                          />
+                        </td>
+                        <td className="p-1 border border-black">
+                          <input
+                            type="number"
+                            value={rowData.particulars}
+                            onChange={(e) =>
+                              handleChange(index, "particulars", e.target.value)
+                            }
+                            className={`${tableInput}resize-none h-[100px]  `}
+                          />
+                        </td>
+                        <td className="p-1 border border-black">
+                          <input
+                            type="number"
+                            value={rowData.particularsAmount}
+                            onChange={(e) =>
+                              handleChange(
+                                index,
+                                "particularsAmount",
+                                e.target.value
+                              )
+                            }
+                            className={`${tableInput}`}
+                          />
+                        </td>
+                        <td className="p-1 border border-black">
+                          <input
+                            type="number"
+                            value={rowData.grandTotal}
+                            readOnly
+                            className={`${tableInput}`}
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-         
+
           <div>
             <table className="border border-black  mt-10 w-full">
               <tr>
@@ -391,11 +396,9 @@ const CreateLiquidation = (props: Props) => {
             >
               Cancel
             </button>
-            <button className={`bg-primary ${buttonStyle}`}>
-              Send Request
-            </button>
+            <button className={`bg-primary ${buttonStyle}`}>Send Request</button>
           </div>
-          </div>
+        </div>
       </div>
     </div>
   );

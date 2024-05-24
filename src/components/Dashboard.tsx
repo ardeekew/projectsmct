@@ -8,7 +8,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { CheckIcon } from "@heroicons/react/24/solid";
 import { Link } from "react-router-dom";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+
 
 
 type Props = {};
@@ -28,54 +28,10 @@ const data: { [key: string]: string } = {
 };
 
 
-const linechartData = [
-  {
-    name: 'Page A',
-    uv: 4000,
-    pv: 2400,
-    amt: 2400,
-  },
-  {
-    name: 'Page B',
-    uv: 3000,
-    pv: 1398,
-    amt: 2210,
-  },
-  {
-    name: 'Page C',
-    uv: 2000,
-    pv: 9800,
-    amt: 2290,
-  },
-  {
-    name: 'Page D',
-    uv: 2780,
-    pv: 3908,
-    amt: 2000,
-  },
-  {
-    name: 'Page E',
-    uv: 1890,
-    pv: 4800,
-    amt: 2181,
-  },
-  {
-    name: 'Page F',
-    uv: 2390,
-    pv: 3800,
-    amt: 2500,
-  },
-  {
-    name: 'Page G',
-    uv: 3490,
-    pv: 4300,
-    amt: 2100,
-  },
-];
 const Dashboard: React.FC<Props> = ({}) => {
   const [darkMode, setDarkMode] = useState(true);
   return (
-    <div className="bg-graybg dark:bg-blackbg  h-full pt-[26px]  px-[30px] ">
+    <div className="bg-graybg dark:bg-blackbg  h-full pt-[26px]  px-[35px] ">
       <div className="bg-primary w-full sm:w-full h-[210px] rounded-[12px] pl-[30px] flex flex-row justify-between items-center">
         <div>
           <p className="text-[15px] lg:text-[20px] ">Hi, Kylie 👋</p>
@@ -150,29 +106,7 @@ const Dashboard: React.FC<Props> = ({}) => {
           </div>
         </div>
       </div>
-      <div>
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart
-          width={500}
-          height={300}
-          data={linechartData}
-          margin={{
-            top: 5,
-            right: 30,
-            left: 20,
-            bottom: 5,
-          }}
-        >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Tooltip />
-          <Legend />
-          <Line type="monotone" dataKey="pv" stroke="#8884d8" activeDot={{ r: 8 }} />
-          <Line type="monotone" dataKey="uv" stroke="#82ca9d" />
-        </LineChart>
-      </ResponsiveContainer>
-      </div>
+     
       <div className="mt-[20px] mb-10 bg-white w-full h-[210px] drop-shadow-lg rounded-[12px] px-4 relative sm:w-full overflow-x-auto">
         <h1 className="py-[16px] px-[25px] font-bold text-[20px]  ">
           Recent request

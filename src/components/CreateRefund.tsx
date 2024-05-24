@@ -5,7 +5,6 @@ import "react-datepicker/dist/react-datepicker.css";
 import { CalendarIcon } from "@heroicons/react/24/solid";
 import path from "path";
 import { Link, useNavigate } from "react-router-dom";
-import { title } from "process";
 
 type Props = {};
 const requestType = [
@@ -27,11 +26,13 @@ const brancheList = [
 const inputStyle = "w-full   border-2 border-black rounded-[12px] pl-[10px]";
 const itemDiv = "flex flex-col ";
 const buttonStyle = "h-[45px] w-[150px] rounded-[12px] text-white";
-const CreateStockRequistion = (props: Props) => {
+const CreateRefund = (props: Props) => {
   const [startDate, setStartDate] = useState(new Date());
-  const navigate=useNavigate();
   const [items, setItems] = useState<{ quantity: string; description: string; unitCost: string; totalAmount: string; remarks: string; }[]>([{ quantity: "", description: "", unitCost: "", totalAmount: "", remarks: "" }]);
-  
+  const [selectedRequestType, setSelectedRequestType] =
+    useState("/request/rfr");
+
+    const navigate = useNavigate();
   const handleRemoveItem = () => {
     if (items.length > 1) {
       const updatedItems = [...items];
@@ -54,80 +55,33 @@ const CreateStockRequistion = (props: Props) => {
     <div className="bg-graybg dark:bg-blackbg h-full pt-[15px] px-[30px] pb-[15px]">
       <h1 className="text-primary dark:text-primaryD text-[32px] font-bold">Create Request</h1>
          
-      <select 
-      className="w-2/5  lg:h-[56px] md:h-10 p-2 bg-gray-200 pl-[30px] border-2 border-black rounded-xl mb-2"
-      onChange={(e) => navigate (e.target.value)}
-    >
-      <option value="" disabled>
-        Type of request
-      </option>
-      {requestType.map((item) => (
-        <option key={item.title} value={item.path}>
-          {item.title}
-        </option>
-      ))}
-    </select>
+      <select
+  className="w-2/5 lg:h-[56px] md:h-10 p-2 bg-gray-200 pl-[30px] border-2 border-black rounded-xl mb-2"
+  value={selectedRequestType}
+  onChange={(e) => {
+    setSelectedRequestType(e.target.value);
+    navigate(e.target.value);
+  }}
+>
+  <option value="" disabled>
+    Type of request
+  </option>
+  {requestType.map((item) => (
+    <option key={item.title} value={item.path}>
+      {item.title}
+    </option>
+  ))}
+</select>
       <div className="bg-white w-full  mb-5 rounded-[12px] flex flex-col">
         <div className="border-b text-left">
         <h1 className="pl-[30px] text-[24px] text-left py-4 text-primary font-bold flex mr-2">
-  <span className="mr-2 underline decoration-2 underline-offset-8">Stock</span> Requisition
+  <span className="mr-2 underline decoration-2 underline-offset-8">Request</span> for Refund
 </h1>
         </div>
         <div className="px-[35px] mt-4">
-          <div className="w-1/2 sm:w-full grid grid-row-3 sm:grid-cols-2 md:flex justify-between">
-          <div className="">
-          <p className="font-bold">Purpose:</p>
-          <div className="flex flex-col lg:flex-row space-x-0 lg:space-x-4">
-            <div >
-              <label className="">
-                Repair & Maintenance
-                <input
-                  type="radio"
-                  id="repair_maintenance"
-                  name="serviceOption"
-                  value="Repair & Maintenance"
-                  className="px-4"
-                />
-              </label>
-              </div>
-              <div>
-              <label className="">
-                Repo. Recon
-                <input
-                  type="radio"
-                  id="repo_recon"
-                  name="serviceOption"
-                  value="Repo. Recon"
-                  className=""
-                />
-              </label>
-              </div>
-              <div>
-              <label className="">
-                Office/Service Used
-                <input
-                  type="radio"
-                  id="office_service_used"
-                  name="serviceOption"
-                  value="Office/Service Used"
-                  className="h-4 w-4"
-                />
-              </label>
-              </div>
-            </div>
-            </div>
-            <div className="flex flex-col mt-2 md:mt-0">
-              <p className="font-bold">Date:</p>
-                <div className=" h-[44px] w-full">
-              <input
-              type="date"
-                className=" w-full rounded-[12px] wfu border-2 border-black h-[44px]"
-               >
-                  </input>
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-col w-full max-w-[300px]  mt-5 mb-4">
+          
+          <div className="flex flex-row w-1/2   mt-5 mb-4 space-x-6 ">
+            <div className="flex flex-col w-2/5">
             <label className="font-semibold ">Branch:</label>
             <select className="border-2  border-black rounded-[12px] h-[44px]">
               <option value="" disabled>
@@ -139,6 +93,11 @@ const CreateStockRequistion = (props: Props) => {
                 </option>
               ))}
             </select>
+            </div>
+            <div className="w-2/5">
+            <label className="font-semibold ">Branch:</label>
+                <input type="date" className="border border-black p-2 rounded-[12px] w-full" />
+            </div>
           </div>
           {items.map((item, index) => (
         <div key={index} className="flex flex-col mt-5 mb-4">
@@ -204,4 +163,4 @@ const CreateStockRequistion = (props: Props) => {
   );
 };
 
-export default CreateStockRequistion;
+export default CreateRefund;

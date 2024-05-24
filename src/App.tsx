@@ -18,6 +18,7 @@ function capitalizeFirstLetter(string: string) {
   if (index !== -1) {
     string = string.substring(0, index);
   }
+  string = string.replace(/_/g, ' ');
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
@@ -26,7 +27,7 @@ const App: React.FC<AppProps> = ({ isdarkMode }) => {
   const location = useLocation();
   const currentPage = capitalizeFirstLetter(location.pathname.substring(1));
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
-
+  const role = localStorage.getItem('role') || '';
   const toggleDarkMode = () => {
     setDarkMode((prevDarkMode) => !prevDarkMode);
   };
@@ -38,7 +39,7 @@ const App: React.FC<AppProps> = ({ isdarkMode }) => {
   return (
     <div className={`flex ${darkMode ? "dark" : "white"} relative w-full`}>
       <div className={`h-[100vh] fixed md:relative ${isSidebarVisible ? 'block' : ' hidden md:block '} md:block z-30`}>
-        <Sidebar darkMode={darkMode} />
+        <Sidebar darkMode={darkMode} role={role} />
       </div>
       <div className="flex-1 flex flex-col w-full">
         <Nav

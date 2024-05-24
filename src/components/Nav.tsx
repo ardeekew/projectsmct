@@ -8,6 +8,7 @@ import {
   EnvelopeIcon,
 } from "@heroicons/react/24/solid";
 import Avatar from "./assets/avatar.png";
+import { Link } from "react-router-dom";
 
 interface NavProps {
   darkMode: boolean;
@@ -16,7 +17,6 @@ interface NavProps {
   currentPage: string;
   isSidebarVisible: boolean;
 }
-
 
 const Nav: React.FC<NavProps> = ({
   darkMode,
@@ -40,19 +40,19 @@ const Nav: React.FC<NavProps> = ({
       {" "}
       {/* Toggle light and dark mode */}
       <nav className={`${flexBetween} bg-white dark:bg-blackD`}>
-      <div
-  className="h-[67px] flex items-center bg-white  dark:bg-blackD"
-  onClick={toggleSidebar} // Toggle the sidebar when this div is clicked
->
-  <h1
-    className={`lg:text-[32px] md:text-[28px] sm:text-[20px] font-bold text-primary ${
-      darkMode ? "dark:text-white" : ""
-    }  pl-4 ${isSidebarVisible ? "ml-4 lg:ml-0" : ""}`}
-  >
-    {currentPage}
-  </h1>
-</div>
-        <div className="flex items-center justify-between pr-4 sm:pr-12">
+        <div
+          className="h-[67px] flex items-center bg-white  dark:bg-blackD"
+          onClick={toggleSidebar} // Toggle the sidebar when this div is clicked
+        >
+          <h1
+            className={`lg:text-[32px] md:text-[28px] sm:text-[20px] font-bold text-primary ${
+              darkMode ? "dark:text-white" : ""
+            }  pl-4 ${isSidebarVisible ? "ml-4 lg:ml-0" : ""}`}
+          >
+            {currentPage}
+          </h1>
+        </div>
+        <div className="flex items-center justify-between pr-12 ">
           <div className="pr-2 sm:pr-8">
             {darkMode ? (
               <SunIcon
@@ -69,7 +69,7 @@ const Nav: React.FC<NavProps> = ({
           <div className={`${flexBetween} gap-2 relative `}>
             <img
               alt="logo"
-              className="cursor-pointer hidden sm-block"
+              className="cursor-pointer hidden sm:block"
               src={Avatar}
               height={45}
               width={45}
@@ -95,11 +95,15 @@ const Nav: React.FC<NavProps> = ({
             )}
             {/* Profile dropdown */}
             {isOpen && (
-              <div className="w-48   bg-white absolute top-11 ">
+              <div
+                className="w-full border-x-2 border-b-2 bg-white absolute top-11 overflow-x-hidden z-50"
+                style={{ zIndex: 1000 }}
+              >
                 <ul>
-                  <li className={`${listProfile}`}>My Profile</li>
+                  <Link to="/profile">
+                    <li className={`${listProfile}`}>My Profile</li>
+                  </Link>
                   <li className={`${listProfile}`}>Settings</li>
-
                   <li className={`${listProfile}`}>Help</li>
                   <li className={`${listProfile}`}>Sign out</li>
                 </ul>
