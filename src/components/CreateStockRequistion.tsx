@@ -86,7 +86,7 @@ const CreateStockRequistion = (props: Props) => {
                   id="repair_maintenance"
                   name="serviceOption"
                   value="Repair & Maintenance"
-                  className="px-4"
+                  className="size-4 ml-1"
                 />
               </label>
               </div>
@@ -98,7 +98,7 @@ const CreateStockRequistion = (props: Props) => {
                   id="repo_recon"
                   name="serviceOption"
                   value="Repo. Recon"
-                  className=""
+                  className="size-4 ml-1"
                 />
               </label>
               </div>
@@ -110,21 +110,24 @@ const CreateStockRequistion = (props: Props) => {
                   id="office_service_used"
                   name="serviceOption"
                   value="Office/Service Used"
-                  className="h-4 w-4"
+                  className="size-4 ml-1"
                 />
               </label>
               </div>
             </div>
             </div>
-            <div className="flex flex-col mt-2 md:mt-0">
-              <p className="font-bold">Date:</p>
-                <div className=" h-[44px] w-full">
+            <div>
+            <p className="font-bold">Date:</p>
+            <div className="flex flex-col mt-2 md:mt-0 w-full items-end">
+           
+                <div className=" h-[44px] ">
               <input
               type="date"
                 className=" w-full rounded-[12px] wfu border-2 border-black h-[44px]"
                >
                   </input>
               </div>
+            </div>
             </div>
           </div>
           <div className="flex flex-col w-full max-w-[300px]  mt-5 mb-4">

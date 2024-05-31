@@ -51,9 +51,10 @@ const initialTableData: TableDataItem[] = Array.from({ length: 5 }, () => ({
 }));
 
 const tableStyle = "border border-black p-2";
-const inputStyle = "w-full   border-2 border-black rounded-[12px] pl-[10px]";
+const inputStyle = "w-full  border-2 border-black rounded-[12px] pl-[10px]";
 const tableInput = "w-full h-full bg-white px-2 py-1";
-const itemDiv = "flex flex-col ";
+const itemDiv = "flex flex-col  w-3/4";
+
 const buttonStyle = "h-[45px] w-[150px] rounded-[12px] text-white";
 const CreateLiquidation = (props: Props) => {
   const [startDate, setStartDate] = useState(new Date());

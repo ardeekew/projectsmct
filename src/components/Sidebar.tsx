@@ -8,20 +8,20 @@ import {
   ArrowLeftCircleIcon,
   ChevronDownIcon,
   ChevronUpIcon,
+  BookOpenIcon,
 } from "@heroicons/react/24/solid";
 import { Link } from "react-router-dom";
-import Nav from './Nav';
+import Nav from "./Nav";
 type Submenu = {
-  title:string;
-  path:string;
- 
-}
+  title: string;
+  path: string;
+};
 type NavItem = {
   title: string;
-  submenu:boolean;
+  submenu: boolean;
   icon: React.ElementType;
   path: string;
-  submenuItems?:Submenu[];
+  submenuItems?: Submenu[];
 };
 
 interface SidebarProps {
@@ -36,43 +36,66 @@ const listStyle =
 const pStyle = "group-hover:text-primary  font text-[20px]";
 const iconStyle = "size-[32px] group-hover:text-primary ";
 
-
-
 const Sidebar: React.FC<SidebarProps> = ({ darkMode, role }) => {
   const [open, setOpen] = useState(window.innerWidth > 1024);
   const [submenuOpen, setSubMenuOpen] = useState<string | null>(null);
-
 
   const handleDropdownClick = (title: string) => {
     setSubMenuOpen(submenuOpen === title ? null : title);
   };
 
+  const navItems: NavItem[] =
+    role === "approver"
+      ? [
+          {
+            title: "Dashboard",
+            icon: ChartBarIcon,
+            path: "/dashboardapprover",
+            submenu: false,
+          },
+          {
+            title: "Request",
+            icon: EnvelopeIcon,
+            path: "/requestapprover",
+            submenu: true,
+            submenuItems: [{ title: "View Request", path: "/requestapprover" }],
+          },
+          
+          
+        ]
+      : [
+          {
+            title: "Dashboard",
+            icon: ChartBarIcon,
+            path: "/dashboard",
+            submenu: false,
+          },
+          {
+            title: "Request",
+            icon: EnvelopeIcon,
+            path: "/request",
+            submenu: true,
+            submenuItems: [
+              { title: "View Request", path: "/request" },
+              { title: "Create Request", path: "/request/sr" },
+              { title: "Custom Request", path: "/request/custom" },
+            ],
+          },
+          {
+            title: "Setup",
+            icon: BeakerIcon,
+            path: "/setup/User",
+            submenu: true,
+            submenuItems: [
+              { title: "User", path: "/setup/User" },
 
-  const navItems: NavItem[] = role === 'approver' ? [
-    { title: "Dashboard", icon: ChartBarIcon, path: "/dashboardapprover", submenu: false},
-    { title: "Request", icon: EnvelopeIcon, path: "/requestapprover",  submenu: true, 
-    submenuItems: [
-      {title: "View Request", path: "/requestapprover"},
-      
-    ]},
-    { title: "Setup", icon: BeakerIcon, path: "/setup", submenu: false},
-  ] : [
-    { title: "Dashboard", icon: ChartBarIcon, path: "/dashboard", submenu: false},
-    { title: "Request", icon: EnvelopeIcon, path: "/request",  submenu: true, 
-    submenuItems: [
-      {title: "View Request", path: "/request"},
-      {title: "Create Request",  path: "/request/sr"},
-     
-    ]},
-    { title: "Setup", icon: BeakerIcon, path: "/setup/User", submenu: true,
-      submenuItems: [
-      {title: "User", path: "/setup/User"},
-
-      {title: "Branch", path: "/setup/Branch"},
-      ]
-    },
-  ];
-
+              { title: "Branch", path: "/setup/Branch" },
+              { title: "Approver", path: "/setup/Approver" },
+              { title: "Area Manager", path: "/setup/AreaManager" },
+            ],
+          },
+          { title: "Help", icon: BookOpenIcon, path: "/help", submenu: false },
+        ];
 
   useEffect(() => {
     const handleResize = () => {
@@ -86,9 +109,9 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode, role }) => {
     };
   }, []);
 
-    const handleResize = () => {
-      setOpen(window.innerWidth > 768);
-    };
+  const handleResize = () => {
+    setOpen(window.innerWidth > 768);
+  };
   return (
     <div className={`${darkMode ? "dark" : "light"}dark:bg-blackD  `}>
       <div
@@ -118,58 +141,75 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode, role }) => {
             onClick={() => setOpen(false)}
           />
         </div>
-        <div className="flex">
-          <ul className="mt-[65px] h-5/6">
-            <p className="text-[12px] text-gray-400 px-3">MENU</p>
-       
+        <div className="flex flex-col flex-grow overflow-hidden">
+          <ul className="mt-[65px] flex-1 overflow-y-auto">
+            <p className="text-[12px] text-gray-400 px-3 w-fit">MENU</p>
+
             {navItems.map((item) => (
-                 <Link to={item.path}>
-              <li
-                key={item.title}
-                className={`${listStyle}  ${!open ? "" : "hover:bg-[#E0E0F9]"}`}
-              >
-                <div
-                  className={`p-2 inline-block ${
-                    !open ? "hover:bg-[#E0E0F9] rounded-lg" : ""
+              <Link to={item.path} key={item.title}>
+                <li
+                  className={`${listStyle}  ${
+                    !open ? "" : "hover:bg-[#E0E0F9]"
                   }`}
                 >
-                  <item.icon className={iconStyle} />
-                </div>
-                <p className={`${pStyle} ${!open && "scale-0"}`}>{item.title}</p>
-                {item.submenu && open && (
-                      submenuOpen === item.title ? (
-                        <ChevronUpIcon className="size-[20px]" onClick={() => handleDropdownClick(item.title)}/>
-                      ) : (
-                        <ChevronDownIcon className="size-[20px]" onClick={() => handleDropdownClick(item.title)}/>
-                      )
+                  <div
+                    className={`p-2 inline-block ${
+                      !open ? "hover:bg-[#E0E0F9] rounded-lg" : ""
+                    }`}
+                  >
+                    <item.icon className={iconStyle} />
+                  </div>
+                  <p className={`${pStyle} ${!open && "scale-0"}`}>
+                    {item.title}
+                  </p>
+                  {item.submenu &&
+                    open &&
+                    (submenuOpen === item.title ? (
+                      <ChevronUpIcon
+                        className="size-[20px]"
+                        onClick={() => handleDropdownClick(item.title)}
+                      />
+                    ) : (
+                      <ChevronDownIcon
+                        className="size-[20px]"
+                        onClick={() => handleDropdownClick(item.title)}
+                      />
+                    ))}
+                </li>
+                {item.submenu && submenuOpen === item.title && open && (
+                  <ul>
+                    {item.submenuItems?.map((submenuItem, index) =>
+                      open && submenuOpen === item.title ? (
+                        <Link to={submenuItem.path} key={index}>
+                          <li
+                            className=" hover:bg-[#E0E0F9] group text-sm flex ml-10 items-center text-[18px] text-gray-400 font-medium py-2 pr-10 px-2 gap-2  overflow-hidden cursor-pointer  rounded-lg"
+                          >
+                            <div className="flex flex-row items-center gap-2">
+                              <p className="group-hover:text-primary ">
+                                {submenuItem.title}
+                              </p>
+                            </div>
+                          </li>
+                        </Link>
+                      ) : null
                     )}
-              </li>
-              {item.submenu && submenuOpen === item.title && open &&(
-                <ul>
-                  {item.submenuItems?.map((submenuItem, index) => (
-                    <Link to={submenuItem.path}>
-                    <li key={index} className=" hover:bg-[#E0E0F9] group text-sm flex ml-10 items-center text-[18px] text-gray-400 font-medium py-2 pr-10 px-2 gap-2  overflow-hidden cursor-pointer  rounded-lg">
-                      <div className="flex flex-row items-center gap-2">
-                       
-                       <p className="group-hover:text-primary ">{submenuItem.title}</p>
-                       </div>
-                    </li>
-                    </Link>
-                  ))}
-                 
-                </ul>
-                
-              )}
-              
-           </Link>
+                  </ul>
+                )}
+              </Link>
             ))}
           </ul>
-        </div>
-        <div className="border-t flex w-full bottom-2 absolute justify-center items-center ">
-          <div className=" flex  h-5/6 p-2">
-            <ArrowLeftStartOnRectangleIcon className={`${iconStyle}dark:text-white`} />
-          </div>
-          <p className={`${pStyle} ${!open ? "hidden" : ""} dark:text-white`}>Logout</p>
+          <Link to="/login">
+            <div className="border-t flex justify-center items-center ">
+              <div className=" flex  h-5/6 p-2">
+                <ArrowLeftStartOnRectangleIcon
+                  className={`${iconStyle}dark:text-white`}
+                />
+              </div>
+              <p className={`${pStyle} ${!open ? "hidden" : ""} dark:text-white`}>
+                Logout
+              </p>
+            </div>
+          </Link>
         </div>
       </div>
     </div>

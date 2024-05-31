@@ -47,7 +47,7 @@ const Nav: React.FC<NavProps> = ({
           <h1
             className={`lg:text-[32px] md:text-[28px] sm:text-[20px] font-bold text-primary ${
               darkMode ? "dark:text-white" : ""
-            }  pl-4 ${isSidebarVisible ? "ml-4 lg:ml-0" : ""}`}
+            }  pl-4 ${isSidebarVisible ? "ml-20 lg:ml-0" : ""}`}
           >
             {currentPage}
           </h1>
@@ -103,9 +103,15 @@ const Nav: React.FC<NavProps> = ({
                   <Link to="/profile">
                     <li className={`${listProfile}`}>My Profile</li>
                   </Link>
+                  <Link to="/settings">
                   <li className={`${listProfile}`}>Settings</li>
+                  </Link>
+                  <Link to="/help">
                   <li className={`${listProfile}`}>Help</li>
+                  </Link>
+                  <Link to="/login">
                   <li className={`${listProfile}`}>Sign out</li>
+                  </Link>
                 </ul>
               </div>
             )}

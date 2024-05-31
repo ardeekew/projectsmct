@@ -18,8 +18,11 @@ import UpdateInformation from '../components/UpdateInformation';
 import CreateRefund from '../components/CreateRefund';
 import SetupUser from '../components/SetupUser';
 import SetupBranch from '../components/SetupBranch';
-
-
+import SetupApprover from '../components/SetupApprover';
+import SetupAreaManager from '../components/SetupAreaManager';
+import Help from '../components/Help';
+import HelpGuide from '../components/HelpGuide';
+import CustomRequest from '../components/CustomRequest';
 
 interface RouterProps {
   isdarkMode: boolean;
@@ -76,6 +79,21 @@ const Router: React.FC<RouterProps> = ({isdarkMode}) => {
           </Route>
           <Route path='/setup/Branch' element={<App isdarkMode={isdarkMode} />}>
             <Route index element={<SetupBranch />} />
+          </Route>
+          <Route path='/setup/Approver' element={<App isdarkMode={isdarkMode} />}>
+            <Route index element={<SetupApprover />} />
+          </Route>
+          <Route path='/setup/AreaManager' element={<App isdarkMode={isdarkMode} />}>
+            <Route index element={<SetupAreaManager />} />
+          </Route>
+          <Route path='/help' element={<App isdarkMode={isdarkMode} />}>
+            <Route index element={<Help />} />
+          </Route>
+          <Route path='/help/guide' element={<App isdarkMode={isdarkMode} />}>
+            <Route index element={<HelpGuide />} />
+          </Route>
+          <Route path='/request/custom' element={<App isdarkMode={isdarkMode} />}>
+            <Route index element={<CustomRequest />} />
           </Route>
         </Routes>
       </BrowserRouter>

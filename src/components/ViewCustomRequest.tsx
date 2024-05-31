@@ -1,7 +1,7 @@
 import React from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 
-const AddUserModal = ({
+const ViewCustomRequest = ({
   modalIsOpen,
   closeModal,
   openCompleteModal,
@@ -31,7 +31,7 @@ const AddUserModal = ({
           />
         </div>
         <div className="bg-white w-1/3 md:w-1/4 x-20 rounded-b-[12px] shadow-lg  overflow-y-auto  h-2/3">
-          <div className="grid lg:grid-cols-2 justify-items-center  place-content-center mt-10 mx-5 md:mx-10 gap-2">
+          <div className="grid lg:grid-cols-2 justify-items-center  place-content-center mt-10 mx-10 gap-2">
             <div>
               <p className={`${pStyle}`}>First Name</p>
               <input type="text" className={`${inputStyle}`} />
@@ -61,9 +61,9 @@ const AddUserModal = ({
               <input type="text" className={`${inputStyle}`} />
             </div>
           </div>
-          <h1 className=" ml-0 md:ml-4 mt-8 text-[20px] font-medium">PASSWORD</h1>
+          <h1 className="ml-4 mt-8 text-[20px] font-medium">PASSWORD</h1>
           <div className="border-b "></div>
-          <div className="grid lg:grid-cols-2 justify-items-center mt-4 mb-5 mx-5 md:mx-10 gap-0 lg:gap-2 ">
+          <div className="grid lg:grid-cols-2 justify-items-center mt-4 mb-5 mx-10 gap-2 ">
             <div>
               <p className={`${pStyle}`}>Enter Password</p>
               <input type="text" className={`${inputStyle}`} />
@@ -73,7 +73,7 @@ const AddUserModal = ({
               <input type="text" className={`${inputStyle}`} />
             </div>
           </div>
-          <div className="flex flex-col lg:flex-row justify-center lg:justify-end items-center space-x-2 md:mt-20 md:mr-10 mb-10">
+          <div className="flex justify-center lg:justify-end items-center space-x-2 md:mt-20 md:mr-10 mb-10">
             <button
               className="bg-[#9C9C9C] p-2 lg:w-1/4 rounded-[12px] text-white font-medium"
               onClick={closeModal}
@@ -92,4 +92,4 @@ const AddUserModal = ({
     )
   );
 };
-export default AddUserModal;
+export default ViewCustomRequest;
