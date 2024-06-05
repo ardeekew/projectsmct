@@ -8,7 +8,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { CheckIcon } from "@heroicons/react/24/solid";
 import { Link } from "react-router-dom";
-
+import { useUser } from "../context/UserContext";
 
 
 type Props = {};
@@ -30,10 +30,12 @@ const data: { [key: string]: string } = {
 
 const Dashboard: React.FC<Props> = ({}) => {
   const [darkMode, setDarkMode] = useState(true);
+  const { userId } = useUser();
   return (
     <div className="bg-graybg dark:bg-blackbg  h-full pt-[26px]  px-[35px] ">
       <div className="bg-primary w-full sm:w-full h-[210px] rounded-[12px] pl-[30px] flex flex-row justify-between items-center">
         <div>
+       
           <p className="text-[15px] lg:text-[20px] ">Hi, Kylie 👋</p>
           <p className="text-[15px] lg:text-[20px] text-white font-semibold ">
             Welcome to Request

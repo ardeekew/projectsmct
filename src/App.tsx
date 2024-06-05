@@ -37,8 +37,9 @@ const App: React.FC<AppProps> = ({ isdarkMode }) => {
   };
 
   return (
-    <div className={`flex ${darkMode ? "dark" : "white"} relative w-full`}>
-      <div className={`h-[100vh] fixed  md:relative ${isSidebarVisible ? 'block' : ' hidden md:block '} md:block z-30`}>
+    
+    <div className={`flex ${darkMode ? "dark" : "white"} relative w-full h-lvh`}>
+      <div className={`h-lvh sticky   ${isSidebarVisible ? 'block' : ' hidden md:block '} md:block z-30`}>
         <Sidebar darkMode={darkMode} role={role} />
       </div>
       <div className="flex-1 flex flex-col w-full">

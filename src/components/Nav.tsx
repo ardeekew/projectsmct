@@ -9,6 +9,7 @@ import {
 } from "@heroicons/react/24/solid";
 import Avatar from "./assets/avatar.png";
 import { Link } from "react-router-dom";
+import { useUser } from "../context/UserContext";
 
 interface NavProps {
   darkMode: boolean;
@@ -34,10 +35,13 @@ const Nav: React.FC<NavProps> = ({
   const iconNotifcation = "size-[18px] text-white  cursor-pointer";
   const [isOpen, setIsOpen] = useState(false);
   const [isOpenNotif, setIsOpenNotif] = useState(false);
+  const { updateUser } = useUser();
+  const userId = localStorage.getItem("userId");
+  const firstName = localStorage.getItem("firstName");
+  const lastName = localStorage.getItem("lastName");
 
   return (
     <div className={`nav-container ${darkMode ? "dark" : "white"}`}>
-      {" "}
       {/* Toggle light and dark mode */}
       <nav className={`${flexBetween} bg-white dark:bg-blackD`}>
         <div
@@ -80,7 +84,7 @@ const Nav: React.FC<NavProps> = ({
               className="pl-2 lg:text-[18px] text-[12px] dark:text-white cursor-pointer"
               onClick={() => setIsOpen(!isOpen)}
             >
-              Kylie Doe
+              {firstName} {lastName}
             </p>
             {!isOpen ? (
               <ChevronDownIcon
@@ -104,13 +108,13 @@ const Nav: React.FC<NavProps> = ({
                     <li className={`${listProfile}`}>My Profile</li>
                   </Link>
                   <Link to="/settings">
-                  <li className={`${listProfile}`}>Settings</li>
+                    <li className={`${listProfile}`}>Settings</li>
                   </Link>
                   <Link to="/help">
-                  <li className={`${listProfile}`}>Help</li>
+                    <li className={`${listProfile}`}>Help</li>
                   </Link>
                   <Link to="/login">
-                  <li className={`${listProfile}`}>Sign out</li>
+                    <li className={`${listProfile}`}>Sign out</li>
                   </Link>
                 </ul>
               </div>

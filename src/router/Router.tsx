@@ -69,7 +69,7 @@ const Router: React.FC<RouterProps> = ({isdarkMode}) => {
             <Route index element={<ApproverViewRequest />} />
           </Route>
           <Route path='/profile' element={<App isdarkMode={isdarkMode} />}>
-            <Route index element={<Profile />} />
+            <Route index element={<Profile isdarkMode={isdarkMode} />} />
           </Route>
           <Route path='/Update_Profile' element={<App isdarkMode={isdarkMode} />}>
             <Route index element={<UpdateInformation />} />

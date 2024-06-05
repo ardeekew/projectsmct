@@ -13,6 +13,7 @@ import { z, ZodType } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import BounceLoader from "react-spinners/ClipLoader";
+import { useUser } from "../context/UserContext";
 
 type UserCredentials = z.infer<typeof schema>;
 
@@ -26,8 +27,9 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMessge, setErrorMessage] = useState("");
   let [color, setColor] = useState("bg-primary");
-
+  const { userId, firstName, lastName, updateUser } = useUser();
   const {
     register,
     handleSubmit,
@@ -49,21 +51,44 @@ const Login: React.FC = () => {
         email: data.email,
         password: data.password,
       });
-
+  
       if (response.data.status) {
         localStorage.setItem("token", response.data.token);
-        if (response.data.role == "User") {
-          navigate("/dashboard");
-        } else {
+        // Save other relevant user data
+        localStorage.setItem("userId", response.data.userId);
+        localStorage.setItem("firstName", response.data.firstName);
+        localStorage.setItem("lastName", response.data.lastName);
+        localStorage.setItem("email", response.data.email);
+        localStorage.setItem("role", response.data.role);
+        localStorage.setItem("contact", response.data.contact);
+        localStorage.setItem("branch", response.data.branch);
+        localStorage.setItem("signature", response.data.signature);
+      
+        // Update context or state with user data if needed
+        updateUser(
+          response.data.userId,
+          response.data.firstName,
+          response.data.lastName,
+          response.data.email,
+          response.data.role,
+          response.data.contact,
+          response.data.branch,
+          response.data.signature
+        );
+        if (response.data.role === "Approver") {
           navigate("/dashboardapprover");
+        } else {
+          navigate("/dashboard");
         }
       } else {
-        alert("Invalid email or password");
+        // Display the error message from the response
+        alert(JSON.stringify(response.data.message));
         setLoading(false);
       }
     } catch (error) {
       console.error(error);
-      alert("An error occurred while trying to log in");
+      // Handle network errors or other exceptions
+      alert("An error occurred while logging in. Please try again later.");
       setLoading(false);
     }
   };
@@ -72,18 +97,18 @@ const Login: React.FC = () => {
     "w-full lg:max-w-[417px] lg:h-[56px] md:h-10  p-2 bg-gray-300 rounded-lg";
   return (
     <div className="flex flex-row">
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-cover bg-center relative">
+      <div className="w-full  lg:w-1/2 flex items-center justify-center p-8 bg-cover bg-center relative">
         <img
           className="absolute inset-0 object-cover w-full h-screen lg:hidden z-0"
           src={building}
           alt="photo"
         />
 
-        <div className="lg:max-w-[481px] md:max-w-sm max-w-xs w-full lg:mt-0  mt-20  bg-opacity-90 p-8 rounded-lg z-10 lg:m-0 m-10 ">
+        <div className="lg:max-w-[481px] bg-white md:max-w-sm max-w-xs w-full lg:mt-0  mt-20  bg-opacity-90 p-8 rounded-lg z-10 lg:m-0 m-10 ">
           <h1 className="text-primary font-bold lg:text-[32px] md:text-2xl  mb-6 text-left lg:mt-0 ">
             ACCOUNT LOGIN
           </h1>
-          <form onSubmit={handleSubmit(submitData)}>
+          <form onSubmit={handleSubmit(submitData, () => setLoading(false))}>
             <div className="mb-4">
               <h1 className="lg:text-lg text-base mb-2">Email</h1>
               <input

@@ -1,15 +1,57 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Slice from "./assets/Slice.png";
 import building from "./assets/building.jpg";
 import Select from "react-select";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, set } from "react-hook-form";
 import { z, ZodType } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { error } from "console";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import BounceLoader from "react-spinners/ClipLoader";
+import SignaturePad from "react-signature-pad-wrapper";
+import SignatureCanvas from "react-signature-canvas";
+import {
+  EyeIcon,
+  EyeSlashIcon,
+  CheckCircleIcon,
+} from "@heroicons/react/24/solid";
+import { sign } from "crypto";
+
 type UserCredentials = z.infer<typeof schema>;
+
+const roleOptions = [
+  { label: "", value: "" },
+  { label: "Accounting Clerk", value: "Accounting Clerk" },
+  { label: "Accounting Manager", value: "Accounting Manager" },
+  { label: "Accounting Staff", value: "Accounting Staff" },
+  { label: "Accounting Supervisor", value: "Accounting Supervisor" },
+  { label: "Admin", value: "Admin" },
+  { label: "Area Manager", value: "Area Manager" },
+  { label: "Assistant Manager", value: "Assistant Manager" },
+  { label: "Assistant Web Developer", value: "Assistant Web Developer" },
+  { label: "Audit Manager", value: "Audit Manager" },
+  { label: "Audit Staff", value: "Audit Staff" },
+  { label: "Audit Supervisor", value: "Audit Supervisor" },
+  { label: "AVP - Finance", value: "AVP - Finance" },
+  { label: "AVP - Sales and Marketing", value: "AVP - Sales and Marketing" },
+  { label: "Branch Supervisor/Manager", value: "Branch Supervisor/Manager" },
+  { label: "Cashier", value: "Cashier" },
+  { label: "CEO", value: "CEO" },
+  { label: "HR Manager", value: "HR Manager" },
+  { label: "HR Staff", value: "HR Staff" },
+  { label: "IT Staff", value: "IT Staff" },
+  { label: "IT/Automation Manager", value: "IT/Automation Manager" },
+  { label: "Juinor Web Developer", value: "Juinor Web Developer" },
+  { label: "Managing Director", value: "Managing Director" },
+  { label: "Payroll Manager", value: "Payroll Manager" },
+  { label: "Payroll Staff", value: "Payroll Staff" },
+  { label: "Sales Representative", value: "Sales Representative" },
+  { label: "Senior Web Developer", value: "Senior Web Developer" },
+  { label: "Vice - President", value: "Vice - President" },
+  { label: "User", value: "User" },
+];
 
 const schema = z
   .object({
@@ -18,9 +60,12 @@ const schema = z
     userName: z.string().min(5).max(20),
     firstName: z.string().min(2).max(30),
     lastName: z.string().min(2).max(30),
-    contact: z.string().min(11),
+    contact: z.string().refine((value) => /^\d{11}$/.test(value), {
+      message: "Contact number must be 11 digits",
+    }),
     branchCode: z.string().nonempty(),
     confirmPassword: z.string().min(5).max(20),
+    role: z.string().nonempty(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -28,6 +73,7 @@ const schema = z
   });
 
 const branchOptions = [
+  "",
   "AKLA",
   "ALEN",
   "ALAH",
@@ -198,7 +244,26 @@ const inputStyle = "w-full  lg:h-[56px] md:h-10  p-2 bg-gray-300 rounded-lg";
 
 const Registration: React.FC = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [signature, setSignature] = useState<SignatureCanvas | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [signatureEmpty, setSignatureEmpty] = useState(false);
+  const sigCanvasRef = useRef<SignatureCanvas | null>(null);
 
+  const signatureIsEmpty = () => {
+    if (signature && signature.isEmpty && signature.isEmpty()) {
+      setSignatureEmpty(true);
+      return true;
+    }
+    return false;
+  };
+  useEffect(() => { 
+    if (signature) {
+      signature.toDataURL('image/png');
+      console.log(signature.toDataURL('image/png'));
+    }
+  }, [signature]);
   const {
     control,
     register,
@@ -208,8 +273,28 @@ const Registration: React.FC = () => {
     resolver: zodResolver(schema),
   });
 
+  const handleClear = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    signature?.clear();
+  };
+  
+
   const submitData = async (data: UserCredentials) => {
+  
     try {
+    
+      setLoading(true);
+
+      // Check if signature is empty
+      if (signatureIsEmpty()) {
+        console.log("Signature is empty");
+        setSignatureEmpty(true);
+        setLoading(false);
+        return; // Exit function early if signature is empty
+      }
+  
+      const signatureDataURL = signature?.toDataURL('image/png');
+      console.log("signatureDataURL", signatureDataURL);
       const response = await axios.post("http://localhost:8000/api/register", {
         email: data.email,
         password: data.password,
@@ -218,24 +303,34 @@ const Registration: React.FC = () => {
         lastName: data.lastName,
         contact: data.contact,
         branchCode: data.branchCode,
+        role: data.role,
         confirmPassword: data.password,
+        signature: signatureDataURL,
+        
       });
 
-      console.log("response", response.data);
+      console.log("response", signature);
 
       if (response.data.status) {
+        setLoading(false);
         localStorage.setItem("token", response.data.token);
         alert("Success");
         window.setTimeout(() => {
           navigate("/login"); // Navigate to login after successful registration
         }, 2000);
       } else {
+        setLoading(false);
         alert("Registration failed. Please check your details and try again.");
       }
     } catch (error) {
       console.error("Registration Error:", error);
       alert("An error occurred during the registration process.");
+      setLoading(false);
     }
+  };
+
+  const onSubmit = (data: UserCredentials) => {
+    submitData(data);
   };
 
   return (
@@ -250,7 +345,7 @@ const Registration: React.FC = () => {
           <h1 className="text-primary font-bold lg:text-[32px] md:text-2xl mb-6 text-left">
             ACCOUNT REGISTRATION
           </h1>
-          <form onSubmit={handleSubmit(submitData)}>
+          <form onSubmit={handleSubmit(submitData, () => setLoading(false))}>
             <div className={`${fieldStyle}`}>
               <div className="w-1/2 mb-4">
                 <h1 className={`${headerStyle}`}>First Name</h1>
@@ -325,12 +420,25 @@ const Registration: React.FC = () => {
             <div className={`${fieldStyle}`}>
               <div className="w-1/2 mb-4">
                 <h1 className={`${headerStyle}`}>Password</h1>
-                <input
-                  type="password"
-                  {...register("password")}
-                  placeholder="Enter password"
-                  className={`${inputStyle}`}
-                />
+                <div className=" flex justify-center items-center relative w-full ">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    {...register("password")}
+                    placeholder="Enter password"
+                    className={`${inputStyle}`}
+                  />
+                  {showPassword ? (
+                    <EyeSlashIcon
+                      className="size-[24px] absolute right-3 cursor-pointer "
+                      onClick={() => setShowPassword(!showPassword)}
+                    />
+                  ) : (
+                    <EyeIcon
+                      className="size-[24px] absolute right-3 cursor-pointer "
+                      onClick={() => setShowPassword(!showPassword)}
+                    />
+                  )}
+                </div>
                 <div>
                   {errors.password && (
                     <span className="text-red-500 text-xs">
@@ -342,12 +450,29 @@ const Registration: React.FC = () => {
               </div>
               <div className="w-1/2 mb-4">
                 <h1 className={`${headerStyle}`}>Confirm Password</h1>
-                <input
-                  type="password"
-                  {...register("confirmPassword")}
-                  placeholder="Confirm password"
-                  className={`${inputStyle}`}
-                />
+                <div className=" flex justify-center items-center relative w-full ">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    {...register("confirmPassword")}
+                    placeholder="Confirm password"
+                    className={`${inputStyle}`}
+                  />
+                  {showConfirmPassword ? (
+                    <EyeSlashIcon
+                      className="size-[24px] absolute right-3 cursor-pointer "
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                    />
+                  ) : (
+                    <EyeIcon
+                      className="size-[24px] absolute right-3 cursor-pointer "
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                    />
+                  )}
+                </div>
                 <div>
                   {errors.confirmPassword && (
                     <span className="text-red-500 text-xs">
@@ -387,9 +512,7 @@ const Registration: React.FC = () => {
                         {...field}
                         className="w-full  lg:h-[56px] md:h-10 p-2 bg-gray-300 rounded-lg"
                       >
-                        <option value="" disabled>
-                          Select branch
-                        </option>
+                        <option value="">Select branch</option>
                         {branchOptions.map((option) => (
                           <option key={option} value={option}>
                             {option}
@@ -409,15 +532,73 @@ const Registration: React.FC = () => {
                 </div>
               </div>
             </div>
-            <button
-              className="bg-primary  text-white py-2 px-4 rounded-lg w-full  lg:h-[56px]  md:h-10 "
-              type="submit"
-            >
-              Register
-            </button>
+            <div className={`${fieldStyle}`}>
+              <div className="w-1/2 mb-4">
+                <h1 className={`${headerStyle}`}>Role</h1>
+                <div className="relative">
+                  <Controller
+                    name="role"
+                    control={control}
+                    render={({ field }) => (
+                      <select
+                        {...field}
+                        className="w-full  lg:h-[56px] md:h-10 p-2 bg-gray-300 rounded-lg"
+                      >
+                        <option value="">Select role</option>
+                        {roleOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  />
+                  <div>
+                    {errors.role && (
+                      <span className="text-red-500 text-xs">
+                        {errors.role.message}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="w-1/2 mb-4 flex flex-col">
+                <h1 className={`${headerStyle}`}>Signature</h1>
+                <SignatureCanvas
+                  penColor="black"
+                  ref={(ref) => setSignature(ref)}
+                  canvasProps={{
+                    className: "sigCanvas border border-black h-20 w-full",
+                  }}
+                />
+                {signatureEmpty && (
+                  <span className="text-red-500 text-xs">
+                    Please provide a signature.
+                  </span>
+                )}
+                <button
+                  onClick={(e) => handleClear(e)}
+                  className="bg-gray-300 p-1 mt-2 rounded-lg"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+            <div className="relative flex items-center justify-center">
+              <button
+                className="bg-primary text-white px-4 rounded-lg w-full lg:h-[56px] h-10"
+                type="submit"
+                onClick={() => setLoading(!loading)}
+              >
+                {!loading && "Register"}
+              </button>
+              {loading ? (
+                <BounceLoader color="#FFFFFF" className="absolute" />
+              ) : null}
+            </div>
           </form>
           <Link to="/login">
-            <div className="flex flex-row justify-center mt-4">
+            <div className="flex flex-row justify-center mt-4 ">
               <p className="text-center italic">Already have an account? </p>
               <p className="pl-2 italic font-bold text-primary underline">
                 Log In

@@ -4,16 +4,36 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { CalendarIcon } from "@heroicons/react/24/solid";
 import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { z, ZodError } from "zod";
+import axios from "axios";
 
 type Props = {};
 const requestType = [
-  {title:"Stock Requisition", path:"/request/sr"},
- { title: "Purchase Order Requisition Slip", path:"/request/pors"},
- { title: "Cash Disbursement Requisition Slip", path:"/request/cdrs"},
- {title: "Application For Cash Advance", path:"/request/afca"},
- {title: "Liquidation of Actual Expense", path:"/request/loae"},
- {title: "Request for Refund", path:"/request/rfr"},
+  { title: "Stock Requisition", path: "/request/sr" },
+  { title: "Purchase Order Requisition Slip", path: "/request/pors" },
+  { title: "Cash Disbursement Requisition Slip", path: "/request/cdrs" },
+  { title: "Application For Cash Advance", path: "/request/afca" },
+  { title: "Liquidation of Actual Expense", path: "/request/loae" },
+  { title: "Request for Refund", path: "/request/rfr" },
 ];
+const schema = z.object({
+  date: z.string(),
+  branch: z.string(),
+  supplier: z.string(),
+  address: z.string(),
+  items: z.array(
+    z.object({
+      quantity: z.string(),
+      description: z.string(),
+      unitCost: z.string(),
+      totalAmount: z.string(),
+      remarks: z.string(),
+    })
+  ),
+});
+
+type FormData = z.infer<typeof schema>;
 
 const brancheList = [
   "Branch A",
@@ -23,13 +43,16 @@ const brancheList = [
   "Branch E",
 ];
 
-const inputStyle =
-  "w-full   border-2 border-black rounded-[12px] ";
+const inputStyle = "w-full   border-2 border-black rounded-[12px] ";
 const itemDiv = "flex flex-col  ";
 const buttonStyle = "h-[45px] w-[150px] rounded-[12px] text-white";
+
 const CreatePurchaseOrder = (props: Props) => {
-  const [startDate, setStartDate] = useState(new Date());
-  const navigate=useNavigate();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [formSubmitted, setFormSubmitted] = useState(false);
+  const [selectedRequestType, setSelectedRequestType] =
+    useState("/request/pors");
   const [items, setItems] = useState<
     {
       quantity: string;
@@ -47,8 +70,51 @@ const CreatePurchaseOrder = (props: Props) => {
       remarks: "",
     },
   ]);
-  const [selectedRequestType, setSelectedRequestType] =
-    useState("/request/pors");
+
+  const { register, handleSubmit, formState: { errors } } = useForm<FormData>();
+
+  const onSubmit = async (data: FormData) => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      const userId = localStorage.getItem("userId"); // Retrieve userId from localStorage
+  
+      if (!token || !userId) {
+        console.error("Token or userId not found");
+        return;
+      }
+  
+      const requestData = {
+        ...data,
+        items: items.map((item) => ({
+          quantity: item.quantity,
+          description: item.description,
+          unitCost: item.unitCost,
+          totalAmount: item.totalAmount,
+          remarks: item.remarks,
+        })),
+        user_id: userId,
+      };
+  
+      const response = await axios.post(
+        "http://localhost:8000/api/purchase-order-requests",
+        requestData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      console.log("Purchase order submitted successfully:", response.data);
+      setFormSubmitted(true);
+    } catch (error) {
+      console.error("An error occurred while submitting the purchase order:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleRemoveItem = () => {
     if (items.length > 1) {
       const updatedItems = [...items];
@@ -108,21 +174,27 @@ const CreatePurchaseOrder = (props: Props) => {
             </span>{" "}
             Order Requisition Slip
           </h1>
+         
         </div>
+        <form onSubmit={handleSubmit(onSubmit)}>
         <div className="px-[35px] mt-4 ">
-          <p className="font-semibold text-start  ">Date:</p>
-          <div className="flex justify-start mb-4 w-1/4 ">   
-
-          <input
-             type="date"
-              className=" w-full rounded-[12px] border-2 border-black h-[44px]"> 
-              </input>
+          <p className="font-semibold text-start">Date:</p>
+          <div className="flex justify-start mb-4 w-1/4">
+            <input
+              type="date"
+              {...register("date", { required: true })}
+              className="w-full rounded-[12px] border-2 border-black h-[44px]"
+            />
+            {errors.date && <p className="text-red-500">Date is required</p>}
           </div>
           <div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 mt-2 sm:mt-0 flex-row items-center justify-start space-y-2 sm:space-y-0 sm:gap-4 lg:gap-0 lg:space-x-4">
-              <div className={`${itemDiv} `}>
+              <div className={`${itemDiv}`}>
                 <label className="font-semibold">Branch:</label>
-                <select className="border-2 w-full   border-black rounded-[12px] h-[44px] pr-10">
+                <select
+                  {...register("branch", { required: true })}
+                  className="border-2 w-full   border-black rounded-[12px] h-[44px] pr-10"
+                >
                   <option value="" disabled>
                     Branch
                   </option>
@@ -132,14 +204,25 @@ const CreatePurchaseOrder = (props: Props) => {
                     </option>
                   ))}
                 </select>
+                {errors.branch && <p className="text-red-500">Branch is required</p>}
               </div>
               <div className={`${itemDiv}`}>
                 <p className="font-semibold">Supplier</p>
-                <input type="number" className={`${inputStyle} h-[44px] `} />
+                <input
+                  type="text"
+                  {...register("supplier", { required: true })}
+                  className={`${inputStyle} h-[44px]`}
+                />
+                {errors.supplier && <p className="text-red-500">Supplier is required</p>}
               </div>
               <div className={`${itemDiv}`}>
                 <p className="font-semibold">Address</p>
-                <input type="number" className={`${inputStyle} h-[44px]`} />
+                <input
+                  type="text"
+                  {...register("address", { required: true })}
+                  className={`${inputStyle} h-[44px]`}
+                />
+                {errors.address && <p className="text-red-500">Address is required</p>}
               </div>
             </div>
           </div>
@@ -219,11 +302,12 @@ const CreatePurchaseOrder = (props: Props) => {
             >
               Cancel
             </button>
-            <button className={`bg-primary ${buttonStyle}`}>
+            <button className={`bg-primary ${buttonStyle}`} type="submit">
               Send Request
             </button>
           </div>
         </div>
+        </form>
       </div>
     </div>
   );

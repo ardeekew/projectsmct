@@ -113,13 +113,13 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode, role }) => {
     setOpen(window.innerWidth > 768);
   };
   return (
-    <div className={`${darkMode ? "dark" : "light"}dark:bg-blackD  `}>
+    <div className={`${darkMode ? "dark" : "light"}dark:bg-blackD h-lvh  `}>
       <div
-        className={`bg-white dark:bg-blackD h-screen ${
+        className={`bg-white dark:bg-blackD h-lvh ${
           open ? "w-[240px]" : "w-20"
-        } relative `}
+        }  `}
       >
-        <div className="px-2 py-3 h-[68px] flex justify-between items-center border-b-[0.5px] border-gray">
+        <div className="px-2  py-3 h-[68px] flex justify-between items-center border-b-[0.5px] border-gray">
           <img
             src={Logo}
             height={34}
