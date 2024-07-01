@@ -35,7 +35,10 @@ const App: React.FC<AppProps> = ({ isdarkMode }) => {
   const toggleSidebar = () => {
     setIsSidebarVisible((prevIsSidebarVisible) => !prevIsSidebarVisible);
   };
-
+  const [userInfoUpdated, setUserInfoUpdated] = useState(false);
+  const updateUserInfo = () => {
+    setUserInfoUpdated(!userInfoUpdated); // Toggle state to trigger Nav to update user info
+  };
   return (
     
     <div className={`flex ${darkMode ? "dark" : "white"} relative w-full h-lvh`}>
@@ -49,7 +52,9 @@ const App: React.FC<AppProps> = ({ isdarkMode }) => {
           toggleSidebar={toggleSidebar}
           currentPage={currentPage}
           isSidebarVisible={isSidebarVisible}
+          updateUserInfo={updateUserInfo}
         />
+        
         <div className={`bg-${darkMode ? "black" : "gray"} flex-1 w-full`}>
           <Outlet></Outlet>
         </div>

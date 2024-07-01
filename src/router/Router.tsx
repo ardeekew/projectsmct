@@ -23,6 +23,7 @@ import SetupAreaManager from '../components/SetupAreaManager';
 import Help from '../components/Help';
 import HelpGuide from '../components/HelpGuide';
 import CustomRequest from '../components/CustomRequest';
+import RequestApprover from '../components/RequestApprover';
 
 interface RouterProps {
   isdarkMode: boolean;
@@ -43,6 +44,9 @@ const Router: React.FC<RouterProps> = ({isdarkMode}) => {
           </Route>
           <Route path='/request' element={<App isdarkMode={isdarkMode} />}>
             <Route index element={<Request />} />
+          </Route>
+          <Route path='/requestapprover' element={<App isdarkMode={isdarkMode} />}>
+            <Route index element={<RequestApprover />} />
           </Route>
           <Route path='request/sr' element={<App isdarkMode={isdarkMode} />}>
             <Route index element={<CreateStockRequistion />} />

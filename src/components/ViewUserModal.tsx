@@ -3,7 +3,8 @@ import { XMarkIcon } from "@heroicons/react/24/outline";
 
 interface Record {
   id: number;
-  name: string;
+  firstname: string;
+  lastname: string;
   branch_code: string;
   email: string;
   role: string;

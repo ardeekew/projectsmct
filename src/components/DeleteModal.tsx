@@ -1,12 +1,36 @@
 import React from 'react';
 import { XMarkIcon, ExclamationCircleIcon} from '@heroicons/react/24/outline'; 
+import { set } from 'react-hook-form';
 
-const DeleteModal = ({ deleteModal, closeDeleteModal, openDeleteSuccessModal, entityType }: { deleteModal: boolean, closeDeleteModal: any, openDeleteSuccessModal: any, entityType:string }) => {
-      if (!deleteModal) {
+type Props = {
+  deleteModal: boolean;
+  closeDeleteModal: () => void;
+  openDeleteSuccessModal: () => void;
+  entityType: string;
+  onDelete: () => void;
+  refreshData: () => void; // New prop to handle deletion
+};
+
+const DeleteModal = ({ deleteModal, closeDeleteModal, openDeleteSuccessModal, entityType, onDelete, refreshData }: { deleteModal: boolean, closeDeleteModal: any, openDeleteSuccessModal: any, entityType:string, onDelete: any, refreshData: any}) => {
+  const [isLoading, setIsLoading] = React.useState(false);
+  if (!deleteModal) {
     return null;
   }
 
 
+  const handleDelete = async () => {
+    try {
+      setIsLoading(true);
+      await onDelete(); // Call onDelete which is expected to delete the entity
+      setIsLoading(false);
+      refreshData(); // Refresh data after deletion
+   
+    } catch (error) {
+      setIsLoading(false);
+      console.error('Error deleting entity:', error);
+      // Handle error state if needed
+    }
+  };
     const pStyle="font-medium";
 const inputStyle="border border-black rounded-md p-1";
 return (
@@ -26,7 +50,9 @@ return (
     <p className='mt-6 text-gray-500 px-2'>Are you sure you want to delete this {entityType}? This action cannot be undone and will delete all the information.</p>
     <div className='space-x-2 justify-center md:justify-end flex'>
         <button className='border border-gray-400 w-full md:w-auto py-2 md:px-4 rounded-lg' onClick={closeDeleteModal}>Cancel</button>
-        <button className='border bg-[#E74E4E]  text-white w-full md:w-auto py-2 md:px-4 rounded-lg' onClick={openDeleteSuccessModal}>Delete</button>
+        <button className='border bg-[#E74E4E] text-white w-full md:w-auto py-2 md:px-4 rounded-lg' onClick={handleDelete}>
+            {isLoading ? 'Deleting...' : 'Delete'}
+          </button>
     </div>
     </div>
   </div>

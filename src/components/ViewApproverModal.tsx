@@ -1,13 +1,17 @@
 import React from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 
-interface Record {
+type Record = {
   id: number;
-  no: number;
-  assigned_branches: string;
   name: string;
-  approvers: string;
-}
+  firstname: string;
+  lastname: string;
+  branch_code: string;
+  branch: string;
+  email: string;
+  role: string;
+  contact: string;
+};
 
 interface ViewApproverModalProps {
   modalIsOpen: boolean;

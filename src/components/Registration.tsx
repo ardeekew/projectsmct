@@ -65,7 +65,9 @@ const schema = z
     }),
     branchCode: z.string().nonempty(),
     confirmPassword: z.string().min(5).max(20),
-    role: z.string().nonempty(),
+    position: z.string().nonempty(),
+    branch: z.string().nonempty(),
+    employee_id: z.string().min(2).max(30),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -258,16 +260,17 @@ const Registration: React.FC = () => {
     }
     return false;
   };
-  useEffect(() => { 
+  useEffect(() => {
     if (signature) {
-      signature.toDataURL('image/png');
-      console.log(signature.toDataURL('image/png'));
+      signature.toDataURL("image/png");
+      console.log(signature.toDataURL("image/png"));
     }
   }, [signature]);
   const {
     control,
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<UserCredentials>({
     resolver: zodResolver(schema),
@@ -277,12 +280,43 @@ const Registration: React.FC = () => {
     event.preventDefault();
     signature?.clear();
   };
-  
 
+  const handleBranchCodeChange = (selectedBranchCode: string) => {
+    setValue("branchCode", selectedBranchCode);
+    if ([
+      "AKLA", "ALEN", "ALIC", "ANTI", "ANTIP", "BANTA", "BAYB", "BINAN",
+      "BOHK", "BOHL", "CAGL", "CALAP", "CALAP2", "CALI", "CARMB", "CARMO",
+      "CARS", "CATAR", "DASMA", "DIPL", "FAMY", "GUIN", "GUIN2", "JAGN",
+      "LIPA", "LOAY", "MADRI", "MALA", "MANG", "MANL", "MANP", "MOLS",
+      "NAIC", "OZAL", "PAGS", "SAGBA", "SALA", "SANJ", "SANP", "SDAV",
+      "SDIP", "SARG", "SILA", "SLAP", "SLAS", "SLIL", "SMCT", "SROS",
+      "TALI", "TANZ", "TANZ2", "TRINI2", "TUBI", "VALEN", "YATI", "ZAML"
+    ].includes(selectedBranchCode)) {
+      setValue("branch", "Strong Motocentrum, Inc.");
+    } else if ([
+      "AURO", "BALA", "BUHA", "BULU", "CARMCDO", "DIGOS", "DONC", "DSMBL",
+      "DSMC", "DSMCA", "DSMD", "DSMD2", "DSMM", "DSMPO", "DSMSO", "DSMTG",
+      "DSMV", "ELSA", "ILIG", "JIMEDSM", "KABA2", "KATI", "LABA", "MARA",
+      "MATI", "RIZA", "TACU", "TORI", "CERI", "VILLA", "VISA", "CARC",
+      "CARC2", "CARMC2", "CATM", "COMPO", "DAAN", "DSMA", "DSMAO", "DSMB",
+      "DSMBN", "DSMCN", "DSMDB", "DSMDM", "DSMDN", "DSMK", "DSMLN", "DSMP",
+      "DSMSB", "DSMT", "DSMT2", "DSMTA", "ILOI", "LAHU", "LAPU 2", "MAND",
+      "MAND2", "MEDE", "PARD", "PARD2", "REMI", "REMI2", "SANT", "TUBU",
+      "UBAY", "BOGO", "DSML", "CALIN"
+    ].includes(selectedBranchCode)) {
+      setValue("branch", "Des Strong Motors, Inc.");
+    } else if ([
+      "ALAD", "AURD", "BALD", "BONI", "BUUD", "CALD", "CAMD", "DAPI", "DIPD", "DIPD2", "ILID", "IMED", "INIT2", "IPID", "JIME", "KABD", "LABD", "LILD", "MANO", "MARA2", "MARD", "MOLD", "MOLD2", "NUND2", "OROD", "OZAD", "PUTD", "RIZD", "SANM", "SIND", "SUCD", "TUBOD", "VITA"
+    ].includes(selectedBranchCode)) {
+      setValue("branch", "Des Appliance Plaza, Inc.");
+    } else if (["HO"].includes(selectedBranchCode)) {
+      setValue("branch", "Head Office");
+    } else {
+      setValue("branch", "Honda Des, Inc.");
+    }
+  };
   const submitData = async (data: UserCredentials) => {
-  
     try {
-    
       setLoading(true);
 
       // Check if signature is empty
@@ -292,8 +326,8 @@ const Registration: React.FC = () => {
         setLoading(false);
         return; // Exit function early if signature is empty
       }
-  
-      const signatureDataURL = signature?.toDataURL('image/png');
+
+      const signatureDataURL = signature?.toDataURL("image/png");
       console.log("signatureDataURL", signatureDataURL);
       const response = await axios.post("http://localhost:8000/api/register", {
         email: data.email,
@@ -302,14 +336,16 @@ const Registration: React.FC = () => {
         firstName: data.firstName,
         lastName: data.lastName,
         contact: data.contact,
-        branchCode: data.branchCode,
-        role: data.role,
+        branch_code: data.branchCode,
+        position: data.position,
         confirmPassword: data.password,
         signature: signatureDataURL,
-        
+        role: "User",
+        branch: data.branch,
+        employee_id: data.employee_id,
       });
 
-      console.log("response", signature);
+      console.log("response", response.data);
 
       if (response.data.status) {
         setLoading(false);
@@ -502,49 +538,17 @@ const Registration: React.FC = () => {
                 </div>
               </div>
               <div className="w-1/2 mb-4">
-                <h1 className={`${headerStyle}`}>Branch Code</h1>
+                <h1 className={`${headerStyle}`}>Position</h1>
                 <div className="relative">
                   <Controller
-                    name="branchCode"
+                    name="position"
                     control={control}
                     render={({ field }) => (
                       <select
                         {...field}
                         className="w-full  lg:h-[56px] md:h-10 p-2 bg-gray-300 rounded-lg"
                       >
-                        <option value="">Select branch</option>
-                        {branchOptions.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                  />{" "}
-                  <div>
-                    {errors.branchCode && (
-                      <span className="text-red-500 text-xs">
-                        {" "}
-                        {errors.branchCode.message}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className={`${fieldStyle}`}>
-              <div className="w-1/2 mb-4">
-                <h1 className={`${headerStyle}`}>Role</h1>
-                <div className="relative">
-                  <Controller
-                    name="role"
-                    control={control}
-                    render={({ field }) => (
-                      <select
-                        {...field}
-                        className="w-full  lg:h-[56px] md:h-10 p-2 bg-gray-300 rounded-lg"
-                      >
-                        <option value="">Select role</option>
+                        <option value="">Select Position</option>
                         {roleOptions.map((option) => (
                           <option key={option.value} value={option.value}>
                             {option.label}
@@ -554,14 +558,67 @@ const Registration: React.FC = () => {
                     )}
                   />
                   <div>
-                    {errors.role && (
+                    {errors.position && (
                       <span className="text-red-500 text-xs">
-                        {errors.role.message}
+                        {errors.position.message}
                       </span>
                     )}
                   </div>
                 </div>
               </div>
+            </div>
+            <div className={`${fieldStyle}`}>
+              <div className="w-1/2 mb-4">
+                <h1 className={`${headerStyle}`}>Branch</h1>
+                <Controller
+                  name="branch"
+                  control={control}
+                  render={({ field }) => (
+                    <input
+                      {...field}
+                    readOnly
+                      className="w-full lg:h-[56px] md:h-10 p-2 bg-gray-300 rounded-lg"
+            
+                    />
+                  )}
+                />
+                {errors.branch && (
+                  <span className="text-red-500 text-xs">
+                    {errors.branch.message}
+                  </span>
+                )}
+              </div>
+              <div className="w-1/2 mb-4">
+                <h1 className={`${headerStyle}`}>Branch Code</h1>
+                <div className="relative">
+                  <Controller
+                    name="branchCode"
+                    control={control}
+                    render={({ field }) => (
+                      <select
+                        {...field}
+                        className="w-full p-2 lg:h-[56px] md:h-10 bg-gray-300 rounded-lg"
+                        onChange={(e) =>{ field.onChange(e); handleBranchCodeChange(e.target.value)}}
+                      >
+                        <option value="">Select branch</option>
+                        {branchOptions.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  />
+                  {errors.branchCode && (
+                    <span className="text-red-500 text-xs">
+                      {errors.branchCode.message}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className={`${fieldStyle}`}>
               <div className="w-1/2 mb-4 flex flex-col">
                 <h1 className={`${headerStyle}`}>Signature</h1>
                 <SignatureCanvas
@@ -582,6 +639,23 @@ const Registration: React.FC = () => {
                 >
                   Clear
                 </button>
+              </div>
+              <div className="w-1/2 mb-4">
+                <h1 className={`${headerStyle}`}>Employee ID</h1>
+                <input
+                  type="text"
+                  {...register("employee_id")}
+                  placeholder="Enter your employee ID"
+                  className={`${inputStyle}`}
+                />
+                <div>
+                  {errors.employee_id && (
+                    <span className="text-red-500 text-xs">
+                      {" "}
+                      {errors.employee_id.message}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
             <div className="relative flex items-center justify-center">

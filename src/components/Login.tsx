@@ -51,17 +51,18 @@ const Login: React.FC = () => {
         email: data.email,
         password: data.password,
       });
-  
+      console.log(response.data);
+      console.log(response.data.id);
       if (response.data.status) {
         localStorage.setItem("token", response.data.token);
         // Save other relevant user data
-        localStorage.setItem("userId", response.data.userId);
+        localStorage.setItem("id", response.data.id);
         localStorage.setItem("firstName", response.data.firstName);
         localStorage.setItem("lastName", response.data.lastName);
         localStorage.setItem("email", response.data.email);
         localStorage.setItem("role", response.data.role);
         localStorage.setItem("contact", response.data.contact);
-        localStorage.setItem("branch", response.data.branch);
+        localStorage.setItem("branch_code", response.data.branch_code);
         localStorage.setItem("signature", response.data.signature);
       
         // Update context or state with user data if needed
@@ -75,7 +76,7 @@ const Login: React.FC = () => {
           response.data.branch,
           response.data.signature
         );
-        if (response.data.role === "Approver") {
+        if (response.data.role === "approver") {
           navigate("/dashboardapprover");
         } else {
           navigate("/dashboard");

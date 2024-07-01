@@ -45,57 +45,75 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode, role }) => {
   };
 
   const navItems: NavItem[] =
-    role === "approver"
-      ? [
-          {
-            title: "Dashboard",
-            icon: ChartBarIcon,
-            path: "/dashboardapprover",
-            submenu: false,
-          },
-          {
-            title: "Request",
-            icon: EnvelopeIcon,
-            path: "/requestapprover",
-            submenu: true,
-            submenuItems: [{ title: "View Request", path: "/requestapprover" }],
-          },
-          
-          
-        ]
-      : [
-          {
-            title: "Dashboard",
-            icon: ChartBarIcon,
-            path: "/dashboard",
-            submenu: false,
-          },
-          {
-            title: "Request",
-            icon: EnvelopeIcon,
-            path: "/request",
-            submenu: true,
-            submenuItems: [
-              { title: "View Request", path: "/request" },
-              { title: "Create Request", path: "/request/sr" },
-              { title: "Custom Request", path: "/request/custom" },
-            ],
-          },
-          {
-            title: "Setup",
-            icon: BeakerIcon,
-            path: "/setup/User",
-            submenu: true,
-            submenuItems: [
-              { title: "User", path: "/setup/User" },
-
-              { title: "Branch", path: "/setup/Branch" },
-              { title: "Approver", path: "/setup/Approver" },
-              { title: "Area Manager", path: "/setup/AreaManager" },
-            ],
-          },
-          { title: "Help", icon: BookOpenIcon, path: "/help", submenu: false },
-        ];
+  role === "approver"
+  ? [
+      {
+        title: "Dashboard",
+        icon: ChartBarIcon,
+        path: "/dashboardapprover",
+        submenu: false,
+      },
+      {
+        title: "Request",
+        icon: EnvelopeIcon,
+        path: "/requestapprover",
+        submenu: true,
+        submenuItems: [{ title: "View Request", path: "/requestapprover" }],
+      },
+    ]
+  :role === "Admin"
+    ? [
+        {
+          title: "Dashboard",
+          icon: ChartBarIcon,
+          path: "/dashboard",
+          submenu: false,
+        },
+        {
+          title: "Request",
+          icon: EnvelopeIcon,
+          path: "/requestapprover",
+          submenu: true,
+          submenuItems: [
+            { title: "View Request", path: "/request" },
+            { title: "Create Request", path: "/request/sr" },
+            { title: "Custom Request", path: "/request/custom" },
+          ],
+        },
+        {
+          title: "Setup",
+          icon: BeakerIcon,
+          path: "/setup/User",
+          submenu: true,
+          submenuItems: [
+            { title: "User", path: "/setup/User" },
+            { title: "Branch", path: "/setup/Branch" },
+            { title: "Approver", path: "/setup/Approver" },
+            { title: "Area Manager", path: "/setup/AreaManager" },
+          ],
+        },
+        { title: "Help", icon: BookOpenIcon, path: "/help", submenu: false },
+      ]
+    : [
+        {
+          title: "Dashboard",
+          icon: ChartBarIcon,
+          path: "/dashboard",
+          submenu: false,
+        },
+        {
+          title: "Request",
+          icon: EnvelopeIcon,
+          path: "/request",
+          submenu: true,
+          submenuItems: [
+            { title: "View Request", path: "/request" },
+            { title: "Create Request", path: "/request/sr" },
+            { title: "Custom Request", path: "/request/custom" },
+          ],
+        },
+        { title: "Help", icon: BookOpenIcon, path: "/help", submenu: false },
+      ];
 
   useEffect(() => {
     const handleResize = () => {

@@ -16,6 +16,7 @@ type Props = {};
 
 type Record = {
   id: number;
+  created_at: Date;
   user_id: number;
   request_id: string;
   form_type: string;
@@ -126,7 +127,7 @@ const Request = (props: Props) => {
       };
 
       axios
-        .get(`http://localhost:8000/api/view-request`, {
+        .get(`http://localhost:8000/api/view-requests`, {
           headers,
         })
         .then((response) => {
@@ -189,7 +190,7 @@ const Request = (props: Props) => {
     {
       name: "Date",
       selector: (row: Record) =>
-        new Date(row.form_data[0].date).toLocaleDateString(undefined, {
+        new Date(row.created_at).toLocaleDateString(undefined, {
           year: "numeric",
           month: "long",
           day: "numeric",

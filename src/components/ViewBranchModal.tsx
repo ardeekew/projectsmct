@@ -3,9 +3,8 @@ import { XMarkIcon } from "@heroicons/react/24/outline";
 
 interface Record {
   id: number;
-  no: number;
-  Branch: string;
-  Branch_Address: string;
+  branch: string;
+  branch_code: string;
 }
 
 interface ViewBranchModalProps {

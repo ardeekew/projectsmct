@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+// Nav.tsx
+
+import React, { useState, useEffect } from "react";
 import {
   MoonIcon,
   SunIcon,
@@ -10,6 +12,8 @@ import {
 import Avatar from "./assets/avatar.png";
 import { Link } from "react-router-dom";
 import { useUser } from "../context/UserContext";
+import axios from "axios";
+import UpdateInformation from "./UpdateInformation";
 
 interface NavProps {
   darkMode: boolean;
@@ -17,6 +21,7 @@ interface NavProps {
   toggleSidebar: () => void;
   currentPage: string;
   isSidebarVisible: boolean;
+  updateUserInfo: () => void; // Function to update user info
 }
 
 const Nav: React.FC<NavProps> = ({
@@ -25,6 +30,7 @@ const Nav: React.FC<NavProps> = ({
   currentPage,
   toggleSidebar,
   isSidebarVisible,
+  updateUserInfo,
 }) => {
   const flexBetween = "flex items-center justify-between";
   const listProfile = "px-4 hover:bg-[#E0E0F9] cursor-pointer py-2";
@@ -37,8 +43,37 @@ const Nav: React.FC<NavProps> = ({
   const [isOpenNotif, setIsOpenNotif] = useState(false);
   const { updateUser } = useUser();
   const userId = localStorage.getItem("userId");
-  const firstName = localStorage.getItem("firstName");
-  const lastName = localStorage.getItem("lastName");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [userInfo, setUserInfo] = useState(null);
+
+  const handleClose = () => {
+    setIsOpen(false);
+  };
+  const toggleProfileDropdown = () => {
+    setIsOpen(!isOpen);
+  };
+  useEffect(() => {
+    const fetchUserInfoFromDatabase = async () => {
+      const id = localStorage.getItem("id");
+      const headers = {};
+
+      try {
+        const response = await axios.get(`http://localhost:8000/api/view-user/${id}`, {
+          headers,
+        });
+        setUserInfo(response.data);
+
+        // Access the lastName from response.data.data
+        setLastName(response.data.data.lastName);
+        setFirstName(response.data.data.firstName);
+      } catch (error) {
+        console.error("Error fetching user information from the database: ", error);
+      }
+    };
+
+    fetchUserInfoFromDatabase();
+  }, [updateUserInfo]); // Fetch user info whenever updateUserInfo changes
 
   return (
     <div className={`nav-container ${darkMode ? "dark" : "white"}`}>
@@ -104,16 +139,16 @@ const Nav: React.FC<NavProps> = ({
                 style={{ zIndex: 1000 }}
               >
                 <ul>
-                  <Link to="/profile">
+                  <Link to="/profile" onClick={handleClose}>
                     <li className={`${listProfile}`}>My Profile</li>
                   </Link>
-                  <Link to="/settings">
+                  <Link to="/settings" onClick={handleClose}>
                     <li className={`${listProfile}`}>Settings</li>
                   </Link>
-                  <Link to="/help">
+                  <Link to="/help" onClick={handleClose}>
                     <li className={`${listProfile}`}>Help</li>
                   </Link>
-                  <Link to="/login">
+                  <Link to="/login" onClick={handleClose}>
                     <li className={`${listProfile}`}>Sign out</li>
                   </Link>
                 </ul>
