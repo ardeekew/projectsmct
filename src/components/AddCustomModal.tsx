@@ -16,13 +16,13 @@ const AddCustomModal = ({
   entityType: string;
   refreshData: () => void;
 }) => {
-  const [notedBy, setNotedBy] = useState<{ firstName: string; lastName: string }[]>([]);
-  const [approvedBy, setApprovedBy] = useState<{ firstName: string; lastName: string }[]>([]);
+  const [notedBy, setNotedBy] = useState<number[]>([]); // Change to store IDs only
+  const [approvedBy, setApprovedBy] = useState<number[]>([]); // Change to store IDs only
   const [name, setName] = useState<string>("");
-  const userId = localStorage.getItem("id");
+ 
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [approvers, setApprovers] = useState<{ firstName: string; lastName: string }[]>([]);
+  const [approvers, setApprovers] = useState<any[]>([]); // Adjust as per your approver structure
 
   useEffect(() => {
     const fetchApprovers = async () => {
@@ -36,76 +36,40 @@ const AddCustomModal = ({
     
         console.log("API Response:", response);
     
-        // Handle specific cases based on response data structure
         if (response.data && Array.isArray(response.data.data)) {
-          const mappedApprovers = response.data.data.map((approver: any) => ({
-            id: approver.id,
-            firstName: approver.firstname,
-            lastName: approver.lastname,
-            email: approver.email,
-            position: approver.position,
-            // Add other fields as needed
-          }));
-          setApprovers(mappedApprovers);
-        } else if (response.data && typeof response.data === 'object') {
-          // Handle single object response
-          const mappedApprover = [{
-            id: response.data.id,
-            firstName: response.data.firstname,
-            lastName: response.data.lastname,
-            email: response.data.email,
-            position: response.data.position,
-            // Add other fields as needed
-          }];
-          setApprovers(mappedApprover);
+          setApprovers(response.data.data); // Set approvers directly from API
         } else {
           console.error("Unexpected response format from API:", response.data);
-          // Handle this case appropriately, e.g., set an error state or display a message to the user
         }
         
         setLoading(false);
       } catch (error) {
         console.error("Error fetching approvers:", error);
         setLoading(false);
-        // Handle error state or display an error message to the user
       }
     };
-    
-    
-    
 
     if (modalIsOpen) {
       fetchApprovers();
     }
   }, [modalIsOpen]);
-
-  const toggleNotedBy = (person: { firstName: string; lastName: string }) => {
-    const isPresent = notedBy.some(
-      (n) => n.firstName === person.firstName && n.lastName === person.lastName
-    );
+console.log("Approvers:", approvedBy);
+console.log("Noted By:", notedBy);
+  const toggleNotedBy = (personId: number) => {
+    const isPresent = notedBy.includes(personId);
     if (isPresent) {
-      setNotedBy((prevNotedBy) =>
-        prevNotedBy.filter(
-          (n) => !(n.firstName === person.firstName && n.lastName === person.lastName)
-        )
-      );
+      setNotedBy((prevNotedBy) => prevNotedBy.filter((id) => id !== personId));
     } else {
-      setNotedBy((prevNotedBy) => [...prevNotedBy, person]);
+      setNotedBy((prevNotedBy) => [...prevNotedBy, personId]);
     }
   };
 
-  const toggleApprovedBy = (person: { firstName: string; lastName: string }) => {
-    const isPresent = approvedBy.some(
-      (n) => n.firstName === person.firstName && n.lastName === person.lastName
-    );
+  const toggleApprovedBy = (personId: number) => {
+    const isPresent = approvedBy.includes(personId);
     if (isPresent) {
-      setApprovedBy((prevApprovedBy) =>
-        prevApprovedBy.filter(
-          (n) => !(n.firstName === person.firstName && n.lastName === person.lastName)
-        )
-      );
+      setApprovedBy((prevApprovedBy) => prevApprovedBy.filter((id) => id !== personId));
     } else {
-      setApprovedBy((prevApprovedBy) => [...prevApprovedBy, person]);
+      setApprovedBy((prevApprovedBy) => [...prevApprovedBy, personId]);
     }
   };
 
@@ -118,7 +82,6 @@ const AddCustomModal = ({
 
   const handleAddCustomRequest = async () => {
     const userId = localStorage.getItem("id");
-
     // Validate inputs
     if (!name.trim()) {
         setErrorMessage("Name is required.");
@@ -131,16 +94,12 @@ const AddCustomModal = ({
     }
 
     const requestData = {
-        user_id: userId,
+     user_id: userId,
         name: name.trim(),
-        approvers: [
-            {
-                noted_by: notedBy,
-                approved_by: approvedBy
-            }
-        ]
+        noted_by: notedBy,
+        approved_by: approvedBy,
     };
-
+    console.log("Request Data:", requestData);
     try {
         setLoading(true);
 
@@ -175,7 +134,6 @@ const AddCustomModal = ({
     }
 };
 
-  
   const pStyle = "font-medium w-full";
   const inputStyle = "border border-black rounded-md p-1 w-full";
 
@@ -218,15 +176,11 @@ const AddCustomModal = ({
                       type="checkbox"
                       className="size-5 mr-2"
                       id={`noted_by_${index}`}
-                      checked={notedBy.some(
-                        (n) =>
-                          n.firstName === person.firstName &&
-                          n.lastName === person.lastName
-                      )}
-                      onChange={() => toggleNotedBy(person)}
+                      checked={notedBy.includes(person.user_id)}
+                      onChange={() => toggleNotedBy(person.user_id)}
                     />
                     <label htmlFor={`noted_by_${index}`}>
-                      {person.firstName} {person.lastName}
+                      {person.firstname} {person.lastname}
                     </label>
                   </div>
                 ))}
@@ -241,15 +195,11 @@ const AddCustomModal = ({
                       type="checkbox"
                       className="size-5 mr-2"
                       id={`approved_by_${index}`}
-                      checked={approvedBy.some(
-                        (n) =>
-                          n.firstName === person.firstName &&
-                          n.lastName === person.lastName
-                      )}
-                      onChange={() => toggleApprovedBy(person)}
+                      checked={approvedBy.includes(person.user_id)}
+                      onChange={() => toggleApprovedBy(person.user_id)}
                     />
                     <label htmlFor={`approved_by_${index}`}>
-                      {person.firstName} {person.lastName}
+                      {person.firstname} {person.lastname}
                     </label>
                   </div>
                 ))}

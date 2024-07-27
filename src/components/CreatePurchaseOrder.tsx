@@ -31,7 +31,7 @@ const schema = z.object({
   date: z.string(),
   branch: z.string(),
   approver_list_id: z.number(),
-  approver:z.string(),
+  approver: z.string(),
   supplier: z.string(),
   address: z.string(),
   items: z.array(
@@ -46,7 +46,6 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-
 const inputStyle = "w-full   border-2 border-black rounded-[12px] ";
 const itemDiv = "flex flex-col  ";
 const buttonStyle = "h-[45px] w-[150px] rounded-[12px] text-white";
@@ -58,8 +57,13 @@ const CreatePurchaseOrder = (props: Props) => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [formData, setFormData] = useState<any>(null);
   const [customApprovers, setCustomApprovers] = useState<CustomApprover[]>([]);
-  const [selectedApproverList, setSelectedApproverList] = useState<number | null>(null);
-  const [selectedApprover, setSelectedApprover] = useState<{ name: string }[]>([]);
+  const [selectedApproverList, setSelectedApproverList] = useState<
+    number | null
+  >(null);
+  const [selectedApprover, setSelectedApprover] = useState<{ name: string }[]>(
+    []
+  );
+  const [file, setFile] = useState<File[]>([]);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
@@ -69,6 +73,13 @@ const CreatePurchaseOrder = (props: Props) => {
   } = useForm<FormData>();
   const [selectedRequestType, setSelectedRequestType] =
     useState("/request/pors");
+    
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files) {
+          // Convert FileList to array and set it
+          setFile(Array.from(e.target.files));
+      }
+  };
   const [items, setItems] = useState<
     {
       quantity: string;
@@ -99,28 +110,35 @@ const CreatePurchaseOrder = (props: Props) => {
 
   const fetchCustomApprovers = async () => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        console.error("Token is missing");
-        return;
-      }
+        const id = localStorage.getItem("id");
+        const token = localStorage.getItem("token");
+        if (!token || !id) {
+            console.error("Token or user ID is missing");
+            return;
+        }
 
-      const response = await axios.get<CustomApprover[]>("http://localhost:8000/api/custom-approvers", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+        const response = await axios.get(`http://localhost:8000/api/custom-approvers/${id}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
 
-      setCustomApprovers(response.data);
-      console.log("Custom Approvers:", response.data);
+        if (Array.isArray(response.data.data)) {
+            setCustomApprovers(response.data.data);
+        } else {
+            console.error("Unexpected response format:", response.data);
+            setCustomApprovers([]); // Ensure that customApprovers is always an array
+        }
+
+        console.log("Custom Approvers:", response.data.data);
     } catch (error) {
-      console.error("Error fetching custom approvers:", error);
+        console.error("Error fetching custom approvers:", error);
+        setCustomApprovers([]); // Ensure that customApprovers is always an array
     }
-  };
+};
 
-  const onSubmit = async (data: FormData) => {
+const onSubmit = async (data: any) => {
     try {
-     
       const token = localStorage.getItem("token");
       const userId = localStorage.getItem("id");
       const branch_code = localStorage.getItem("branch_code");
@@ -130,7 +148,9 @@ const CreatePurchaseOrder = (props: Props) => {
         return;
       }
 
-      const selectedList = customApprovers.find(approver => approver.id === selectedApproverList);
+      const selectedList = customApprovers.find(
+        (approver) => approver.id === selectedApproverList
+      );
       if (!selectedList) {
         console.error("Selected approver list not found");
         return;
@@ -138,7 +158,9 @@ const CreatePurchaseOrder = (props: Props) => {
       // Check if any item fields are empty
       if (
         items.some((item) =>
-          Object.entries(item).filter(([key, value]) => key !== "remarks").some(([key, value]) => value === "")
+          Object.entries(item)
+            .filter(([key, value]) => key !== "remarks")
+            .some(([key, value]) => value === "")
         )
       ) {
         console.error("Item fields cannot be empty");
@@ -153,11 +175,25 @@ const CreatePurchaseOrder = (props: Props) => {
         }
       });
 
-      console.log("data", data);
-      const requestData = {
-        form_type: "Purchase Order Requisition Slip",
-        approvers_id: selectedApproverList,
-        form_data: [
+      if (file.length === 0) {
+        console.log("No file selected");
+        return;
+    }
+
+    const formData = new FormData();
+
+    // Append each file to FormData
+    file.forEach((file) => {
+        formData.append("attachment[]", file); // Use "attachment[]" to handle multiple files
+    });
+
+    formData.append("form_type", "Purchase Order Requisition Slip");
+    formData.append("approvers_id", String(selectedApproverList));
+    formData.append("user_id", userId);
+
+    formData.append(
+      "form_data",
+      JSON.stringify([
           {
             date: data.date,
             branch: branch_code,
@@ -173,23 +209,25 @@ const CreatePurchaseOrder = (props: Props) => {
               remarks: item.remarks,
             })),
           },
-        ],
-        user_id: userId,
-      };
-      console.log(requestData);
+      ])
+  );
 
       setShowConfirmationModal(true);
-
-      // Set form data to be submitted after confirmation
-      setFormData(requestData);
-     
+      setLoading(false);
+        // Log formData content
+        logFormData(formData);
+        setFormData(formData);
     } catch (error) {
       console.error("An error occurred while submitting the request:", error);
+      setLoading(false);
     } finally {
-    
     }
   };
-
+  const logFormData = (formData: any) => {
+    for (let [key, value] of formData.entries()) {
+      console.log(key, value);
+    }
+  };
   const calculateGrandTotal = () => {
     let grandTotal = 0;
     items.forEach((item) => {
@@ -204,9 +242,15 @@ const CreatePurchaseOrder = (props: Props) => {
     // Close the confirmation modal
     setShowConfirmationModal(false);
     const token = localStorage.getItem("token");
+
+    if (!selectedApproverList) {
+      alert("Please select an approver.");
+      return;
+    }
+  
     try {
       setLoading(true);
-      console.log(formData);
+      logFormData(formData);
 
       // Perform the actual form submission
       const response = await axios.post(
@@ -215,6 +259,7 @@ const CreatePurchaseOrder = (props: Props) => {
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
           },
         }
       );
@@ -224,6 +269,8 @@ const CreatePurchaseOrder = (props: Props) => {
       setFormSubmitted(true);
     } catch (error) {
       console.error("An error occurred while submitting the request:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -286,34 +333,31 @@ const CreatePurchaseOrder = (props: Props) => {
       } else {
         updatedItems[index].totalAmount = "";
       }
-    }  <div className="space-x-3 flex justify-end mt-20 pb-10">
-              <button
-                className={`bg-yellow ${buttonStyle}`}
-                onClick={handleAddItem}
-              >
-                Add
-              </button>
-              {items.length > 1 && (
-                <button
-                  className={`${buttonStyle} bg-pink`}
-                  onClick={handleRemoveItem}
-                >
-                  Remove Item
-                </button>
-              )}
-              <button
-                className={`bg-primary ${buttonStyle}`}
-                type="submit"
-                onClick={handleFormSubmit}
-              >
-                {loading ? <ClipLoader color="#36d7b7" /> : "Send Request"}
-              </button>
-            </div>
+    }
+    <div className="space-x-3 flex justify-end mt-20 pb-10">
+      <button className={`bg-yellow ${buttonStyle}`} onClick={handleAddItem}>
+        Add
+      </button>
+      {items.length > 1 && (
+        <button className={`${buttonStyle} bg-pink`} onClick={handleRemoveItem}>
+          Remove Item
+        </button>
+      )}
+      <button
+        className={`bg-primary ${buttonStyle}`}
+        type="submit"
+        onClick={handleFormSubmit}
+      >
+        {loading ? <ClipLoader color="#36d7b7" /> : "Send Request"}
+      </button>
+    </div>;
 
     setItems(updatedItems);
   };
   const handleTextareaHeight = (index: number, field: string) => {
-    const textarea = document.getElementById(`${field}-${index}`) as HTMLTextAreaElement;
+    const textarea = document.getElementById(
+      `${field}-${index}`
+    ) as HTMLTextAreaElement;
     if (textarea) {
       textarea.style.height = "auto"; // Reset to auto height first
       textarea.style.height = `${Math.max(textarea.scrollHeight, 100)}px`; // Set to scroll height or minimum 100px
@@ -340,33 +384,42 @@ const CreatePurchaseOrder = (props: Props) => {
         ))}
       </select>
       <div className="bg-white w-full mb-5 rounded-[12px] flex flex-col">
-      <div className="border-b flex justify-between flex-col px-[30px] md:flex-row ">
+        <div className="border-b flex justify-between flex-col px-[30px] md:flex-row ">
           <div>
             <h1 className=" text-[24px] text-left py-4 text-primary font-bold flex mr-2">
               <span className="mr-2 underline decoration-2 underline-offset-8">
-               Purchase
+                Purchase
               </span>{" "}
-            Order Requisition Slip
+              Order Requisition Slip
             </h1>
           </div>
           <div className="my-2  ">
-          <label className="block font-semibold mb-2">Approver List:</label>
-          <select
-            {...register("approver_list_id", { required: true })}
-            value={selectedApproverList !== null ? selectedApproverList.toString() : ""}
-            onChange={(e) => setSelectedApproverList(parseInt(e.target.value))}
-            className="border-2 border-black  p-2 rounded-md w-full"
-          >
-            <option value="">Select Approver List</option>
-            {customApprovers.map(approverList => (
-              <option key={approverList.id} value={approverList.id.toString()}>
-                {approverList.name}
-              </option>
-            ))}
-          </select>
-          {errors.approver_list_id && formSubmitted && (
-            <p className="text-red-500">Please select an approver list.</p>
-          )}
+            <label className="block font-semibold mb-2">Approver List:</label>
+            <select
+              {...register("approver_list_id", { required: true })}
+              value={
+                selectedApproverList !== null
+                  ? selectedApproverList.toString()
+                  : ""
+              }
+              onChange={(e) =>
+                setSelectedApproverList(parseInt(e.target.value))
+              }
+              className="border-2 border-black  p-2 rounded-md w-full"
+            >
+              <option value="">Select Approver List</option>
+              {customApprovers.map((approverList) => (
+                <option
+                  key={approverList.id}
+                  value={approverList.id.toString()}
+                >
+                  {approverList.name}
+                </option>
+              ))}
+            </select>
+            {errors.approver_list_id && formSubmitted && (
+              <p className="text-red-500">Please select an approver list.</p>
+            )}
           </div>
         </div>
         <form onSubmit={handleSubmit(onSubmit)}>
@@ -384,7 +437,6 @@ const CreatePurchaseOrder = (props: Props) => {
             </div>
             <div>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4  mt-2 sm:mt-0 flex-row  justify-start space-y-2 sm:space-y-0 sm:gap-4 lg:gap-0 lg:space-x-4">
-          
                 <div className={`${itemDiv}`}>
                   <p className="font-semibold">Supplier</p>
                   <input
@@ -523,7 +575,18 @@ const CreatePurchaseOrder = (props: Props) => {
                 </div>
               </div>
             ))}
-             <div className="space-x-3 flex justify-end mt-20 pb-10">
+             <div className="flex justify-between">
+              <div>
+                <p className="font-semibold">Attachments:</p>
+                <input id="file" type="file" multiple onChange={handleFileChange} />
+              </div>
+              <div>
+                <p className="font-semibold">
+                  Grand Total: ₱{calculateGrandTotal()}
+                </p>
+              </div>
+            </div>
+            <div className="space-x-3 flex justify-end mt-20 pb-10">
               <button
                 className={`bg-yellow ${buttonStyle}`}
                 onClick={handleAddItem}

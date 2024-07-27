@@ -23,6 +23,7 @@ const schema = z.object({
   date: z.string(),
   approver_list_id: z.number(),
   approver: z.string(),
+  attachment: z.array(z.instanceof(File)).optional(),
   items: z.array(
     z.object({
       quantity: z.string(),
@@ -57,6 +58,9 @@ const CreateStockRequistion = (props: Props) => {
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const userId = localStorage.getItem("id");
+  const [file, setFile] = useState<File[]>([]);
+
+  const [filebase64, setFileBase64] = useState<string>("");
   const [customApprovers, setCustomApprovers] = useState<CustomApprover[]>([]);
   const [selectedApproverList, setSelectedApproverList] = useState<
     number | null
@@ -64,7 +68,12 @@ const CreateStockRequistion = (props: Props) => {
   const [selectedApprover, setSelectedApprover] = useState<{ name: string }[]>(
     []
   );
-
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files) {
+          // Convert FileList to array and set it
+          setFile(Array.from(e.target.files));
+      }
+  };
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({});
@@ -98,14 +107,15 @@ const CreateStockRequistion = (props: Props) => {
 
   const fetchCustomApprovers = async () => {
     try {
+      const id = localStorage.getItem("id");
       const token = localStorage.getItem("token");
-      if (!token) {
-        console.error("Token is missing");
+      if (!token || !id) {
+        console.error("Token or user ID is missing");
         return;
       }
 
-      const response = await axios.get<CustomApprover[]>(
-        "http://localhost:8000/api/custom-approvers",
+      const response = await axios.get(
+        `http://localhost:8000/api/custom-approvers/${id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -113,10 +123,17 @@ const CreateStockRequistion = (props: Props) => {
         }
       );
 
-      setCustomApprovers(response.data);
-      console.log("Custom Approvers:", response.data);
+      if (Array.isArray(response.data.data)) {
+        setCustomApprovers(response.data.data);
+      } else {
+        console.error("Unexpected response format:", response.data);
+        setCustomApprovers([]); // Ensure that customApprovers is always an array
+      }
+
+      console.log("Custom Approvers:", response.data.data);
     } catch (error) {
       console.error("Error fetching custom approvers:", error);
+      setCustomApprovers([]); // Ensure that customApprovers is always an array
     }
   };
 
@@ -140,113 +157,137 @@ const CreateStockRequistion = (props: Props) => {
 
   // Function to handle form submission with confirmation
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: any) => {
     try {
-      setLoading(true);
-      const token = localStorage.getItem("token");
-      const userId = localStorage.getItem("id");
-      const branch_code = localStorage.getItem("branch_code");
+        setLoading(true);
 
-      console.log("id", userId);
-      if (!token || !userId) {
-        console.error("Token or userId not found");
-        return;
-      }
-      const selectedList = customApprovers.find(
-        (approver) => approver.id === selectedApproverList
-      );
-      if (!selectedList) {
-        console.error("Selected approver list not found");
-        return;
-      }
+        const token = localStorage.getItem("token");
+        const userId = localStorage.getItem("id");
+        const branch_code = localStorage.getItem("branch_code");
 
-      // Check if any item fields are empty
-      if (
-        items.some((item) =>
-          Object.entries(item)
-            .filter(([key, value]) => key !== "remarks")
-            .some(([key, value]) => value === "")
-        )
-      ) {
-        console.error("Item fields cannot be empty");
-        // Display error message to the user or handle it accordingly
-        return;
-      }
-
-      let grandTotal = 0;
-      items.forEach((item) => {
-        if (item.totalAmount) {
-          grandTotal += parseFloat(item.totalAmount);
+        if (!token || !userId) {
+            console.error("Token or userId not found");
+            return;
         }
-      });
-      console.log("data", selectedList.approvers);
-      const requestData = {
-        form_type: "Stock Requisition Slip",
-        approvers_id: selectedApproverList,
-        form_data: [
-          {
-            purpose: data.purpose,
-            date: data.date,
-            branch: branch_code,
-            grand_total: grandTotal.toFixed(2),
-            items: items.map((item) => ({
-              quantity: item.quantity,
-              description: item.description,
-              unitCost: item.unitCost,
-              totalAmount: item.totalAmount,
-              remarks: item.remarks,
-            })),
-          },
-        ],
-        user_id: userId,
-      };
-      console.log(requestData);
 
-      // Display confirmation modal
-      setShowConfirmationModal(true);
+        const selectedList = customApprovers.find(
+            (approver) => approver.id === selectedApproverList
+        );
+        if (!selectedList) {
+            console.error("Selected approver list not found");
+            return;
+        }
 
-      // Set form data to be submitted after confirmation
-      setFormData(requestData);
+        if (
+            items.some((item) =>
+                Object.entries(item)
+                    .filter(([key, value]) => key !== "remarks")
+                    .some(([key, value]) => value === "")
+            )
+        ) {
+            console.error("Item fields cannot be empty");
+            return;
+        }
+
+        let grandTotal = 0;
+        items.forEach((item) => {
+            if (item.totalAmount) {
+                grandTotal += parseFloat(item.totalAmount);
+            }
+        });
+
+        if (file.length === 0) {
+            console.log("No file selected");
+            return;
+        }
+
+        const formData = new FormData();
+
+        // Append each file to FormData
+        file.forEach((file) => {
+            formData.append("attachment[]", file); 
+        });
+
+        formData.append("form_type", "Stock Requisition Slip");
+        formData.append("approvers_id", String(selectedApproverList));
+        formData.append("user_id", userId);
+
+        formData.append(
+            "form_data",
+            JSON.stringify([
+                {
+                    purpose: data.purpose,
+                    date: data.date,
+                    branch: branch_code,
+                    grand_total: grandTotal.toFixed(2),
+                    items: items.map((item) => ({
+                        quantity: item.quantity,
+                        description: item.description,
+                        unitCost: item.unitCost,
+                        totalAmount: item.totalAmount,
+                        remarks: item.remarks,
+                    })),
+                },
+            ])
+        );
+
+        // Log formData content
+        logFormData(formData);
+
+        // Display confirmation modal
+        setShowConfirmationModal(true);
+        setFormData(formData);
+
     } catch (error) {
-      console.error("An error occurred while preparing the request:", error);
+        console.error("An error occurred while preparing the request:", error);
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
-
+};
+  
   const handleConfirmSubmit = async () => {
-    // Close the confirmation modal
     setShowConfirmationModal(false);
     const token = localStorage.getItem("token");
-
+  
     if (!selectedApproverList) {
       alert("Please select an approver.");
-      return; // Prevent form submission
+      return;
     }
-
+  
     try {
       setLoading(true);
-      console.log(formData);
-
-      // Perform the actual form submission
+  
+      // Log formData content
+      logFormData(formData);
+  
       const response = await axios.post(
         "http://localhost:8000/api/create-request",
-        formData, // Use the formData stored in state
+        formData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
           },
         }
       );
-      setShowSuccessModal(true);
       console.log("Request submitted successfully:", response.data);
+      setShowSuccessModal(true);
       setFormSubmitted(true);
       setLoading(false);
     } catch (error) {
       console.error("An error occurred while submitting the request:", error);
+    } finally {
+      setLoading(false);
     }
   };
-
+  
+  const logFormData = (formData: any) => {
+    for (let [key, value] of formData.entries()) {
+      console.log(key, value);
+    }
+  };
+  
+  
   const handleCancelSubmit = () => {
     // Close the confirmation modal
     setShowConfirmationModal(false);
@@ -566,10 +607,17 @@ const CreateStockRequistion = (props: Props) => {
                 </div>
               </div>
             ))}
-            <div className="flex justify-end">
-              <p className="font-semibold">
-                Grand Total: ₱{calculateGrandTotal()}
-              </p>
+
+            <div className="flex justify-between">
+              <div>
+                <p className="font-semibold">Attachments:</p>
+                <input id="file" type="file" multiple onChange={handleFileChange} />
+              </div>
+              <div>
+                <p className="font-semibold">
+                  Grand Total: ₱{calculateGrandTotal()}
+                </p>
+              </div>
             </div>
             <div className="space-x-3 flex justify-end mt-20 pb-10">
               <button

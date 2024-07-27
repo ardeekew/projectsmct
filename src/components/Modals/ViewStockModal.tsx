@@ -5,7 +5,10 @@ import axios from "axios";
 import PencilIcon from "@heroicons/react/24/solid/PencilIcon";
 import EditStockModalSuccess from "./EditStockModalSuccess";
 import { read } from "fs";
+import Avatar from "../assets/avatar.png";
+import PrintStock from "../PrintStock";
 
+const get = localStorage.getItem("id");
 type Props = {
   closeModal: () => void;
   record: Record;
@@ -13,19 +16,28 @@ type Props = {
 };
 interface Approver {
   id: number;
+  firstname: string;
+  lastname: string;
   firstName: string;
   lastName: string;
   name: string;
+  comment: string;
+  position: string;
+  signature: string;
+  status: string;
+  branch: string;
 }
 type Record = {
   id: number;
   status: string;
   approvers_id: number;
   form_data: FormData[];
+  supplier?: string;
+  address?: string;
   branch: string;
   date: string;
   user_id: number;
-  grand_total: string;
+  attachment: string;
 };
 
 type FormData = {
@@ -39,6 +51,8 @@ type FormData = {
   branch: string;
   date: string;
   grand_total: string;
+  supplier: string;
+  address: string;
 };
 
 type Item = {
@@ -61,31 +75,85 @@ const ViewStockModal: React.FC<Props> = ({
   const [newData, setNewData] = useState<Item[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [editedDate, setEditedDate] = useState("");
-  const [editedApprovers, setEditedApprovers] = useState<number>(record.approvers_id);
-
+  const [editedApprovers, setEditedApprovers] = useState<number>(
+    record.approvers_id
+  );
+  const [comments, setComments] = useState("");
   const [loading, setLoading] = useState(false);
   const [approvers, setApprovers] = useState<Approver[]>([]);
   const [fetchingApprovers, setFetchingApprovers] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [checkedPurpose, setCheckedPurpose] = useState<string | null>(null);
   const [savedSuccessfully, setSavedSuccessfully] = useState(false);
-
+  const [customApprovers, setCustomApprovers] = useState<Approver[]>([]);
+  const [notedBy, setNotedBy] = useState<Approver[]>([]);
+  const [approvedBy, setApprovedBy] = useState<Approver[]>([]);
+  const [isFetchingApprovers, setisFetchingApprovers] = useState(false);
+  const [user, setUser] = useState<any>({});
+  const [isFetchingUser, setisFetchingUser] = useState(false);
+  const [printWindow, setPrintWindow] = useState<Window | null>(null);
+  const [attachmentUrl, setAttachmentUrl] = useState<string[]>([]);
+  const [newAttachments, setNewAttachments] = useState<File[]>([]);
+  const [originalAttachments, setOriginalAttachments] = useState<string[]>([]);
+  const [removedAttachments, setRemovedAttachments] = useState<number[]>([]);
+  console.log("record", record);
   useEffect(() => {
+    const attachments = JSON.parse(record.attachment);
     const currentUserId = localStorage.getItem("id");
-
-    // Ensure currentUserId and userId are converted to numbers if they exist
     const userId = currentUserId ? parseInt(currentUserId) : 0;
-    
+
     setNewData(record.form_data[0].items.map((item) => ({ ...item })));
     setEditableRecord(record);
-    setCheckedPurpose(record.form_data[0].purpose); // Initialize checkedPurpose with the original purpose
-  
-    // Call fetchApprovers with both arguments
+    setCheckedPurpose(record.form_data[0].purpose);
+    setEditedApprovers(record.approvers_id);
     if (currentUserId) {
-      fetchApprovers(userId, parseInt(currentUserId)); // Fetch approvers based on currentUserId
+      fetchUser(record.user_id);
+      fetchApprovers(userId);
+      fetchCustomApprovers(record.id);
+    }
+    try {
+      // If record.attachment is a JSON string, parse it
+      if (typeof record.attachment === 'string') {
+        const parsedAttachment = JSON.parse(record.attachment);
+        // Handle the parsed attachment
+        const fileUrls = parsedAttachment.map((filePath: string) =>
+          `http://localhost:8000/storage/${filePath.replace(/\\/g, '/')}`
+        );
+        setAttachmentUrl(fileUrls);
+      } else {
+        // Handle case where record.attachment is already an object
+        console.warn("Attachment is not a JSON string:", record.attachment);
+        // Optionally handle this case if needed
+      }
+    } catch (error) {
+      console.error("Error parsing attachment:", error);
     }
   }, [record]);
+  const fetchUser = async (id: number) => {
+    setisFetchingUser(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("Token is missing");
+      }
 
+      const response = await axios.get(
+        `http://localhost:8000/api/view-user/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log("response", response.data.data);
+      setUser(response.data);
+    } catch (error) {
+      console.error("Failed to fetch approvers:", error);
+    } finally {
+      setisFetchingUser(false);
+    }
+  };
   const handleEdit = () => {
     setEditedDate(editableRecord.form_data[0].date); // Initialize editedDate with the original date
     setIsEditing(true);
@@ -93,6 +161,9 @@ const ViewStockModal: React.FC<Props> = ({
 
   const handleCancelEdit = () => {
     setIsEditing(false);
+   setAttachmentUrl(attachmentUrl);
+    setNewAttachments([]); // Clear new attachments
+    setRemovedAttachments([]); // Reset removed attachments
     setCheckedPurpose(record.form_data[0].purpose);
     setEditedApprovers(record.approvers_id);
     // Reset newData to original values
@@ -107,9 +178,46 @@ const ViewStockModal: React.FC<Props> = ({
       ],
     }));
   };
+  const fetchCustomApprovers = async (id: number) => {
+    setisFetchingApprovers(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("Token is missing");
+      }
 
+      const response = await axios.get(
+        `http://localhost:8000/api/request-forms/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const { notedby, approvedby } = response.data;
+      setNotedBy(notedby);
+      setApprovedBy(approvedby);
+
+      console.log("notedby", notedby);
+      console.log("approvedby", approvedby);
+    } catch (error) {
+      console.error("Failed to fetch approvers:", error);
+    } finally {
+      setisFetchingApprovers(false);
+    }
+  };
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      setNewAttachments(Array.from(event.target.files));
+    }
+  };
+
+  const handleRemoveAttachment = (index: number) => {
+    setRemovedAttachments((prevRemoved) => [...prevRemoved, index]);
+  };
+  console.log('newAttach',newAttachments);
   const handleSaveChanges = async () => {
-    // Simple validation
     if (
       !newData.every(
         (item) =>
@@ -133,58 +241,51 @@ const ViewStockModal: React.FC<Props> = ({
         return;
       }
   
-      const requestData = {
-        updated_at: new Date().toISOString(),
-        approvers_id: editedApprovers,
-        form_data: [
-          {
-            branch: editableRecord.form_data[0].branch,
-            date:
-              editedDate !== "" ? editedDate : editableRecord.form_data[0].date,
-            status: editableRecord.status,
-            grand_total: editableRecord.form_data[0].grand_total,
-            purpose: checkedPurpose || editableRecord.form_data[0].purpose,
-            items: newData,
-          },
-        ],
-      };
+      const formData = new FormData();
+      formData.append("updated_at", new Date().toISOString());
+      formData.append("approvers_id", JSON.stringify(editedApprovers));
   
-      // Log approvers_id before updating state
-      console.log("approvers_id before state update:", editedApprovers);
+      formData.append(
+        "form_data",
+        JSON.stringify([{
+          branch: editableRecord.form_data[0].branch,
+          date: editedDate !== "" ? editedDate : editableRecord.form_data[0].date,
+          status: editableRecord.status,
+          grand_total: editableRecord.form_data[0].grand_total,
+          purpose: checkedPurpose || editableRecord.form_data[0].purpose,
+          items: newData,
+        }])
+      );
+
+      // Append existing attachments
+      attachmentUrl.forEach((url, index) => {
+        const path = url.split('storage/attachments/')[1];
+        formData.append(`attachment_url_${index}`, path);
+      });
   
-      // Update editableRecord with the new data
-      setEditableRecord((prevState) => ({
-        ...prevState,
-        approvers_id: editedApprovers,
-        form_data: [
-          {
-            ...prevState.form_data[0],
-            items: newData,
-            date: editedDate !== "" ? editedDate : prevState.form_data[0].date,
-            purpose: checkedPurpose || prevState.form_data[0].purpose,
-          },
-        ],
-      }));
+      // Append new attachments
+      newAttachments.forEach((file) => {
+        formData.append("new_attachments[]", file);
+      });
   
-      // Log approvers_id after updating state
-      console.log("approvers_id after state update:", editedApprovers);
-  
-      const response = await axios.put(
+      const response = await axios.post(
         `http://localhost:8000/api/update-request/${record.id}`,
-        requestData,
+        formData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
           },
         }
       );
-      console.log("requestData", requestData);
+  
       console.log("Stock requisition updated successfully:", response.data);
       setLoading(false);
       setIsEditing(false);
       setSavedSuccessfully(true);
       refreshData();
     } catch (error: any) {
+      setLoading(false);
       setErrorMessage(
         error.response?.data?.message ||
           error.message ||
@@ -193,7 +294,9 @@ const ViewStockModal: React.FC<Props> = ({
     }
   };
   
-console.log('id', editedApprovers);
+  
+console.log("attachmentUrl", attachmentUrl);
+  console.log("record.attachment", record.attachment);
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const options: Intl.DateTimeFormatOptions = {
@@ -247,7 +350,7 @@ console.log('id', editedApprovers);
     }));
   };
 
-  const fetchApprovers = async (userId: number, currentUserId: number) => {
+  const fetchApprovers = async (userId: number) => {
     setFetchingApprovers(true);
     try {
       const token = localStorage.getItem("token");
@@ -255,18 +358,20 @@ console.log('id', editedApprovers);
         throw new Error("Token is missing");
       }
 
-      const response = await axios.get<Approver[]>(
-        `http://localhost:8000/api/custom-approvers/?user_id=${currentUserId}`, // Use currentUserId in the query parameter
+      const response = await axios.get(
+        `http://localhost:8000/api/custom-approvers/${userId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
-
-      const approversData = response.data;
+      console.log("approvers", response.data.data);
+      const approversData = Array.isArray(response.data.data)
+        ? response.data.data
+        : [];
       setApprovers(approversData);
-      console.log("data", approversData);
+      console.log("Approvers:", approversData);
     } catch (error) {
       console.error("Failed to fetch approvers:", error);
     } finally {
@@ -274,6 +379,25 @@ console.log('id', editedApprovers);
     }
   };
 
+  const handlePrint = () => {
+    // Construct the data object to be passed
+    const data = {
+      id: record,
+      approvedBy: approvedBy,
+      notedBy: notedBy,
+      user: user,
+    };
+    console.log("dataas", data);
+
+    localStorage.setItem("printData", JSON.stringify(data));
+    // Open a new window with PrintRefund component
+    const newWindow = window.open(`/print-stock`, "_blank");
+
+    // Optional: Focus the new window
+    if (newWindow) {
+      newWindow.focus();
+    }
+  };
   return (
     <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50">
       <div className="p-4 relative w-full mx-10 md:mx-0 z-10 md:w-1/2 space-y-auto h-3/4 overflow-scroll bg-white border-black rounded-t-lg shadow-lg">
@@ -281,17 +405,41 @@ console.log('id', editedApprovers);
           <XMarkIcon className="h-6 w-6 text-black" onClick={closeModal} />
         </div>
         <div className="justify-start items-start flex flex-col space-y-4 w-full">
+        {!fetchingApprovers && !isFetchingApprovers && (
+  <>
+    <button
+      className="bg-blue-600 p-1 px-2 rounded-md text-white"
+      onClick={handlePrint}
+    >
+      Print
+    </button>
+    {printWindow && (
+      <PrintStock
+        data={{
+          id: record,
+          approvedBy: approvedBy,
+          notedBy: notedBy,
+          user: user,
+        }}
+      />
+    )}
+  </>
+)}
           <h1 className="font-semibold text-[18px]">Stock Requisition Slip</h1>
           <p className="font-medium text-[14px]">Request ID:#{record.id}</p>
           <div className="flex w-full md:w-1/2 items-center">
             <p>Status:</p>
             <p
               className={`${
-                record.status === "Pending"
+                record.status.trim() === "Pending"
                   ? "bg-yellow"
-                  : record.status === "Approved"
+                  : record.status.trim() === "Approved"
                   ? "bg-green"
-                  : "bg-pink"
+                  : record.status.trim() === "Disapproved"
+                  ? "bg-pink"
+                  : record.status.trim() === "Ongoing"
+                  ? "bg-primary"
+                  : ""
               } rounded-lg  py-1 w-1/3
              font-medium text-[14px] text-center ml-2 text-white`}
             >
@@ -482,10 +630,12 @@ console.log('id', editedApprovers);
             ) : (
               <select
                 className="border w-1/2 mt-2 h-10 border-black rounded-lg"
-                value={isEditing ? editedApprovers : editableRecord.approvers_id}
+                value={
+                  isEditing ? editedApprovers : editableRecord.approvers_id
+                }
                 onChange={(e) => {
                   const selectedApproverId = parseInt(e.target.value);
-                    console.log("Selected Approver ID:", selectedApproverId);
+                  console.log("Selected Approver ID:", selectedApproverId);
                   setEditedApprovers(selectedApproverId);
                 }}
                 disabled={!isEditing}
@@ -493,7 +643,7 @@ console.log('id', editedApprovers);
                 <option value="" disabled>
                   Approver List
                 </option>
-                {approvers.flat().map((approver) => (
+                {approvers.map((approver) => (
                   <option key={approver.id} value={approver.id}>
                     {approver.name}
                   </option>
@@ -502,21 +652,185 @@ console.log('id', editedApprovers);
             )}
           </div>
 
-          <div className="w-full">
-            <h1 className="flex">
-              Comments<p className="text-red-600">*</p>
-            </h1>
-            <textarea
-              className="border h-32 border-black rounded-md p-1 mt-2 w-full "
-              placeholder="e.g."
-              readOnly
-            />
+          <div className="w-full flex-col justify-center items-center">
+            {isFetchingApprovers ? (
+              <div className="flex items-center justify-center w-full h-40">
+                <h1>Fetching..</h1>
+              </div>
+            ) : (
+              <div className="flex flex-wrap">
+                <div className="ml-5 mb-4">
+                  <h3 className="font-bold mb-3">Requested By:</h3>
+                  <div className="flex flex-row justify-start space-x-2">
+                    <div className="flex flex-col items-center justify-center text-center">
+                      <p className="relative inline-block uppercase font-medium text-center pt-6">
+                        <img
+                          className="absolute top-2"
+                          src={user.data?.signature}
+                          alt="avatar"
+                          width={120}
+                        />
+
+                        <span className="relative z-10 px-2">
+                          {user.data?.firstName} {user.data?.lastName}
+                        </span>
+                        <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black -mx-4"></span>
+                      </p>
+                      <p className="font-bold text-[12px] text-center">
+                        {user.data?.position}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mb-4 ml-5">
+                  <h3 className="font-bold mb-3">Noted By:</h3>
+                  <ul className="flex flex-row space-x-6">
+                    {notedBy.map((user, index) => (
+                      <li
+                        className="flex flex-row justify-start space-x-2"
+                        key={index}
+                      >
+                        <div className="flex flex-col items-center justify-center text-center">
+                          <p className="relative inline-block uppercase font-medium text-center pt-6">
+                            {user.status === "approved" && (
+                              <img
+                                className="absolute top-2"
+                                src={user.signature}
+                                alt="avatar"
+                                width={120}
+                              />
+                            )}
+                            <span className="relative z-10 px-2">
+                              {user.firstname} {user.lastname}
+                            </span>
+                            <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black -mx-4"></span>
+                          </p>
+                          <p className="font-bold text-[12px] text-center">
+                            {user.position}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="mb-4 ml-5">
+                  <h3 className="font-bold mb-3">Approved By:</h3>
+                  <ul className="flex flex-row space-x-6">
+                    {approvedBy.map((user, index) => (
+                      <li
+                        className="flex flex-row justify-start space-x-2"
+                        key={index}
+                      >
+                        <div className="flex flex-col items-center justify-center text-center">
+                          <p className="relative inline-block uppercase font-medium text-center pt-6">
+                            {user.status === "approved" && (
+                              <img
+                                className="absolute top-2"
+                                src={user.signature}
+                                alt="avatar"
+                                width={120}
+                              />
+                            )}
+                            <span className="relative z-10 px-2">
+                              {user.firstname} {user.lastname}
+                            </span>
+                            <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black -mx-4"></span>
+                          </p>
+                          <p className="font-bold text-[12px] text-center">
+                            {user.position}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
           </div>
-          <div className="md:absolute  right-11 top-2 items-center">
+          <div className="w-full">
+            <h1 className="font-bold">Attachments:</h1>
+            <div>
+            {attachmentUrl
+            .filter((_, index) => !removedAttachments.includes(index))
+            .map((url, index) => (
+                <div key={index} className="flex items-center space-x-2">
+                  <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-500">
+                  {url.split("/").pop()}
+                  </a>
+                 {isEditing && ( 
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveAttachment(index)}
+                    className="text-red-500"
+                  >
+                    Remove
+                  </button>
+                )}
+                </div>
+              ))}
+            </div>
+            {isEditing && (
+              <div>
+                <input
+                  type="file"
+                  multiple
+                  onChange={handleFileChange}
+                  className="mt-2"
+                />
+              </div>
+            )}
+          </div>
+          <div className="w-full">
+            <h2 className="text-lg font-bold mb-2">Comments</h2>
+            <ul className="flex flex-col w-full mb-4 space-y-4">
+              {notedBy
+                .filter((user) => user.comment)
+                .map((user, index) => (
+                  <div className="flex flex-row w-full" key={index}>
+                    <img
+                      alt="logo"
+                      className="cursor-pointer hidden sm:block"
+                      src={Avatar}
+                      height={35}
+                      width={45}
+                    />
+                    <li className="flex flex-col justify-between pl-2">
+                      <h3 className="font-bold text-lg">
+                        {user.firstname} {user.lastname}
+                      </h3>
+                      <p>{user.comment}</p>
+                    </li>
+                  </div>
+                ))}
+            </ul>
+            <ul className="flex flex-col w-full mb-4 space-y-4">
+              {approvedBy
+                .filter((user) => user.comment)
+                .map((user, index) => (
+                  <div className="flex flex-row w-full" key={index}>
+                    <img
+                      alt="logo"
+                      className="cursor-pointer hidden sm:block"
+                      src={Avatar}
+                      height={35}
+                      width={45}
+                    />
+                    <li className="flex flex-col justify-between pl-2">
+                      <h3 className="font-bold text-lg">
+                        {user.firstname} {user.lastname}
+                      </h3>
+                      <p>{user.comment}</p>
+                    </li>
+                  </div>
+                ))}
+            </ul>
+          </div>
+          <div className="md:absolute right-11 top-2 items-center">
             {isEditing ? (
               <div>
                 <button
-                  className="bg-primary text-white  items-center h-10 rounded-xl p-2"
+                  className="bg-primary text-white items-center h-10 rounded-xl p-2"
                   onClick={handleSaveChanges}
                 >
                   {loading ? (
@@ -526,7 +840,7 @@ console.log('id', editedApprovers);
                   )}
                 </button>
                 <button
-                  className="bg-red-600  rounded-xl text-white ml-2 p-2"
+                  className="bg-red-600 rounded-xl text-white ml-2 p-2"
                   onClick={handleCancelEdit}
                 >
                   Cancel

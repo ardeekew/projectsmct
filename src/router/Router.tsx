@@ -24,6 +24,14 @@ import Help from '../components/Help';
 import HelpGuide from '../components/HelpGuide';
 import CustomRequest from '../components/CustomRequest';
 import RequestApprover from '../components/RequestApprover';
+import ApproversStock from '../components/ApproverStock';
+import PrintRefund from '../components/PrintRefund';
+import PrintStock from '../components/PrintStock';
+import PrintPurchase from '../components/PrintPurchase';
+import PrintCash from '../components/PrintCash';
+import PrintCashDisbursement from '../components/PrintCashDisbursement';
+import PrintLiquidation from '../components/PrintLiquidation';
+import ViewRequestApprover from '../components/ViewRequestApprover';
 
 interface RouterProps {
   isdarkMode: boolean;
@@ -45,7 +53,10 @@ const Router: React.FC<RouterProps> = ({isdarkMode}) => {
           <Route path='/request' element={<App isdarkMode={isdarkMode} />}>
             <Route index element={<Request />} />
           </Route>
-          <Route path='/requestapprover' element={<App isdarkMode={isdarkMode} />}>
+          <Route path='/request/rq' element={<App isdarkMode={isdarkMode} />}>
+            <Route index element={<ViewRequestApprover />} />
+          </Route>
+          <Route path='/request/approver' element={<App isdarkMode={isdarkMode} />}>
             <Route index element={<RequestApprover />} />
           </Route>
           <Route path='request/sr' element={<App isdarkMode={isdarkMode} />}>
@@ -66,10 +77,10 @@ const Router: React.FC<RouterProps> = ({isdarkMode}) => {
           <Route path='request/rfr' element={<App isdarkMode={isdarkMode} />}>
             <Route index element={<CreateRefund />} />
           </Route>
-          <Route path='/dashboardapprover' element={<App isdarkMode={isdarkMode} />}>
+          <Route path='/dashboard/approver' element={<App isdarkMode={isdarkMode} />}>
             <Route index element={<ApproverDashBoard />} />
           </Route>
-          <Route path='/requestapprover' element={<App isdarkMode={isdarkMode} />}>
+          <Route path='/request' element={<App isdarkMode={isdarkMode} />}>
             <Route index element={<ApproverViewRequest />} />
           </Route>
           <Route path='/profile' element={<App isdarkMode={isdarkMode} />}>
@@ -99,6 +110,18 @@ const Router: React.FC<RouterProps> = ({isdarkMode}) => {
           <Route path='/request/custom' element={<App isdarkMode={isdarkMode} />}>
             <Route index element={<CustomRequest />} />
           </Route>
+         {/*  <Route
+            path="/request/rfr/print"
+            element={<App isdarkMode={isdarkMode} />}
+          >
+            <Route index element={<PrintRefund />} />
+          </Route> */}
+        <Route path="/print-refund" element={<PrintRefund />} />
+        <Route path="/print-stock" element={<PrintStock />} />
+        <Route path="/print-purchase" element={<PrintPurchase />} />
+        <Route path="/print-cash" element={<PrintCash />} />
+        <Route path="/print-cashDisbursement" element={<PrintCashDisbursement />} />
+        <Route path="/print-liquidation" element={<PrintLiquidation />} />
         </Routes>
       </BrowserRouter>
     </div>

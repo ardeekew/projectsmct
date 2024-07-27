@@ -101,6 +101,7 @@ const CreateApplicationCash = (props: Props) => {
   const [totalContingency, setTotalContingency] = useState(0);
   const [startDate, setStartDate] = useState(new Date());
   const navigate = useNavigate();
+  const [file, setFile] = useState<File[]>([]);
   const [customApprovers, setCustomApprovers] = useState<CustomApprover[]>([]);
   const [selectedApproverList, setSelectedApproverList] = useState<
     number | null
@@ -108,6 +109,12 @@ const CreateApplicationCash = (props: Props) => {
   const [selectedApprover, setSelectedApprover] = useState<{ name: string }[]>(
     []
   );
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+        // Convert FileList to array and set it
+        setFile(Array.from(e.target.files));
+    }
+};
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
@@ -151,27 +158,32 @@ const CreateApplicationCash = (props: Props) => {
 
   const fetchCustomApprovers = async () => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        console.error("Token is missing");
-        return;
-      }
-
-      const response = await axios.get<CustomApprover[]>(
-        "http://localhost:8000/api/custom-approvers",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const id = localStorage.getItem("id");
+        const token = localStorage.getItem("token");
+        if (!token || !id) {
+            console.error("Token or user ID is missing");
+            return;
         }
-      );
 
-      setCustomApprovers(response.data);
-      console.log("Custom Approvers:", response.data);
+        const response = await axios.get(`http://localhost:8000/api/custom-approvers/${id}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+
+        if (Array.isArray(response.data.data)) {
+            setCustomApprovers(response.data.data);
+        } else {
+            console.error("Unexpected response format:", response.data);
+            setCustomApprovers([]); // Ensure that customApprovers is always an array
+        }
+
+        console.log("Custom Approvers:", response.data.data);
     } catch (error) {
-      console.error("Error fetching custom approvers:", error);
+        console.error("Error fetching custom approvers:", error);
+        setCustomApprovers([]); // Ensure that customApprovers is always an array
     }
-  };
+};
 
   const handleOpenConfirmationModal = () => {
     setShowConfirmationModal(true);
@@ -240,11 +252,11 @@ const CreateApplicationCash = (props: Props) => {
     ]);
   };
 
-  const handleRemoveRow = () => {
+  const handleRemoveItem = () => {
     if (tableData.length > 1) {
-      const newData = [...tableData];
-      newData.pop();
-      setTableData(newData);
+      const updatedItems = [...tableData];
+      updatedItems.pop();
+      setTableData(updatedItems);
     }
   };
 
@@ -357,12 +369,24 @@ const CreateApplicationCash = (props: Props) => {
         return;
       }
 
-      // Prepare request data
-      const requestData = {
-        form_type: "Application For Cash Advance",
-        approvers_id: selectedApproverList,
-        form_data: [
-          {
+      if (file.length === 0) {
+        console.log("No file selected");
+        return;
+    }
+
+    const formData = new FormData();
+
+    file.forEach((file) => {
+      formData.append("attachment[]", file); // Use "attachment[]" to handle multiple files
+  });
+  formData.append("form_type", "Application For Cash Advance");
+        formData.append("approvers_id", String(selectedApproverList));
+        formData.append("user_id", userId);
+
+        formData.append(
+          "form_data",
+          JSON.stringify([
+              {
             branch: branch_code,
             grand_total: grand_total,
             date: data.date,
@@ -386,17 +410,16 @@ const CreateApplicationCash = (props: Props) => {
               remarks: item.remarks,
             })),
           },
-        ],
-        user_id: userId,
-      };
+      ])
+  );
 
-      console.log(requestData);
+  logFormData(formData);
 
       // Display confirmation modal
       setShowConfirmationModal(true);
 
       // Set form data to be submitted after confirmation
-      setFormData(requestData);
+      setFormData(formData);
     } catch (error) {
       console.error("An error occurred while submitting the request:", error);
     } finally {
@@ -416,7 +439,7 @@ const CreateApplicationCash = (props: Props) => {
 
     try {
       setLoading(true);
-      console.log(formData);
+      logFormData(formData);
 
       // Perform the actual form submission
       const response = await axios.post(
@@ -425,6 +448,7 @@ const CreateApplicationCash = (props: Props) => {
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
           },
         }
       );
@@ -434,6 +458,14 @@ const CreateApplicationCash = (props: Props) => {
       setLoading(false);
     } catch (error) {
       console.error("An error occurred while submitting the request:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const logFormData = (formData: any) => {
+    for (let [key, value] of formData.entries()) {
+      console.log(key, value);
     }
   };
 
@@ -765,7 +797,8 @@ const CreateApplicationCash = (props: Props) => {
                 </div>
               </div>
             </div>
-            <div className="inline-block w-full">
+            <div className="flex justify-between ">
+              <div>
               <table className="border border-black  mt-10">
                 <tr>
                   <th colSpan={2} className="bg-[#8EC7F7] ">
@@ -858,7 +891,13 @@ const CreateApplicationCash = (props: Props) => {
                   </td>
                 </tr>
               </table>
+              </div> 
+              <div className="mt-10">
+                <p className="font-semibold">Attachments:</p>
+                <input id="file" type="file" multiple onChange={handleFileChange} />
+              </div>
             </div>
+           
             <div className="space-x-3 flex justify-end mt-20 pb-10">
               <button
                 className={`bg-yellow ${buttonStyle}`}
@@ -866,12 +905,14 @@ const CreateApplicationCash = (props: Props) => {
               >
                 Add
               </button>
-              <button
-                className={`${buttonStyle} bg-pink`}
-                onClick={handleRemoveRow}
-              >
-                Cancel
-              </button>
+              {tableData.length > 1 && (
+                <button
+                  className={`${buttonStyle} bg-pink`}
+                  onClick={handleRemoveItem}
+                >
+                  Remove Item
+                </button>
+              )}
               <button
                 className={`bg-primary ${buttonStyle}`}
                 type="submit"

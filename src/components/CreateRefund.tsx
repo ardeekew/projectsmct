@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Select from "react-select/dist/declarations/src/Select";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -24,7 +24,7 @@ const schema = z.object({
   branch: z.string(),
   date: z.string(),
   approver_list_id: z.number(),
-  approver:z.string(),
+  approver: z.string(),
   items: z.array(
     z.object({
       quantity: z.string(),
@@ -48,7 +48,6 @@ const requestType = [
   { title: "Request for Refund", path: "/request/rfr" },
 ];
 
-
 const inputStyle = "w-full   border-2 border-black rounded-[12px] pl-[10px]";
 const itemDiv = "flex flex-col ";
 const buttonStyle = "h-[45px] w-[150px] rounded-[12px] text-white";
@@ -56,14 +55,18 @@ const CreateRefund = (props: Props) => {
   const [startDate, setStartDate] = useState(new Date());
   const [selectedRequestType, setSelectedRequestType] =
     useState("/request/rfr");
-    const [formData, setFormData] = useState<any>(null);
+  const [formData, setFormData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [customApprovers, setCustomApprovers] = useState<CustomApprover[]>([]);
-  const [selectedApproverList, setSelectedApproverList] = useState<number | null>(null);
-  const [selectedApprover, setSelectedApprover] = useState<{ name: string }[]>([]);
-  
+  const [selectedApproverList, setSelectedApproverList] = useState<
+    number | null
+  >(null);
+  const [selectedApprover, setSelectedApprover] = useState<{ name: string }[]>(
+    []
+  );
+  const [file, setFile] = useState<File[]>([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
@@ -74,6 +77,12 @@ const CreateRefund = (props: Props) => {
     formState: { errors },
   } = useForm<FormData>();
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      // Convert FileList to array and set it
+      setFile(Array.from(e.target.files));
+    }
+  };
   const [items, setItems] = useState<
     {
       quantity: string;
@@ -97,24 +106,36 @@ const CreateRefund = (props: Props) => {
 
   const fetchCustomApprovers = async () => {
     try {
+      const id = localStorage.getItem("id");
       const token = localStorage.getItem("token");
-      if (!token) {
-        console.error("Token is missing");
+      if (!token || !id) {
+        console.error("Token or user ID is missing");
         return;
       }
 
-      const response = await axios.get<CustomApprover[]>("http://localhost:8000/api/custom-approvers", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axios.get(
+        `http://localhost:8000/api/custom-approvers/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-      setCustomApprovers(response.data);
-      console.log("Custom Approvers:", response.data);
+      if (Array.isArray(response.data.data)) {
+        setCustomApprovers(response.data.data);
+      } else {
+        console.error("Unexpected response format:", response.data);
+        setCustomApprovers([]); // Ensure that customApprovers is always an array
+      }
+
+      console.log("Custom Approvers:", response.data.data);
     } catch (error) {
       console.error("Error fetching custom approvers:", error);
+      setCustomApprovers([]); // Ensure that customApprovers is always an array
     }
   };
+
   const handleOpenConfirmationModal = () => {
     setShowConfirmationModal(true);
   };
@@ -123,7 +144,6 @@ const CreateRefund = (props: Props) => {
   const handleCloseConfirmationModal = () => {
     setShowConfirmationModal(false);
   };
-
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -137,7 +157,9 @@ const CreateRefund = (props: Props) => {
         return;
       }
 
-      const selectedList = customApprovers.find(approver => approver.id === selectedApproverList);
+      const selectedList = customApprovers.find(
+        (approver) => approver.id === selectedApproverList
+      );
       if (!selectedList) {
         console.error("Selected approver list not found");
         return;
@@ -146,7 +168,9 @@ const CreateRefund = (props: Props) => {
       // Check if any item fields are empty
       if (
         items.some((item) =>
-          Object.entries(item).filter(([key, value]) => key !== "remarks").some(([key, value]) => value === "")
+          Object.entries(item)
+            .filter(([key, value]) => key !== "remarks")
+            .some(([key, value]) => value === "")
         )
       ) {
         console.error("Item fields cannot be empty");
@@ -160,11 +184,26 @@ const CreateRefund = (props: Props) => {
           grandTotal += parseFloat(item.totalAmount);
         }
       });
-      console.log("data", data);
-      const requestData = {
-        form_type: "Refund Request",
-        approvers_id: selectedApproverList,
-        form_data: [
+
+      if (file.length === 0) {
+        console.log("No file selected");
+        return;
+      }
+
+      const formData = new FormData();
+
+      // Append each file to FormData
+      file.forEach((file) => {
+        formData.append("attachment[]", file); // Use "attachment[]" to handle multiple files
+      });
+
+      formData.append("form_type", "Refund Request");
+      formData.append("approvers_id", String(selectedApproverList));
+      formData.append("user_id", userId);
+
+      formData.append(
+        "form_data",
+        JSON.stringify([
           {
             branch: branch_code,
             date: data.date,
@@ -177,16 +216,13 @@ const CreateRefund = (props: Props) => {
               remarks: item.remarks,
             })),
           },
-        ],
-        user_id: userId,
-      };
-      console.log(requestData);
- 
-      // Display confirmation modal
-  setShowConfirmationModal(true);
+        ])
+      );
 
-  // Set form data to be submitted after confirmation
-  setFormData(requestData);
+      // Display confirmation modal
+      setShowConfirmationModal(true);
+      logFormData(formData);
+      setFormData(formData);
     } catch (error) {
       console.error("An error occurred while submitting the request:", error);
     } finally {
@@ -196,19 +232,18 @@ const CreateRefund = (props: Props) => {
   const handleConfirmSubmit = async () => {
     // Close the confirmation modal
     setShowConfirmationModal(false);
+    const token = localStorage.getItem("token");
 
-    
     if (!selectedApproverList) {
       alert("Please select an approver.");
       return; // Prevent form submission
     }
 
-
-    const token = localStorage.getItem("token");
+   
     try {
       setLoading(true);
-      console.log(formData);
 
+      logFormData(formData);
       // Perform the actual form submission
       const response = await axios.post(
         "http://localhost:8000/api/create-request",
@@ -216,6 +251,7 @@ const CreateRefund = (props: Props) => {
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
           },
         }
       );
@@ -225,8 +261,17 @@ const CreateRefund = (props: Props) => {
       setLoading(false);
     } catch (error) {
       console.error("An error occurred while submitting the request:", error);
+     } finally {
+        setLoading(false);
+      }
+  };
+
+  const logFormData = (formData: any) => {
+    for (let [key, value] of formData.entries()) {
+      console.log(key, value);
     }
   };
+
   const navigate = useNavigate();
 
   const handleCancelSubmit = () => {
@@ -298,6 +343,16 @@ const CreateRefund = (props: Props) => {
     setItems(updatedItems);
   };
 
+  const handleTextareaHeight = (index: number, field: string) => {
+    const textarea = document.getElementById(
+      `${field}-${index}`
+    ) as HTMLTextAreaElement;
+    if (textarea) {
+      textarea.style.height = "auto"; // Reset to auto height first
+      textarea.style.height = `${Math.max(textarea.scrollHeight, 100)}px`; // Set to scroll height or minimum 100px
+    }
+  };
+  
   return (
     <div className="bg-graybg dark:bg-blackbg h-full pt-[15px] px-[30px] pb-[15px]">
       <h1 className="text-primary dark:text-primaryD text-[32px] font-bold">
@@ -322,68 +377,75 @@ const CreateRefund = (props: Props) => {
         ))}
       </select>
       <div className="bg-white w-full  mb-5 rounded-[12px] flex flex-col">
-      <div className="border-b flex justify-between flex-col px-[30px] md:flex-row ">
+        <div className="border-b flex justify-between flex-col px-[30px] md:flex-row ">
           <div>
             <h1 className=" text-[24px] text-left py-4 text-primary font-bold flex mr-2">
               <span className="mr-2 underline decoration-2 underline-offset-8">
-               Request 
+                Request
               </span>{" "}
               for Refund
             </h1>
           </div>
           <div className="my-2  ">
-          <label className="block font-semibold mb-2">Approver List:</label>
-          <select
-            {...register("approver_list_id", { required: true })}
-            value={selectedApproverList !== null ? selectedApproverList.toString() : ""}
-            onChange={(e) => setSelectedApproverList(parseInt(e.target.value))}
-            className="border-2 border-black  p-2 rounded-md w-full"
-          >
-            <option value="">Select Approver List</option>
-            {customApprovers.map(approverList => (
-              <option key={approverList.id} value={approverList.id.toString()}>
-                {approverList.name}
-              </option>
-            ))}
-          </select>
-          {errors.approver_list_id && formSubmitted && (
-            <p className="text-red-500">Please select an approver list.</p>
-          )}
+            <label className="block font-semibold mb-2">Approver List:</label>
+            <select
+              {...register("approver_list_id", { required: true })}
+              value={
+                selectedApproverList !== null
+                  ? selectedApproverList.toString()
+                  : ""
+              }
+              onChange={(e) =>
+                setSelectedApproverList(parseInt(e.target.value))
+              }
+              className="border-2 border-black  p-2 rounded-md w-full"
+            >
+              <option value="">Select Approver List</option>
+              {customApprovers.map((approverList) => (
+                <option
+                  key={approverList.id}
+                  value={approverList.id.toString()}
+                >
+                  {approverList.name}
+                </option>
+              ))}
+            </select>
+            {errors.approver_list_id && formSubmitted && (
+              <p className="text-red-500">Please select an approver list.</p>
+            )}
           </div>
         </div>
         <div className="px-[35px] mt-4">
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="flex flex-row w-1/2   mt-5 mb-4 space-x-6 ">
-            
-            
-            <div className="flex flex-col w-2/5">
-              <label className="font-semibold ">Date:</label>
-              <div>
-              <input
-                type="date"
-                {...register("date", { required: true })}
-                className="border border-black p-2 rounded-[12px] w-full"
-              />
-            </div>
-            {errors.date && formSubmitted && (
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="flex flex-row w-1/2   mt-5 mb-4 space-x-6 ">
+              <div className="flex flex-col w-2/5">
+                <label className="font-semibold ">Date:</label>
+                <div>
+                  <input
+                    type="date"
+                    {...register("date", { required: true })}
+                    className="border border-black p-2 rounded-[12px] w-full"
+                  />
+                </div>
+                {errors.date && formSubmitted && (
                   <p className="text-red-500 mr-44">Date is required</p>
                 )}
-          </div>
-          </div>
-          {items.map((item, index) => (
-            <div key={index} className="flex flex-col mt-5 mb-4">
-              <label className="font-semibold">ITEM {index + 1}</label>
-              <div className=" grid grid-cols-1 md:grid-cols-2 gap-2 lg:grid-cols-5">
-                <div className={`${itemDiv}`}>
-                  <p>Quantity</p>
-                  <input
-                    type="number"
-                    value={item.quantity}
-                    onChange={(e) =>
-                      handleInputChange(index, "quantity", e.target.value)
-                    }
-                    className={`${inputStyle} h-[44px]`}
-                  />
+              </div>
+            </div>
+            {items.map((item, index) => (
+              <div key={index} className="flex flex-col mt-5 mb-4">
+                <label className="font-semibold">ITEM {index + 1}</label>
+                <div className=" grid grid-cols-1 md:grid-cols-2 gap-2 lg:grid-cols-5">
+                  <div className={`${itemDiv}`}>
+                    <p>Quantity</p>
+                    <input
+                      type="number"
+                      value={item.quantity}
+                      onChange={(e) =>
+                        handleInputChange(index, "quantity", e.target.value)
+                      }
+                      className={`${inputStyle} h-[44px]`}
+                    />
                     {validationErrors[`items.${index}.quantity`] &&
                       formSubmitted && (
                         <p className="text-red-500">
@@ -395,18 +457,22 @@ const CreateRefund = (props: Props) => {
                       !validationErrors[`items.${index}.quantity`] && (
                         <p className="text-red-500">Quantity Required</p>
                       )}
-                </div>
-                <div className={`${itemDiv}`}>
-                  <p>Description</p>
-                  <input
-                    type="text"
-                    value={item.description}
-                    onChange={(e) =>
-                      handleInputChange(index, "description", e.target.value)
-                    }
-                    className={`${inputStyle} h-[100px]`}
-                  />
-                    {validationErrors[`items.${index}.description`] &&
+                  </div>
+                  <div key={index} className={itemDiv}>
+                    <label className="font-semibold">Description:</label>
+                    <textarea
+                      id={`description-${index}`}
+                      value={item.description}
+                      onChange={(e) =>
+                        handleInputChange(index, "description", e.target.value)
+                      }
+                      className={`${inputStyle}`}
+                      style={{ minHeight: "100px", maxHeight: "400px" }} // Minimum height 100px, maximum height 400px (optional)
+                      onFocus={() => handleTextareaHeight(index, "description")} // Adjust height on focus
+                      onBlur={() => handleTextareaHeight(index, "description")} // Adjust height on blur
+                      onInput={() => handleTextareaHeight(index, "description")} // Adjust height on input change
+                    />
+                    {validationErrors?.[`items.${index}.description`] &&
                       formSubmitted && (
                         <p className="text-red-500">
                           {validationErrors[`items.${index}.description`]}
@@ -414,23 +480,22 @@ const CreateRefund = (props: Props) => {
                       )}
                     {!item.description &&
                       formSubmitted &&
-                      !validationErrors[`items.${index}.description`] && (
+                      !validationErrors?.[`items.${index}.description`] && (
                         <p className="text-red-500">Description Required</p>
                       )}
-                  
-                </div>
-                <div className={`${itemDiv}`}>
-                  <p>Unit Cost</p>
-                  <input
-                    type="number"
-                    value={item.unitCost}
-                    onChange={(e) =>
-                      handleInputChange(index, "unitCost", e.target.value)
-                    }
-                    placeholder="₱"
-                    className={`${inputStyle} h-[44px]`}
-                  />
-                   {validationErrors[`items.${index}.unitCost`] &&
+                  </div>
+                  <div className={`${itemDiv}`}>
+                    <p>Unit Cost</p>
+                    <input
+                      type="number"
+                      value={item.unitCost}
+                      onChange={(e) =>
+                        handleInputChange(index, "unitCost", e.target.value)
+                      }
+                      placeholder="₱"
+                      className={`${inputStyle} h-[44px]`}
+                    />
+                    {validationErrors[`items.${index}.unitCost`] &&
                       formSubmitted && (
                         <p className="text-red-500">
                           {validationErrors[`items.${index}.unitCost`]}
@@ -441,20 +506,20 @@ const CreateRefund = (props: Props) => {
                       !validationErrors[`items.${index}.unitCost`] && (
                         <p className="text-red-500">Unit Cost Required</p>
                       )}
-                </div>
-                <div className={`${itemDiv}`}>
-                  <p>Total Amount</p>
-                  <input
-                    type="number"
-                    value={item.totalAmount}
-                    onChange={(e) =>
-                      handleInputChange(index, "totalAmount", e.target.value)
-                    }
-                    placeholder="₱"
-                    className={`${inputStyle} h-[44px]`}
-                    readOnly
-                />
-                   {validationErrors[`items.${index}.totalAmount`] &&
+                  </div>
+                  <div className={`${itemDiv}`}>
+                    <p>Total Amount</p>
+                    <input
+                      type="number"
+                      value={item.totalAmount}
+                      onChange={(e) =>
+                        handleInputChange(index, "totalAmount", e.target.value)
+                      }
+                      placeholder="₱"
+                      className={`${inputStyle} h-[44px]`}
+                      readOnly
+                    />
+                    {validationErrors[`items.${index}.totalAmount`] &&
                       formSubmitted && (
                         <p className="text-red-500">
                           {validationErrors[`items.${index}.totalAmount`]}
@@ -465,8 +530,8 @@ const CreateRefund = (props: Props) => {
                       !validationErrors[`items.${index}.totalAmount`] && (
                         <p className="text-red-500">Total Amount Required</p>
                       )}
-                </div>
-                <div className={`${itemDiv}`}>
+                  </div>
+                  <div className={`${itemDiv}`}>
                     <label className="font-semibold">Usage/Remarks</label>
                     <textarea
                       value={item.remarks}
@@ -476,36 +541,42 @@ const CreateRefund = (props: Props) => {
                       className={`${inputStyle} h-[100px]`}
                     />
                   </div>
+                </div>
               </div>
-            </div>
-          ))}
-            <div className="flex justify-end">
+            ))}
+            <div className="flex justify-between">
+            <div>
+                <p className="font-semibold">Attachments:</p>
+                <input id="file" type="file" multiple onChange={handleFileChange} />
+              </div>
               <p className="font-semibold">
                 Grand Total: ₱{calculateGrandTotal()}
               </p>
             </div>
-          <div className="space-x-3 flex justify-end mt-20 pb-10">
-            <button
-              className={`bg-yellow ${buttonStyle}`}
-              onClick={handleAddItem}
-            >
-              Add
-            </button>
-            <button
-              className={`${buttonStyle} bg-pink`}
-              onClick={handleRemoveItem}
-            >
-              Cancel
-            </button>
-            <button
+            <div className="space-x-3 flex justify-end mt-20 pb-10">
+              <button
+                className={`bg-yellow ${buttonStyle}`}
+                onClick={handleAddItem}
+              >
+                Add
+              </button>
+              {items.length > 1 && (
+                <button
+                  className={`${buttonStyle} bg-pink`}
+                  onClick={handleRemoveItem}
+                >
+                  Remove Item
+                </button>
+              )}
+              <button
                 className={`bg-primary ${buttonStyle}`}
                 type="submit"
                 onClick={handleFormSubmit}
               >
                 {loading ? <ClipLoader color="#36d7b7" /> : "Send Request"}
               </button>
-          </div>
-          {showConfirmationModal && (
+            </div>
+            {showConfirmationModal && (
               <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 z-50">
                 <div className="bg-white p-4 rounded-md">
                   <p>Are you sure you want to submit the request?</p>
@@ -528,7 +599,6 @@ const CreateRefund = (props: Props) => {
             )}
           </form>
         </div>
-        
       </div>
       {showSuccessModal && (
         <RequestSuccessModal onClose={handleCloseSuccessModal} />

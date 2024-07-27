@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import DataTable from "react-data-table-component";
 import axios from "axios";
-import { XMarkIcon } from "@heroicons/react/24/outline";
-
 import { Link } from "react-router-dom";
 import ViewStockModal from "./Modals/ViewStockModal";
 import ViewPurchaseModal from "./Modals/ViewPurchaseModal";
@@ -11,6 +9,12 @@ import ViewCashAdvanceModal from "./Modals/ViewCashAdvanceModal";
 import ViewLiquidationModal from "./Modals/ViewLiquidationModal";
 import ViewRequestModal from "./Modals/ViewRequestModal";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
+import ApproversStock from "./ApproverStock";
+import ApproverPurchase from "./ApproverPurchase";
+import ApproverCashAdvance from "./ApproverCashAdvance";
+import ApproverCashDisbursement from "./ApproverCashDisbursement";
+import ApproverLiquidation from "./ApproverLiquidation";
+import ApproverRefund from "./ApproverRefund";
 
 type Props = {};
 
@@ -29,15 +33,30 @@ type Record = {
   destination: string;
   grand_total: string;
   grandTotal: string;
-  approvers_id:number;
+  approvers_id: number;
 };
+
 type MyFormData = {
   approvers_id: number;
   purpose: string;
   items: MyItem[];
   approvers: {
-    noted_by: { firstName: string; lastName: string }[];
-    approved_by: { firstName: string; lastName: string }[];
+    noted_by: {
+      firstName: string;
+      lastName: string;
+      position: string;
+      signature: string;
+      status: string;
+      branch: string;
+    }[];
+    approved_by: {
+      firstName: string;
+      lastName: string;
+      position: string;
+      signature: string;
+      status: string;
+      branch: string;
+    }[];
   };
   date: string;
   branch: string;
@@ -67,7 +86,7 @@ type MyItem = {
   branch: string;
   status: string;
   day: string;
-  itinerary: string; 
+  itinerary: string;
   activity: string;
   hotel: string;
   rate: string;
@@ -80,7 +99,7 @@ type MyItem = {
   transportation: string;
   transportationAmount: string;
   hotelAmount: string;
-  hotelAddress: string; 
+  hotelAddress: string;
   grandTotal: string;
 };
 
@@ -93,25 +112,24 @@ const tableCustomStyles = {
   },
   rows: {
     style: {
-      color: "STRIPEDCOLOR",
-      backgroundColor: "STRIPEDCOLOR",
+      color: "black", // Adjust as per your design
+      backgroundColor: "#E7F1F9", // Adjust as per your design
     },
     stripedStyle: {
-      color: "NORMALCOLOR",
-      backgroundColor: "#E7F1F9",
+      color: "black", // Adjust as per your design
+      backgroundColor: "#E7F1F9", // Adjust as per your design
     },
   },
 };
 
-const Request = (props: Props) => {
+const RequestApprover = (props: Props) => {
   const [selected, setSelected] = useState(0);
-  const [data, setData] = useState([]);
   const [requests, setRequests] = useState<Record[]>([]);
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<Record | null>(null);
   const [sortOrder, setSortOrder] = useState("desc");
   const userId = localStorage.getItem("id");
-  
+
   useEffect(() => {
     if (userId) {
       console.log("Fetching data...");
@@ -127,12 +145,12 @@ const Request = (props: Props) => {
       };
 
       axios
-        .get(`http://localhost:8000/api/view-requests`, {
+        .get(`http://localhost:8000/api/request-forms/for-approval/${userId}`, {
           headers,
         })
         .then((response) => {
-          setRequests(response.data);
-          console.log("Requests:", response.data);
+          setRequests(response.data.request_forms);
+          console.log("Requests:", response.data.request_forms);
         })
         .catch((error) => {
           console.error("Error fetching requests data:", error);
@@ -150,24 +168,31 @@ const Request = (props: Props) => {
   };
 
   const filteredData = () => {
+    let filteredRequests: Record[] = [];
     switch (selected) {
       case 0: // All Requests
-        return requests;
+        filteredRequests = requests;
+        break;
       case 1: // Pending Requests
-        return requests.filter(
+        filteredRequests = requests.filter(
           (item: Record) => item.status.trim() === "Pending"
         );
-      case 2: // Approved Requests
-        return requests.filter(
+        break;
+
+      case 2: // Ongoing Requests
+        filteredRequests = requests.filter(
           (item: Record) => item.status.trim() === "Approved"
         );
-      case 3: // Unsuccessful Requests
-        return requests.filter(
-          (item: Record) => item.status.trim() === "Unapproved"
+        break;
+      case 3: // Approved Requests
+        filteredRequests = requests.filter(
+          (item: Record) => item.status.trim() === "Disapproved"
         );
-      default:
-        return requests;
+        break;
+       default:
+        filteredRequests = [];
     }
+    return filteredRequests;
   };
 
   const columns = [
@@ -198,7 +223,8 @@ const Request = (props: Props) => {
     },
     {
       name: "Branch",
-      selector: (row: Record) => row.form_data[0].branch,
+      selector: (row: Record) =>
+        row.form_data && row.form_data[0] ? row.form_data[0].branch : "N/A",
     },
     {
       name: "Status",
@@ -211,10 +237,11 @@ const Request = (props: Props) => {
               ? "bg-yellow"
               : row.status.trim() === "Approved"
               ? "bg-green"
-              : row.status.trim() === "Unapproved"
+              : row.status.trim() === "Disapproved"
               ? "bg-pink"
+            
               : ""
-          } rounded-lg py-1 w-full md:w-full xl:w-3/4 2xl:w-2/4  text-center text-white`}
+          } rounded-lg py-1 w-full md:w-full xl:w-3/4 2xl:w-2/4 text-center text-white`}
         >
           {row.status.trim()}
         </div>
@@ -233,6 +260,11 @@ const Request = (props: Props) => {
       ),
     },
   ];
+
+  const closeModal = () => {
+    setModalIsOpen(false);
+  };
+
   const refreshData = () => {
     if (userId) {
       console.log("Refreshing data...");
@@ -242,25 +274,25 @@ const Request = (props: Props) => {
         console.error("Token is missing");
         return;
       }
-  
+
       const headers = {
         Authorization: `Bearer ${token}`,
       };
-  
+
       axios
-        .get(`http://localhost:8000/api/view-request`, {
+        .get(`http://localhost:8000/api/request-forms/for-approval/${userId}`, {
           headers,
         })
         .then((response) => {
-          setRequests(response.data);
-          console.log("Requests refreshed:", response.data);
+          setRequests(response.data.request_forms);
+          console.log("Requests refreshed:", response.data.request_forms);
         })
         .catch((error) => {
           console.error("Error refreshing requests data:", error);
         });
     }
   };
-  
+
   const items = [
     "All Requests",
     "Pending Requests",
@@ -268,21 +300,17 @@ const Request = (props: Props) => {
     "Unsuccessful Requests",
   ];
 
-  const closeModal = () => {
-    setModalIsOpen(false);
-  };
-
   return (
-    <div className="bg-graybg dark:bg-blackbg w-full h-lvh pt-4 px-10 md:px-10 lg:px-30">
+    <div className="bg-graybg dark:bg-blackbg w-full h-full pb-10 pt-4 px-10 md:px-10 lg:px-30">
       <Link to="/request/sr">
         <button className="bg-primary text-white rounded-[12px] mb-2 w-[120px] sm:w-[151px] h-[34px] z-10">
           Send Request
         </button>
       </Link>
-      <div className="w-full  h-auto  drop-shadow-lg rounded-lg  md:mr-4 relative ">
-        <div className="bg-white   rounded-lg  w-full flex flex-col items-center overflow-x-auto">
-          <div className="w-full border-b-2  md:px-30">
-            <ul className=" px-2 md:px-30 flex justify-start items-center space-x-4 md:space-x-6 py-4 font-medium overflow-x-auto">
+      <div className="w-full h-auto drop-shadow-lg rounded-lg md:mr-4 relative">
+        <div className="bg-white rounded-lg w-full flex flex-col items-center overflow-x-auto">
+          <div className="w-full border-b-2 md:px-30">
+            <ul className="px-2 md:px-30 flex justify-start items-center space-x-4 md:space-x-6 py-4 font-medium overflow-x-auto">
               {items.map((item, index) => (
                 <li
                   key={index}
@@ -296,14 +324,18 @@ const Request = (props: Props) => {
               ))}
             </ul>
           </div>
-          <div className="w-full  overflow-x-auto ">
+          <div className="w-full overflow-x-auto">
             <DataTable
               columns={columns}
-              defaultSortFieldId={1}
-              data={filteredData().map((item: Record) => ({
-                ...item,
-                date: new Date(item.date),
-              }))}
+              defaultSortAsc={false}
+              data={
+                filteredData()
+                  .map((item: Record) => ({
+                    ...item,
+                    date: new Date(item.date),
+                  }))
+                  .sort((a, b) => b.id - a.id) // Sorts by id in descending order
+              }
               pagination
               striped
               customStyles={tableCustomStyles}
@@ -314,34 +346,34 @@ const Request = (props: Props) => {
       {modalIsOpen &&
         selectedRecord &&
         selectedRecord.form_type === "Stock Requisition Slip" && (
-          <ViewStockModal
+          <ApproversStock
             closeModal={closeModal}
             record={{ ...selectedRecord, date: selectedRecord.date.toString() }}
-              refreshData={refreshData}
-            />
+            refreshData={refreshData}
+          />
         )}
       {modalIsOpen &&
         selectedRecord &&
         selectedRecord.form_type === "Purchase Order Requisition Slip" && (
-          <ViewPurchaseModal
+          <ApproverPurchase
             closeModal={closeModal}
             record={{ ...selectedRecord, date: selectedRecord.date.toString() }}
             refreshData={refreshData}
-            />
+          />
         )}
       {modalIsOpen &&
         selectedRecord &&
         selectedRecord.form_type === "Cash Disbursement Requisition Slip" && (
-          <ViewCashDisbursementModal
+          <ApproverCashDisbursement
             closeModal={closeModal}
             record={{ ...selectedRecord, date: selectedRecord.date.toString() }}
             refreshData={refreshData}
-            />
+          />
         )}
       {modalIsOpen &&
         selectedRecord &&
         selectedRecord.form_type === "Application For Cash Advance" && (
-          <ViewCashAdvanceModal
+          <ApproverCashAdvance
             closeModal={closeModal}
             record={{ ...selectedRecord, date: selectedRecord.date.toString() }}
             refreshData={refreshData}
@@ -350,7 +382,7 @@ const Request = (props: Props) => {
       {modalIsOpen &&
         selectedRecord &&
         selectedRecord.form_type === "Liquidation of Actual Expense" && (
-          <ViewLiquidationModal
+          <ApproverLiquidation
             closeModal={closeModal}
             record={{ ...selectedRecord, date: selectedRecord.date.toString() }}
             refreshData={refreshData}
@@ -359,7 +391,7 @@ const Request = (props: Props) => {
       {modalIsOpen &&
         selectedRecord &&
         selectedRecord.form_type === "Refund Request" && (
-          <ViewRequestModal
+          <ApproverRefund
             closeModal={closeModal}
             record={{ ...selectedRecord, date: selectedRecord.date.toString() }}
             refreshData={refreshData}
@@ -369,4 +401,4 @@ const Request = (props: Props) => {
   );
 };
 
-export default Request;
+export default RequestApprover;

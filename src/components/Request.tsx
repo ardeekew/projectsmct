@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import DataTable from "react-data-table-component";
 import axios from "axios";
-import { XMarkIcon } from "@heroicons/react/24/outline";
-
 import { Link } from "react-router-dom";
 import ViewStockModal from "./Modals/ViewStockModal";
 import ViewPurchaseModal from "./Modals/ViewPurchaseModal";
@@ -28,8 +26,10 @@ type Record = {
   destination: string;
   grand_total: string;
   grandTotal: string;
-  approvers_id:number;
+  approvers_id: number;
+  attachment: string;
 };
+
 type MyFormData = {
   approvers_id: number;
   purpose: string;
@@ -53,6 +53,7 @@ type MyFormData = {
   short: string;
   name: string;
   signature: string;
+  attachment: string;
 };
 
 type MyItem = {
@@ -66,7 +67,7 @@ type MyItem = {
   branch: string;
   status: string;
   day: string;
-  itinerary: string; 
+  itinerary: string;
   activity: string;
   hotel: string;
   rate: string;
@@ -79,7 +80,7 @@ type MyItem = {
   transportation: string;
   transportationAmount: string;
   hotelAmount: string;
-  hotelAddress: string; 
+  hotelAddress: string;
   grandTotal: string;
 };
 
@@ -104,13 +105,13 @@ const tableCustomStyles = {
 
 const Request = (props: Props) => {
   const [selected, setSelected] = useState(0);
-  const [data, setData] = useState([]);
   const [requests, setRequests] = useState<Record[]>([]);
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<Record | null>(null);
   const [sortOrder, setSortOrder] = useState("desc");
   const userId = localStorage.getItem("id");
-  
+
+
   useEffect(() => {
     if (userId) {
       console.log("Fetching data...");
@@ -130,8 +131,8 @@ const Request = (props: Props) => {
           headers,
         })
         .then((response) => {
-          setRequests(response.data);
-          console.log("Requests:", response.data);
+          setRequests(response.data.data); // Assuming response.data.data contains your array of data
+          console.log("Requests:", response.data.data);
         })
         .catch((error) => {
           console.error("Error fetching requests data:", error);
@@ -168,7 +169,33 @@ const Request = (props: Props) => {
         return requests;
     }
   };
+  const refreshData = () => {
+    if (userId) {
+      console.log("Fetching data...");
+      console.log("User ID:", userId);
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("Token is missing");
+        return;
+      }
 
+      const headers = {
+        Authorization: `Bearer ${token}`,
+      };
+
+      axios
+        .get(`http://localhost:8000/api/view-request`, {
+          headers,
+        })
+        .then((response) => {
+          setRequests(response.data.data); // Assuming response.data.data contains your array of data
+          console.log("Requests:", response.data.data);
+        })
+        .catch((error) => {
+          console.error("Error fetching requests data:", error);
+        });
+    }
+  };
   const columns = [
     {
       name: "Request ID",
@@ -210,8 +237,11 @@ const Request = (props: Props) => {
               ? "bg-yellow"
               : row.status.trim() === "Approved"
               ? "bg-green"
-              : row.status.trim() === "Unapproved"
+              : row.status.trim() === "Disapproved"
               ? "bg-pink"
+              : row.status.trim() === "Ongoing"
+               ? "bg-primary"
+              
               : ""
           } rounded-lg py-1 w-full md:w-full xl:w-3/4 2xl:w-2/4  text-center text-white`}
         >
@@ -232,34 +262,7 @@ const Request = (props: Props) => {
       ),
     },
   ];
-  const refreshData = () => {
-    if (userId) {
-      console.log("Refreshing data...");
-      console.log("User ID:", userId);
-      const token = localStorage.getItem("token");
-      if (!token) {
-        console.error("Token is missing");
-        return;
-      }
-  
-      const headers = {
-        Authorization: `Bearer ${token}`,
-      };
-  
-      axios
-        .get(`http://localhost:8000/api/view-request`, {
-          headers,
-        })
-        .then((response) => {
-          setRequests(response.data);
-          console.log("Requests refreshed:", response.data);
-        })
-        .catch((error) => {
-          console.error("Error refreshing requests data:", error);
-        });
-    }
-  };
-  
+
   const items = [
     "All Requests",
     "Pending Requests",
@@ -295,14 +298,18 @@ const Request = (props: Props) => {
               ))}
             </ul>
           </div>
-          <div className="w-full  overflow-x-auto ">
+          <div className="w-full overflow-x-auto">
             <DataTable
               columns={columns}
-              defaultSortFieldId={1}
-              data={filteredData().map((item: Record) => ({
-                ...item,
-                date: new Date(item.date),
-              }))}
+              defaultSortAsc={false}
+              data={
+                filteredData()
+                  .map((item: Record) => ({
+                    ...item,
+                    date: new Date(item.date),
+                  }))
+                  .sort((a, b) => b.id - a.id) // Sorts by id in descending order
+              }
               pagination
               striped
               customStyles={tableCustomStyles}
@@ -316,8 +323,8 @@ const Request = (props: Props) => {
           <ViewStockModal
             closeModal={closeModal}
             record={{ ...selectedRecord, date: selectedRecord.date.toString() }}
-              refreshData={refreshData}
-            />
+            refreshData={refreshData}
+          />
         )}
       {modalIsOpen &&
         selectedRecord &&
@@ -326,7 +333,7 @@ const Request = (props: Props) => {
             closeModal={closeModal}
             record={{ ...selectedRecord, date: selectedRecord.date.toString() }}
             refreshData={refreshData}
-            />
+          />
         )}
       {modalIsOpen &&
         selectedRecord &&
@@ -335,7 +342,7 @@ const Request = (props: Props) => {
             closeModal={closeModal}
             record={{ ...selectedRecord, date: selectedRecord.date.toString() }}
             refreshData={refreshData}
-            />
+          />
         )}
       {modalIsOpen &&
         selectedRecord &&

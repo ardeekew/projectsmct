@@ -18,18 +18,29 @@ import { set } from "react-hook-form";
 import ViewApproverModal from "./ViewApproverModal";
 import AddCustomModal from "./AddCustomModal";
 import axios from "axios";
-
+import { format } from "path";
+import { ClipLoader } from "react-spinners";
 type Props = {};
 
 type Record = {
   id: number;
   name: string;
-  approvers: {
-    noted_by: { firstName: string; lastName: string }[];
-    approved_by: { firstName: string; lastName: string }[];
-  };
+  noted_by: number[];
+  approved_by: number[];
+  noted_by_details?: any[]; // Update with appropriate type if known
+  approved_by_details?: Approved_by[]; // Update with appropriate type if known
+  firstName: string;
+  lastName: string;
+  firstname: string;
+  lastname: string;
 };
-
+type Approved_by = {
+firstname: string;
+name: string;
+id: number;
+lastname: string;
+data: Record;
+};
 const tableCustomStyles = {
   headRow: {
     style: {
@@ -72,92 +83,114 @@ const CustomRequest = (props: Props) => {
   const [selectedUser, setSelectedUser] = useState<Record | null>(null);
   const [requests, setRequests] = useState<Record[]>([]);
   const userId = localStorage.getItem("id");
+  const [formattedRequests, setFormattedRequests] = useState<Record[]>([]);
+  const [loading, setLoading] = useState(false);
+/*   useEffect(() => {
+    fetchRequests();
+  }, [userId]);  */// useEffect will re-run whenever userId changes
 
   useEffect(() => {
-    fetchRequests();
-  }, [userId]); // useEffect will re-run whenever userId changes
-
-  const fetchRequests = () => {
-    if (userId) {
+    const fetchRequests = () => {
+      if (userId) {
+        setLoading(true);
         console.log("Fetching data...");
         console.log("User ID:", userId);
         const token = localStorage.getItem("token");
         if (!token) {
-            console.error("Token is missing");
-            return;
+          console.error("Token is missing");
+          return;
         }
-
+  
         const headers = {
-            Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         };
-
+  
         axios
-            .get(`http://localhost:8000/api/custom-approvers?user_id=${userId}`, {
-                headers,
-            })
-            .then((response) => {
-                console.log("Response:", response.data); // Log the entire response object
-                const formattedRequests = response.data.map((item: any) => {
-                    let notedBy = [];
-                    let approvedBy = [];
-
-                    try {
-                        // Parse the stringified JSON in approvers field
-                        const approversArray = JSON.parse(item.approvers);
-
-                        // Extract noted_by array if it exists and is an array
-                        if (approversArray[0]?.noted_by && Array.isArray(approversArray[0].noted_by)) {
-                            notedBy = approversArray[0].noted_by.map((notedByItem:any) => ({
-                                id: notedByItem.id,
-                                firstName: notedByItem.firstName,
-                                lastName: notedByItem.lastName,
-                                email: notedByItem.email,
-                                position: notedByItem.position,
-                            }));
-                            console.log("NOTED BY:", notedBy);
-                        }
-
-                        // Extract approved_by array if it exists and is an array
-                        if (approversArray[0]?.approved_by && Array.isArray(approversArray[0].approved_by)) {
-                            approvedBy = approversArray[0].approved_by.map((approvedByItem: any) => ({
-                                id: approvedByItem.id,
-                                firstName: approvedByItem.firstName,
-                                lastName: approvedByItem.lastName,
-                                email: approvedByItem.email,
-                                position: approvedByItem.position,
-                            }));
-                            console.log("Approved BY:", approvedBy);
-                        }
-                    } catch (error) {
-                        console.error("Error parsing approvers JSON:", error);
-                    }
-
-                    return {
-                        id: item.id,
-                        name: item.name,
-                        approvers: {
-                            noted_by: notedBy,
-                            approved_by: approvedBy,
-                        },
-                        created_at: item.created_at,
-                        updated_at: item.updated_at,
-                    };
-                });
-
-                console.table("formatted:", formattedRequests); // Log formatted requests
-                // Assuming setRequests is a state setter function
-                setRequests(formattedRequests);
-            })
-            .catch((error) => {
-                console.error("Error fetching requests data:", error);
-            });
-    }
-};
+          .get(`http://localhost:8000/api/custom-approvers/${userId}`, {
+            headers,
+          })
+          .then(async (response) => {
+            console.log("Response:", response.data);
+            const responseData = response.data;
+            if (!Array.isArray(responseData.data)) {
+              console.error("Expected data to be an array:", responseData);
+              return;
+            }
+  
+            const customApprovers: any[] = responseData.data;
+  
+            const formattedRequests: Record[] = [];
+  
+            for (let item of customApprovers) {
+              let notedByDetails: any[] = [];
+              let approvedByDetails: any[] = [];
+  
+              // Parse noted_by and approved_by arrays
+              let notedByArray = JSON.parse(item.noted_by);
+              let approvedByArray = JSON.parse(item.approved_by);
+  
+              // Fetch details for noted_by
+              for (let notedById of notedByArray) {
+           
+                await axios
+                  .get(`http://localhost:8000/api/approvers/${notedById}`, {
+                    headers,
+                  })
+                  .then((response) => {
+                    notedByDetails.push(response.data);
+                  })
+                  .catch((error) => {
+                    console.error(`Error fetching approver ${notedById} details:`, error);
+                  });
+              }
+  
+              // Fetch details for approved_by
+              for (let approvedById of approvedByArray) {
+                await axios
+                  .get(`http://localhost:8000/api/approvers/${approvedById}`, {
+                    headers,
+                  })
+                  .then((response) => {
+                    approvedByDetails.push(response.data);
+                  })
+                  .catch((error) => {
+                    console.error(`Error fetching approver ${approvedById} details:`, error);
+                  });
+              }
+              console.log("mehehe")
+              formattedRequests.push({
+                id: item.id,
+                name: item.name,
+                firstName: "", // Add the missing properties
+                lastName: "",
+                firstname: "",
+                lastname: "",
+                noted_by: notedByArray,
+                approved_by: approvedByArray,
+                noted_by_details: notedByDetails,
+                approved_by_details: approvedByDetails,
+              });
+            }
+            setLoading(false);
+            console.log("Formatted Requests:", formattedRequests);
+            setRequests(formattedRequests);
+          })
+          .catch((error) => {
+            setLoading(false);
+            console.error("Error fetching requests data:", error);
+          });
+      }
+    };
+  
+    fetchRequests();
+  }, [userId]);
+  
 
   const deleteUser = async () => {};
   const refreshData = () => {
     if (userId) {
-      console.log("Refreshing data...");
+      setLoading(true);
+      console.log("Fetching data...");
       console.log("User ID:", userId);
       const token = localStorage.getItem("token");
       if (!token) {
@@ -170,18 +203,83 @@ const CustomRequest = (props: Props) => {
       };
 
       axios
-        .get(`http://localhost:8000/api/custom-approvers`, {
+        .get(`http://localhost:8000/api/custom-approvers/${userId}`, {
           headers,
         })
-        .then((response) => {
-          setRequests(response.data);
-          console.log("Requests refreshed:", response.data);
+        .then(async (response) => {
+          console.log("Response:", response.data);
+          const responseData = response.data;
+          if (!Array.isArray(responseData.data)) {
+            console.error("Expected data to be an array:", responseData);
+            return;
+          }
+
+          const customApprovers: any[] = responseData.data;
+
+          const formattedRequests: Record[] = [];
+
+          for (let item of customApprovers) {
+            let notedByDetails: any[] = [];
+            let approvedByDetails: any[] = [];
+
+            // Parse noted_by and approved_by arrays
+            let notedByArray = JSON.parse(item.noted_by);
+            let approvedByArray = JSON.parse(item.approved_by);
+
+            // Fetch details for noted_by
+            for (let notedById of notedByArray) {
+         
+              await axios
+                .get(`http://localhost:8000/api/approvers/${notedById}`, {
+                  headers,
+                })
+                .then((response) => {
+                  notedByDetails.push(response.data);
+                })
+                .catch((error) => {
+                  console.error(`Error fetching approver ${notedById} details:`, error);
+                });
+            }
+
+            // Fetch details for approved_by
+            for (let approvedById of approvedByArray) {
+              await axios
+                .get(`http://localhost:8000/api/approvers/${approvedById}`, {
+                  headers,
+                })
+                .then((response) => {
+                  approvedByDetails.push(response.data);
+                })
+                .catch((error) => {
+                  console.error(`Error fetching approver ${approvedById} details:`, error);
+                });
+            }
+            console.log("mehehe")
+            formattedRequests.push({
+              id: item.id,
+              name: item.name,
+              firstName: "", // Add the missing properties
+              lastName: "",
+              firstname: "",
+              lastname: "",
+              noted_by: notedByArray,
+              approved_by: approvedByArray,
+              noted_by_details: notedByDetails,
+              approved_by_details: approvedByDetails,
+            });
+          }
+          setLoading(false);
+          console.log("Formatted Requests:", formattedRequests);
+          setRequests(formattedRequests);
         })
         .catch((error) => {
-          console.error("Error refreshing requests data:", error);
+          setLoading(false);
+          console.error("Error fetching requests data:", error);
         });
     }
+  
   };
+
 
   const viewModalShow = (row: Record) => {
     setSelectedUser(row);
@@ -238,42 +336,73 @@ const CustomRequest = (props: Props) => {
     setDeleteModal(false);
   };
 
+
   const closeDeleteSuccessModal = () => {
     setShowDeletedSuccessModal(false);
   };
+
 
   const columns = [
     {
       name: "ID",
       selector: (row: Record) => row.id,
-      width: "20%",
+      width: "10%",
     },
+   
     {
       name: "Name",
       selector: (row: Record) => row.name,
-      width: "20%",
+      width: "25%",
     },
     {
-      name: "Approvers",
+      name:"Noted By",
       cell: (row: Record) => (
-        <div className="grid w-full grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-2">
-          {row.approvers.noted_by.map((notedBy, index) => (
-            <div
-              key={index}
-              className="flex flex-col text-center  rounded-lg space-y-2 gap-x-4"
-            >
-              <p className="bg-primary w-full py-2 rounded-xl text-white">{`${notedBy.firstName}`}</p>
+        <div className="w-full">
+          {row.noted_by_details && row.noted_by_details.length > 0 ? (
+            <div className="grid md:grid-cols-3">
+              {row.noted_by_details.map((approver) => (
+               <div
+               className="w-full md:w-3/4 text-center px-2  bg-pink rounded-[12px] py-2 text-white flex justify-center items-center  my-1"
+               key={approver.data.id}
+             >
+                  {`${approver.data.firstname} ${approver.data.lastname}`}
+                </div>
+              ))}
             </div>
-          ))}
-          {row.approvers.approved_by.map((approvedBy, index) => (
-            <div key={index} className="flex flex-col text-center space-y-2 ">
-              <p className="bg-pink py-2 w-full rounded-xl text-white">{`${approvedBy.firstName}`}</p>
-            </div>
-          ))}
+          ) : (
+            <div className="w-full text-center mb-2">No Approved By</div>
+          )}
+          
+         
         </div>
       ),
-      width: "45%",
     },
+    {
+      name: "Approved By",
+      cell: (row: Record) => (
+        <div className="w-full">
+          {row.approved_by_details && row.approved_by_details.length > 0 ? (
+            <div className="grid md:grid-cols-3">
+              {row.approved_by_details.map((approver) => (
+                <div
+                  className="w-full md:w-3/4 text-center px-2  bg-primary rounded-[12px] py-2 text-white flex justify-center items-center  my-1"
+                  key={approver.data.id}
+                >
+                  {`${approver.data.firstname} ${approver.data.lastname}`}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="w-full text-center mb-2">No Approved By</div>
+          )}
+          
+         
+        </div>
+      ),
+    },
+
+    
+    
     {
       name: "Modify",
       cell: (row: Record) => (
@@ -282,6 +411,7 @@ const CustomRequest = (props: Props) => {
             className="text-primary size-10 cursor-pointer "
             onClick={editModalShow}
           />
+         
           <TrashIcon
             className="text-[#A30D11] size-10 cursor-pointer"
             onClick={deleteModalShow}
@@ -294,7 +424,9 @@ const CustomRequest = (props: Props) => {
           </button>
         </div>
       ),
+      width: "14%",
     },
+    
   ];
 
   return (
@@ -314,17 +446,23 @@ const CustomRequest = (props: Props) => {
               </button>
             </div>
           </div>
-          <DataTable
-            columns={columns}
-            data={requests}
-            pagination
-            striped
-            customStyles={tableCustomStyles}
-          />
+          {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <ClipLoader size={50} color={"#123abc"} loading={loading} />
+        </div>
+      ) : (
+        <DataTable
+          columns={columns}
+          data={requests}
+          pagination
+          striped
+          customStyles={tableCustomStyles}
+        />
+      )}
         </div>
       </div>
       <AddCustomModal
-        refreshData={fetchRequests}
+        refreshData={refreshData}
         modalIsOpen={modalIsOpen}
         closeModal={closeModal}
         openCompleteModal={openCompleteModal}

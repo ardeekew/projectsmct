@@ -1,6 +1,4 @@
-// Nav.tsx
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   MoonIcon,
   SunIcon,
@@ -46,13 +44,16 @@ const Nav: React.FC<NavProps> = ({
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [userInfo, setUserInfo] = useState(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleClose = () => {
     setIsOpen(false);
   };
+
   const toggleProfileDropdown = () => {
-    setIsOpen(!isOpen);
+    setIsOpen((prev) => !prev);
   };
+
   useEffect(() => {
     const fetchUserInfoFromDatabase = async () => {
       const id = localStorage.getItem("id");
@@ -74,6 +75,23 @@ const Nav: React.FC<NavProps> = ({
 
     fetchUserInfoFromDatabase();
   }, [updateUserInfo]); // Fetch user info whenever updateUserInfo changes
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   return (
     <div className={`nav-container ${darkMode ? "dark" : "white"}`}>
@@ -112,29 +130,30 @@ const Nav: React.FC<NavProps> = ({
               src={Avatar}
               height={45}
               width={45}
-              onClick={() => setIsOpen(!isOpen)}
+              onClick={toggleProfileDropdown}
             />
             {/* USER NAME */}
             <p
               className="pl-2 lg:text-[18px] text-[12px] dark:text-white cursor-pointer"
-              onClick={() => setIsOpen(!isOpen)}
+              onClick={toggleProfileDropdown}
             >
               {firstName} {lastName}
             </p>
             {!isOpen ? (
               <ChevronDownIcon
                 className="size-[25px] text-black dark:text-white cursor-pointer"
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={toggleProfileDropdown}
               />
             ) : (
               <ChevronUpIcon
                 className="size-[25px] text-black dark:text-white cursor-pointer"
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={toggleProfileDropdown}
               />
             )}
             {/* Profile dropdown */}
             {isOpen && (
               <div
+                ref={dropdownRef}
                 className="w-full border-x-2 border-b-2 bg-white absolute top-11 overflow-x-hidden z-50"
                 style={{ zIndex: 1000 }}
               >

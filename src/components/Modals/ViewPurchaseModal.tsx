@@ -4,6 +4,9 @@ import axios from "axios";
 import BeatLoader from "react-spinners/BeatLoader";
 import { PencilIcon } from "@heroicons/react/24/solid";
 import EditStockModalSuccess from "./EditStockModalSuccess";
+import ClipLoader from "react-spinners/ClipLoader";
+import Avatar from "../assets/avatar.png";
+import PrintPurchase from "../PrintPurchase";
 type Props = {
   closeModal: () => void;
   record: Record;
@@ -11,9 +14,16 @@ type Props = {
 };
 interface Approver {
   id: number;
+  firstname: string;
+  lastname: string;
   firstName: string;
   lastName: string;
   name: string;
+  comment: string;
+  position: string;
+  signature: string;
+  status: string;
+  branch: string;
 }
 type Record = {
   id: number;
@@ -26,6 +36,7 @@ type Record = {
   date: string;
   user_id: number;
   grand_total: string;
+  attachment: string;
 };
 
 type FormData = {
@@ -61,28 +72,84 @@ const ViewPurchaseModal: React.FC<Props> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editedDate, setEditedDate] = useState("");
   const [loading, setLoading] = useState(false);
-  const [editedApprovers, setEditedApprovers] = useState<number>(record.approvers_id);
+  const [editedApprovers, setEditedApprovers] = useState<number>(
+    record.approvers_id
+  );
   const [errorMessage, setErrorMessage] = useState("");
   const [approvers, setApprovers] = useState<Approver[]>([]);
   const [fetchingApprovers, setFetchingApprovers] = useState(false);
   const [newSupplier, setNewSupplier] = useState("");
   const [newAddress, setNewAddress] = useState("");
   const [savedSuccessfully, setSavedSuccessfully] = useState(false);
+  const [comments, setComments] = useState("");
+  const [approvedBy, setApprovedBy] = useState<Approver[]>([]);
+  const [notedBy, setNotedBy] = useState<Approver[]>([]);
+  const [customApprovers, setCustomApprovers] = useState<any>(null);
+  const [isFetchingApprovers, setisFetchingApprovers] = useState(false);
+  const [isFetchingUser, setisFetchingUser] = useState(false);
+  const [user, setUser] = useState<any>({});
+  const [attachmentUrl, setAttachmentUrl] = useState<string[]>([]);
+  const [printWindow, setPrintWindow] = useState<Window | null>(null);
+  const [newAttachments, setNewAttachments] = useState<File[]>([]);
+  const [originalAttachments, setOriginalAttachments] = useState<string[]>([]);
+  const [removedAttachments, setRemovedAttachments] = useState<number[]>([]);
   useEffect(() => {
     const currentUserId = localStorage.getItem("id");
-
+    const attachments = JSON.parse(record.attachment);
     const userId = currentUserId ? parseInt(currentUserId) : 0;
 
     setNewData(record.form_data[0].items.map((item) => ({ ...item })));
     setEditableRecord(record);
     setNewAddress(record.form_data[0].address);
     setNewSupplier(record.form_data[0].supplier); // Initialize checkedPurpose with the original purpose
-
+    setEditedApprovers(record.approvers_id);
     if (currentUserId) {
-      fetchApprovers(userId, parseInt(currentUserId)); // Fetch approvers based on currentUserId
+      fetchUser(record.user_id);
+      fetchCustomApprovers(record.id);
+      fetchApprovers(userId); // Fetch approvers based on userId
+    }
+    try {
+      if (typeof record.attachment === "string") {
+        // Parse the JSON string if it contains the file path
+        const parsedAttachment: string[] = JSON.parse(record.attachment);
+
+        if (parsedAttachment.length > 0) {
+          // Construct file URLs
+          const fileUrls = parsedAttachment.map(filePath =>
+            `http://localhost:8000/storage/${filePath.replace(/\\/g, '/')}`
+          );
+          setAttachmentUrl(fileUrls);
+        }
+      }
+    } catch (error) {
+      console.error("Error parsing attachment:", error);
     }
   }, [record]);
+  const fetchUser = async (id: number) => {
+    setisFetchingUser(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("Token is missing");
+      }
 
+      const response = await axios.get(
+        `http://localhost:8000/api/view-user/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log("response", response.data.data);
+      setUser(response.data);
+    } catch (error) {
+      console.error("Failed to fetch approvers:", error);
+    } finally {
+      setisFetchingUser(false);
+    }
+  };
   const handleEdit = () => {
     setEditedDate(editableRecord.form_data[0].date); // Initialize editedDate with the original date
     setIsEditing(true);
@@ -90,6 +157,9 @@ const ViewPurchaseModal: React.FC<Props> = ({
 
   const handleCancelEdit = () => {
     setIsEditing(false);
+    setAttachmentUrl(attachmentUrl);
+    setNewAttachments([]); // Clear new attachments
+    setRemovedAttachments([]); // Reset removed attachments
     setNewAddress(record.form_data[0].address);
     setEditedApprovers(record.approvers_id);
     setNewSupplier(record.form_data[0].supplier); // Reset checkedPurpose to original value
@@ -157,16 +227,16 @@ const ViewPurchaseModal: React.FC<Props> = ({
       approvers_id: editedApprovers,
     }));
   };
-  const fetchApprovers = async (userId: number, currentUserId: number) => {
-    setFetchingApprovers(true);
+  const fetchCustomApprovers = async (id: number) => {
+    setisFetchingApprovers(true);
     try {
       const token = localStorage.getItem("token");
       if (!token) {
         throw new Error("Token is missing");
       }
 
-      const response = await axios.get<Approver[]>(
-        `http://localhost:8000/api/custom-approvers/?user_id=${currentUserId}`, // Use currentUserId in the query parameter
+      const response = await axios.get(
+        `http://localhost:8000/api/request-forms/${id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -174,15 +244,56 @@ const ViewPurchaseModal: React.FC<Props> = ({
         }
       );
 
-      const approversData = response.data;
+      const { notedby, approvedby } = response.data;
+      setNotedBy(notedby);
+      setApprovedBy(approvedby);
+
+      console.log("notedby", notedby);
+      console.log("approvedby", approvedby);
+    } catch (error) {
+      console.error("Failed to fetch approvers:", error);
+    } finally {
+      setisFetchingApprovers(false);
+    }
+  };
+  const fetchApprovers = async (userId: number) => {
+    setFetchingApprovers(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("Token is missing");
+      }
+
+      const response = await axios.get(
+        `http://localhost:8000/api/custom-approvers/${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const approversData = Array.isArray(response.data.data)
+        ? response.data.data
+        : [];
       setApprovers(approversData);
-      console.log("data", approversData);
+      console.log("Approvers:", approvers);
     } catch (error) {
       console.error("Failed to fetch approvers:", error);
     } finally {
       setFetchingApprovers(false);
     }
   };
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      setNewAttachments(Array.from(event.target.files));
+    }
+  };
+
+  const handleRemoveAttachment = (index: number) => {
+    setRemovedAttachments((prevRemoved) => [...prevRemoved, index]);
+  };
+  console.log('newAttach',newAttachments);
   const handleSaveChanges = async () => {
     // Simple validation
     if (
@@ -208,11 +319,12 @@ const ViewPurchaseModal: React.FC<Props> = ({
         return;
       }
 
-      const requestData = {
-        updated_at: new Date().toISOString(),
-        approvers_id: editedApprovers,
-        form_data: [
-          {
+      const formData = new FormData();
+      formData.append("updated_at", new Date().toISOString());
+      formData.append("approvers_id", JSON.stringify(editedApprovers));
+        formData.append(
+          "form_data",
+          JSON.stringify([{
             branch: editableRecord.form_data[0].branch,
             date:
               editedDate !== "" ? editedDate : editableRecord.form_data[0].date,
@@ -221,49 +333,64 @@ const ViewPurchaseModal: React.FC<Props> = ({
             supplier: newSupplier,
             address: newAddress,
             items: newData,
-          },
-        ],
-      };
+          }])
+        );
 
-      // Update editableRecord with the new data
-      setEditableRecord((prevState) => ({
-        ...prevState,
-        approvers_id: editedApprovers,
-        form_data: [
+        attachmentUrl.forEach((url, index) => {
+          const path = url.split('storage/attachments/')[1];
+          formData.append(`attachment_url_${index}`, path);
+        });
+    
+        // Append new attachments
+        newAttachments.forEach((file) => {
+          formData.append("new_attachments[]", file);
+        });
+
+        const response = await axios.post(
+          `http://localhost:8000/api/update-request/${record.id}`,
+          formData,
           {
-            ...prevState.form_data[0],
-            items: newData,
-            date: editedDate !== "" ? editedDate : prevState.form_data[0].date,
-            supplier: newSupplier,
-            address: newAddress,
-          },
-        ],
-      }));
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
 
-      const response = await axios.put(
-        `http://localhost:8000/api/update-request/${record.id}`,
-        requestData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      console.log("Stock requisition updated successfully:", response.data);
+      console.log("Purchase Modal updated successfully:", response.data);
       setLoading(false);
       setIsEditing(false);
       setSavedSuccessfully(true);
       refreshData();
     } catch (error: any) {
+      setLoading(false);
       setErrorMessage(
         error.response?.data?.message ||
           error.message ||
-          "Failed to update stock requisition."
+          "Failed to update Purchase Modal."
       );
     }
   };
+  console.log("Record:", record.approvers_id);
+  const handlePrint = () => {
+    // Construct the data object to be passed
+    const data = {
+      id: record,
+      approvedBy: approvedBy,
+      notedBy: notedBy,
+      user: user,
+    };
+    console.log("dataas", data);
 
+    localStorage.setItem("printData", JSON.stringify(data));
+    // Open a new window with PrintRefund component
+    const newWindow = window.open(`/print-purchase`, "_blank");
+
+    // Optional: Focus the new window
+    if (newWindow) {
+      newWindow.focus();
+    }
+  };
   return (
     <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 z-50">
       <div className="p-4 relative w-full mx-10 md:mx-0 z-10 md:w-1/2 space-y-auto h-3/4 overflow-scroll bg-white border-black rounded-t-lg shadow-lg">
@@ -271,17 +398,39 @@ const ViewPurchaseModal: React.FC<Props> = ({
           <XMarkIcon className="h-6 w-6 text-black" onClick={closeModal} />
         </div>
         <div className="justify-start items-start flex flex-col space-y-4 w-full">
+        {!fetchingApprovers && !isFetchingApprovers && (
+  <>
+    <button
+      className="bg-blue-600 p-1 px-2 rounded-md text-white"
+      onClick={handlePrint}
+    >
+      Print
+    </button>
+    {printWindow && (
+      <PrintPurchase
+        data={{
+          id: record,
+          approvedBy: approvedBy,
+          notedBy: notedBy,
+          user: user,
+        }}
+      />
+    )}
+  </>
+)}
           <h1 className="font-semibold text-[18px]">Purchase Modal</h1>
           <p className="font-medium text-[14px]">Request ID:#{record.id}</p>
           <div className="flex w-full md:w-1/2 items-center">
             <p>Status:</p>
             <p
               className={`${
-                record.status === "Pending"
+                record.status.trim() === "Pending"
                   ? "bg-yellow"
-                  : record.status === "Approved"
+                  : record.status.trim() === "Approved"
                   ? "bg-green"
-                  : "bg-pink"
+                  : record.status.trim() === "Disapproved"
+                  ? "bg-pink"
+                  : ""
               } rounded-lg  py-1 w-1/3
              font-medium text-[14px] text-center ml-2 text-white`}
             >
@@ -292,7 +441,7 @@ const ViewPurchaseModal: React.FC<Props> = ({
 
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2 w-full">
             <div className="w-full">
-              <h1>Branch</h1>
+              <h1>Branches</h1>
               <input
                 type="text"
                 className="border border-black rounded-md p-1 mt-2 w-full "
@@ -340,7 +489,7 @@ const ViewPurchaseModal: React.FC<Props> = ({
                 />
               )}
             </div>
-           
+
             <div className="w-full">
               <h1>Address</h1>
               {isEditing ? (
@@ -457,6 +606,15 @@ const ViewPurchaseModal: React.FC<Props> = ({
             </div>
             {errorMessage && <p className="text-red-500">{errorMessage}</p>}
           </div>
+          <div className="w-full">
+            <h1>Grand Total</h1>
+            <input
+              type="text"
+              className="border border-black rounded-md p-1 mt-2 w-full font-bold "
+              value={`₱ ${editableRecord.form_data[0].grand_total}`}
+              readOnly
+            />
+          </div>
           <div className="w-full pr-12">
             <h1>Approvers</h1>
             {fetchingApprovers ? (
@@ -464,10 +622,12 @@ const ViewPurchaseModal: React.FC<Props> = ({
             ) : (
               <select
                 className="border w-1/2 mt-2 h-10 border-black rounded-lg"
-                value={isEditing ? editedApprovers : editableRecord.approvers_id}
+                value={
+                  isEditing ? editedApprovers : editableRecord.approvers_id
+                }
                 onChange={(e) => {
                   const selectedApproverId = parseInt(e.target.value);
-                    console.log("Selected Approver ID:", selectedApproverId);
+                  console.log("Selected Approver ID:", selectedApproverId);
                   setEditedApprovers(selectedApproverId);
                 }}
                 disabled={!isEditing}
@@ -475,12 +635,109 @@ const ViewPurchaseModal: React.FC<Props> = ({
                 <option value="" disabled>
                   Approver List
                 </option>
-                {approvers.flat().map((approver) => (
+                {approvers.map((approver) => (
                   <option key={approver.id} value={approver.id}>
                     {approver.name}
                   </option>
                 ))}
               </select>
+            )}
+          </div>
+
+          <div className="w-full flex-col justify-center items-center">
+            {isFetchingApprovers ? (
+              <div className="flex items-center justify-center w-full h-40">
+                <h1>Fetching..</h1>
+              </div>
+            ) : (
+              <div className="flex flex-wrap">
+                <div className="ml-5 mb-4">
+                  <h3 className="font-bold mb-3">Requested By:</h3>
+                  <div className="flex flex-row justify-start space-x-2">
+                    <div className="flex flex-col items-center justify-center text-center">
+                      <p className="relative inline-block uppercase font-medium text-center pt-6">
+                        <img
+                          className="absolute top-2"
+                          src={user.data?.signature}
+                          alt="avatar"
+                          width={120}
+                        />
+
+                        <span className="relative z-10 px-2">
+                          {user.data?.firstName} {user.data?.lastName}
+                        </span>
+                        <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black -mx-4"></span>
+                      </p>
+                      <p className="font-bold text-[12px] text-center">
+                        {user.data?.position}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mb-4 ml-5">
+                  <h3 className="font-bold mb-3">Noted By:</h3>
+                  <ul className="flex flex-row space-x-6">
+                    {notedBy.map((user, index) => (
+                      <li
+                        className="flex flex-row justify-start space-x-2"
+                        key={index}
+                      >
+                        <div className="flex flex-col items-center justify-center text-center">
+                          <p className="relative inline-block uppercase font-medium text-center pt-6">
+                            {user.status === "approved" && (
+                              <img
+                                className="absolute top-2"
+                                src={user.signature}
+                                alt="avatar"
+                                width={120}
+                              />
+                            )}
+                            <span className="relative z-10 px-2">
+                              {user.firstname} {user.lastname}
+                            </span>
+                            <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black -mx-4"></span>
+                          </p>
+                          <p className="font-bold text-[12px] text-center">
+                            {user.position}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="mb-4 ml-5">
+                  <h3 className="font-bold mb-3">Approved By:</h3>
+                  <ul className="flex flex-row space-x-6">
+                    {approvedBy.map((user, index) => (
+                      <li
+                        className="flex flex-row justify-start space-x-2"
+                        key={index}
+                      >
+                        <div className="flex flex-col items-center justify-center text-center">
+                          <p className="relative inline-block uppercase font-medium text-center pt-6">
+                            {user.status === "approved" && (
+                              <img
+                                className="absolute top-2"
+                                src={user.signature}
+                                alt="avatar"
+                                width={120}
+                              />
+                            )}
+                            <span className="relative z-10 px-2">
+                              {user.firstname} {user.lastname}
+                            </span>
+                            <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black -mx-4"></span>
+                          </p>
+                          <p className="font-bold text-[12px] text-center">
+                            {user.position}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
             )}
           </div>
           <div className="w-full">
@@ -493,16 +750,83 @@ const ViewPurchaseModal: React.FC<Props> = ({
               readOnly
             />
           </div>
-          
           <div className="w-full">
-            <h1 className="flex">
-              Comments<p className="text-red-600">*</p>
-            </h1>
-            <textarea
-              className="border h-32 border-black rounded-md p-1 mt-2 w-full "
-              placeholder="e.g."
-              readOnly
-            />
+            <h1 className="font-bold">Attachments:</h1>
+            <div>
+            {attachmentUrl
+            .filter((_, index) => !removedAttachments.includes(index))
+            .map((url, index) => (
+                <div key={index} className="flex items-center space-x-2">
+                  <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-500">
+                  {url.split("/").pop()}
+                  </a>
+                 {isEditing && ( 
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveAttachment(index)}
+                    className="text-red-500"
+                  >
+                    Remove
+                  </button>
+                )}
+                </div>
+              ))}
+            </div>
+            {isEditing && (
+              <div>
+                <input
+                  type="file"
+                  multiple
+                  onChange={handleFileChange}
+                  className="mt-2"
+                />
+              </div>
+            )}
+          </div>
+          <div className="w-full">
+            <h2 className="text-lg font-bold mb-2">Comments</h2>
+            <ul className="flex flex-col w-full mb-4 space-y-4">
+              {notedBy
+                .filter((user) => user.comment)
+                .map((user, index) => (
+                  <div className="flex flex-row w-full" key={index}>
+                    <img
+                      alt="logo"
+                      className="cursor-pointer hidden sm:block"
+                      src={Avatar}
+                      height={35}
+                      width={45}
+                    />
+                    <li className="flex flex-col justify-between pl-2">
+                      <h3 className="font-bold text-lg">
+                        {user.firstname} {user.lastname}
+                      </h3>
+                      <p>{user.comment}</p>
+                    </li>
+                  </div>
+                ))}
+            </ul>
+            <ul className="flex flex-col w-full mb-4 space-y-4">
+              {approvedBy
+                .filter((user) => user.comment)
+                .map((user, index) => (
+                  <div className="flex flex-row w-full" key={index}>
+                    <img
+                      alt="logo"
+                      className="cursor-pointer hidden sm:block"
+                      src={Avatar}
+                      height={35}
+                      width={45}
+                    />
+                    <li className="flex flex-col justify-between pl-2">
+                      <h3 className="font-bold text-lg">
+                        {user.firstname} {user.lastname}
+                      </h3>
+                      <p>{user.comment}</p>
+                    </li>
+                  </div>
+                ))}
+            </ul>
           </div>
 
           <div className="md:absolute right-11 top-2 items-center">
@@ -526,13 +850,15 @@ const ViewPurchaseModal: React.FC<Props> = ({
                 </button>
               </div>
             ) : (
-              <button
-                className="bg-blue-500 ml-2 rounded-xl p-2 flex text-white"
-                onClick={handleEdit}
-              >
-                <PencilIcon className="h-6 w-6 mr-2" />
-                Edit
-              </button>
+            
+                <button
+                  className="bg-blue-500 ml-2 rounded-xl p-2 flex text-white"
+                  onClick={handleEdit}
+                >
+                  <PencilIcon className="h-6 w-6 mr-2" />
+                  Edit
+                </button>
+              
             )}
           </div>
         </div>

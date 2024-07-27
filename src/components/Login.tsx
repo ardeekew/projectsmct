@@ -77,7 +77,7 @@ const Login: React.FC = () => {
           response.data.signature
         );
         if (response.data.role === "approver") {
-          navigate("/dashboardapprover");
+          navigate("/dashboard/approver");
         } else {
           navigate("/dashboard");
         }

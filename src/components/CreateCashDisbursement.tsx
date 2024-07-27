@@ -57,6 +57,7 @@ const CreateCashDisbursement = (props: Props) => {
   const [selectedApproverList, setSelectedApproverList] = useState<
     number | null
   >(null);
+  const [file, setFile] = useState<File[]>([]);
   const [selectedApprover, setSelectedApprover] = useState<{ name: string }[]>(
     []
   );
@@ -66,7 +67,12 @@ const CreateCashDisbursement = (props: Props) => {
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({});
-
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+        // Convert FileList to array and set it
+        setFile(Array.from(e.target.files));
+    }
+};
   const navigate = useNavigate();
   const [items, setItems] = useState<
     {
@@ -85,9 +91,7 @@ const CreateCashDisbursement = (props: Props) => {
       remarks: "",
     },
   ]);
-  useEffect(() => {
-    fetchCustomApprovers();
-  }, []);
+ 
 
   const {
     register,
@@ -97,29 +101,38 @@ const CreateCashDisbursement = (props: Props) => {
   const handleOpenConfirmationModal = () => {
     setShowConfirmationModal(true);
   };
+  useEffect(() => {
+    fetchCustomApprovers();
+  }, []);
+
   const fetchCustomApprovers = async () => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        console.error("Token is missing");
-        return;
-      }
-
-      const response = await axios.get<CustomApprover[]>(
-        "http://localhost:8000/api/custom-approvers",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const id = localStorage.getItem("id");
+        const token = localStorage.getItem("token");
+        if (!token || !id) {
+            console.error("Token or user ID is missing");
+            return;
         }
-      );
 
-      setCustomApprovers(response.data);
-      console.log("Custom Approvers:", response.data);
+        const response = await axios.get(`http://localhost:8000/api/custom-approvers/${id}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+
+        if (Array.isArray(response.data.data)) {
+            setCustomApprovers(response.data.data);
+        } else {
+            console.error("Unexpected response format:", response.data);
+            setCustomApprovers([]); // Ensure that customApprovers is always an array
+        }
+
+        console.log("Custom Approvers:", response.data.data);
     } catch (error) {
-      console.error("Error fetching custom approvers:", error);
+        console.error("Error fetching custom approvers:", error);
+        setCustomApprovers([]); // Ensure that customApprovers is always an array
     }
-  };
+};
   // Function to close the confirmation modal
   const handleCloseConfirmationModal = () => {
     setShowConfirmationModal(false);
@@ -162,12 +175,27 @@ const CreateCashDisbursement = (props: Props) => {
           grandTotal += parseFloat(item.totalAmount);
         }
       });
-      console.log("data", data);
-      const requestData = {
-        form_type: "Cash Disbursement Requisition Slip",
-        approvers_id: selectedApproverList,
-        form_data: [
-          {
+
+      if (file.length === 0) {
+        console.log("No file selected");
+        return;
+    }
+
+    const formData = new FormData();
+
+     // Append each file to FormData
+     file.forEach((file) => {
+      formData.append("attachment[]", file); // Use "attachment[]" to handle multiple files
+  });
+
+  formData.append("form_type", "Cash Disbursement Requisition Slip");
+  formData.append("approvers_id", String(selectedApproverList));
+  formData.append("user_id", userId);
+
+  formData.append(
+    "form_data",
+    JSON.stringify([
+        {
             date: data.date,
             branch: branch_code,
             grand_total: grandTotal.toFixed(2),
@@ -179,14 +207,13 @@ const CreateCashDisbursement = (props: Props) => {
               remarks: item.remarks,
             })),
           },
-        ],
-        user_id: userId,
-      };
+      ])
+  );
       // Display confirmation modal
       setShowConfirmationModal(true);
-
+      setFormData(formData);
       // Set form data to be submitted after confirmation
-      setFormData(requestData);
+      logFormData(formData);
     } catch (error) {
       console.error("An error occurred while submitting the request:", error);
     } finally {
@@ -206,15 +233,17 @@ const CreateCashDisbursement = (props: Props) => {
 
     try {
       setLoading(true);
-      console.log(formData);
+
+      logFormData(formData);
 
       // Perform the actual form submission
-      const response = await axios.post(
+     const response = await axios.post(
         "http://localhost:8000/api/create-request",
-        formData, // Use the formData stored in state
+        formData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
           },
         }
       );
@@ -224,6 +253,14 @@ const CreateCashDisbursement = (props: Props) => {
       setLoading(false);
     } catch (error) {
       console.error("An error occurred while submitting the request:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const logFormData = (formData: any) => {
+    for (let [key, value] of formData.entries()) {
+      console.log(key, value);
     }
   };
 
@@ -496,10 +533,17 @@ const CreateCashDisbursement = (props: Props) => {
                 </div>
               </div>
             ))}
-            <div className="flex justify-end">
-              <p className="font-semibold">
-                Grand Total: ₱{calculateGrandTotal()}
-              </p>
+
+             <div className="flex justify-between">
+              <div>
+                <p className="font-semibold">Attachments:</p>
+                <input id="file" type="file" multiple onChange={handleFileChange} />
+              </div>
+              <div>
+                <p className="font-semibold">
+                  Grand Total: ₱{calculateGrandTotal()}
+                </p>
+              </div>
             </div>
             <div className="space-x-3 flex justify-end mt-20 pb-10">
               <button

@@ -315,6 +315,10 @@ const Registration: React.FC = () => {
       setValue("branch", "Honda Des, Inc.");
     }
   };
+  const capitalizeWords = (str: string) => {
+    return str.replace(/\b\w+/g, (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
+  };
+  
   const submitData = async (data: UserCredentials) => {
     try {
       setLoading(true);
@@ -333,8 +337,8 @@ const Registration: React.FC = () => {
         email: data.email,
         password: data.password,
         userName: data.userName,
-        firstName: data.firstName,
-        lastName: data.lastName,
+        firstName: capitalizeWords(data.firstName),
+        lastName: capitalizeWords(data.lastName),
         contact: data.contact,
         branch_code: data.branchCode,
         position: data.position,
@@ -568,27 +572,7 @@ const Registration: React.FC = () => {
               </div>
             </div>
             <div className={`${fieldStyle}`}>
-              <div className="w-1/2 mb-4">
-                <h1 className={`${headerStyle}`}>Branch</h1>
-                <Controller
-                  name="branch"
-                  control={control}
-                  render={({ field }) => (
-                    <input
-                      {...field}
-                    readOnly
-                      className="w-full lg:h-[56px] md:h-10 p-2 bg-gray-300 rounded-lg"
-            
-                    />
-                  )}
-                />
-                {errors.branch && (
-                  <span className="text-red-500 text-xs">
-                    {errors.branch.message}
-                  </span>
-                )}
-              </div>
-              <div className="w-1/2 mb-4">
+            <div className="w-1/2 mb-4">
                 <h1 className={`${headerStyle}`}>Branch Code</h1>
                 <div className="relative">
                   <Controller
@@ -616,6 +600,27 @@ const Registration: React.FC = () => {
                   )}
                 </div>
               </div>
+              <div className="w-1/2 mb-4">
+                <h1 className={`${headerStyle}`}>Branch</h1>
+                <Controller
+                  name="branch"
+                  control={control}
+                  render={({ field }) => (
+                    <input
+                      {...field}
+                    readOnly
+                      className="w-full lg:h-[56px] md:h-10 p-2 bg-gray-300 rounded-lg"
+            
+                    />
+                  )}
+                />
+                {errors.branch && (
+                  <span className="text-red-500 text-xs">
+                    {errors.branch.message}
+                  </span>
+                )}
+              </div>
+              
             </div>
 
             <div className={`${fieldStyle}`}>

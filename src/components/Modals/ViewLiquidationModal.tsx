@@ -5,7 +5,9 @@ import BeatLoader from "react-spinners/BeatLoader";
 import EditStockModalSuccess from "./EditStockModalSuccess";
 import { ClipLoader } from "react-spinners";
 import { PencilIcon } from "@heroicons/react/24/solid";
-
+import Avatar from "../assets/avatar.png";
+import PrintLiquidation
+ from "../PrintLiquidation";
 type Props = {
   closeModal: () => void;
   record: Record;
@@ -13,9 +15,17 @@ type Props = {
 };
 interface Approver {
   id: number;
+  firstname: string;
+  lastname: string;
   firstName: string;
   lastName: string;
   name: string;
+  comment: string;
+  position: string;
+  signature: string;
+  status: string;
+  branch: string;
+  
 }
 type Record = {
   id: number;
@@ -28,6 +38,7 @@ type Record = {
   date: string;
   user_id: number;
   destination: string;
+  attachment: string;
 };
 
 type FormData = {
@@ -81,17 +92,30 @@ const ViewLiquidationModal: React.FC<Props> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [cashAdvance, setCashAdvance] = useState("");
   const [loading, setLoading] = useState(false);
-  const [editedApprovers, setEditedApprovers] = useState<number>(record.approvers_id);
+  const [editedApprovers, setEditedApprovers] = useState<number>(
+    record.approvers_id
+  );
   const [approvers, setApprovers] = useState<Approver[]>([]);
   const [fetchingApprovers, setFetchingApprovers] = useState(false);
   const [savedSuccessfully, setSavedSuccessfully] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [editedDate, setEditedDate] = useState("");
   const [newCashAdvance, setNewCashAdvance] = useState("");
-
+  const [notedBy, setNotedBy] = useState<Approver[]>([]);
+  const [approvedBy, setApprovedBy] = useState<Approver[]>([]);
+  const [isFetchingApprovers, setisFetchingApprovers] = useState(false);
+  const [customApprovers, setCustomApprovers] = useState<Approver[]>([]);
+  const [isFetchingUser, setisFetchingUser] = useState(false);
+  const [user, setUser] = useState<any>({});
+  const [attachmentUrl, setAttachmentUrl] = useState<string[]>([]);
+  const [printWindow, setPrintWindow] = useState<Window | null>(null);
+  const [newAttachments, setNewAttachments] = useState<File[]>([]);
+  const [originalAttachments, setOriginalAttachments] = useState<string[]>([]);
+  const [removedAttachments, setRemovedAttachments] = useState<number[]>([]);
+  
   useEffect(() => {
     const currentUserId = localStorage.getItem("id");
-
+    const attachments = JSON.parse(record.attachment);
     // Ensure currentUserId and userId are converted to numbers if they exist
     const userId = currentUserId ? parseInt(currentUserId) : 0;
     setNewData(record.form_data[0].items.map((item) => ({ ...item })));
@@ -99,13 +123,58 @@ const ViewLiquidationModal: React.FC<Props> = ({
     setNewCashAdvance(record.form_data[0].cashAdvance);
 
     if (currentUserId) {
-      fetchApprovers(userId, parseInt(currentUserId)); // Fetch approvers based on currentUserId
+      fetchUser(record.user_id);
+      fetchCustomApprovers(record.id);
+      fetchApprovers(userId); // Fetch approvers based on userId
+    }
+    try {
+      if (typeof record.attachment === "string") {
+        // Parse the JSON string if it contains the file path
+        const parsedAttachment: string[] = JSON.parse(record.attachment);
+
+        if (parsedAttachment.length > 0) {
+          // Construct file URLs
+          const fileUrls = parsedAttachment.map(filePath =>
+            `http://localhost:8000/storage/${filePath.replace(/\\/g, '/')}`
+          );
+          setAttachmentUrl(fileUrls);
+        }
+      }
+    } catch (error) {
+      console.error("Error parsing attachment:", error);
     }
   }, [record]);
+  const fetchUser = async (id: number) => {
+    setisFetchingUser(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("Token is missing");
+      }
 
+      const response = await axios.get(
+        `http://localhost:8000/api/view-user/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log("response", response.data.data);
+      setUser(response.data);
+    } catch (error) {
+      console.error("Failed to fetch approvers:", error);
+    } finally {
+      setisFetchingUser(false);
+    }
+  };
   const handleCancelEdit = () => {
     setIsEditing(false);
     setEditedApprovers(record.approvers_id);
+    setAttachmentUrl(attachmentUrl);
+    setNewAttachments([]); // Clear new attachments
+    setRemovedAttachments([]); // Reset removed attachments
     // Reset newData to original values
     setNewData(record.form_data[0].items.map((item) => ({ ...item })));
     setEditableRecord((prevState) => ({
@@ -133,7 +202,44 @@ const ViewLiquidationModal: React.FC<Props> = ({
     const short = cashAdvance - totalExpense;
     return short.toFixed(2);
   };
+  const fetchCustomApprovers = async (id: number) => {
+    setisFetchingApprovers(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("Token is missing");
+      }
 
+      const response = await axios.get(
+        `http://localhost:8000/api/request-forms/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const { notedby, approvedby } = response.data;
+      setNotedBy(notedby);
+      setApprovedBy(approvedby);
+    
+      console.log("notedby", notedby);
+      console.log("approvedby", approvedby);
+    } catch (error) {
+      console.error("Failed to fetch approvers:", error);
+    } finally {
+      setisFetchingApprovers(false);
+    }
+  };
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      setNewAttachments(Array.from(event.target.files));
+    }
+  };
+
+  const handleRemoveAttachment = (index: number) => {
+    setRemovedAttachments((prevRemoved) => [...prevRemoved, index]);
+  };
   const handleEdit = () => {
     setEditedDate(editableRecord.form_data[0].date);
 
@@ -183,11 +289,14 @@ const ViewLiquidationModal: React.FC<Props> = ({
         return;
       }
 
-      const requestData = {
-        updated_at: new Date().toISOString(),
-        approvers_id: editedApprovers,
-        form_data: [
-          {
+      const formData = new FormData();
+      formData.append("updated_at", new Date().toISOString());
+      formData.append("approvers_id", JSON.stringify(editedApprovers));
+
+
+      formData.append(
+        "form_data",
+        JSON.stringify([{
             branch: editableRecord.form_data[0].branch,
             date:
               editedDate !== "" ? editedDate : editableRecord.form_data[0].date,
@@ -202,33 +311,28 @@ const ViewLiquidationModal: React.FC<Props> = ({
               parseFloat(newCashAdvance)
             ).toString(),
             signature: editableRecord.form_data[0].signature,
-          },
-        ],
-      };
+          }])
+        );
+  
 
-      // Update editableRecord with the new data
-      setEditableRecord((prevState) => ({
-        ...prevState,
-        approvers_id: editedApprovers,
-        form_data: [
-          {
-            ...prevState.form_data[0],
-            items: newData,
-            date: editedDate !== "" ? editedDate : prevState.form_data[0].date,
-            name: editableRecord.form_data[0].name,
-            signature: editableRecord.form_data[0].signature,
-            totalExpense: calculateTotalExpense(),
-            cashAdvance: newCashAdvance,
-          },
-        ],
-      }));
-      console.log("editableRecord:", editableRecord);
-      const response = await axios.put(
+      // Append existing attachments
+      attachmentUrl.forEach((url, index) => {
+        const path = url.split('storage/attachments/')[1];
+        formData.append(`attachment_url_${index}`, path);
+      });
+  
+      // Append new attachments
+      newAttachments.forEach((file) => {
+        formData.append("new_attachments[]", file);
+      });
+  
+      const response = await axios.post(
         `http://localhost:8000/api/update-request/${record.id}`,
-        requestData,
+        formData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
           },
         }
       );
@@ -239,6 +343,7 @@ const ViewLiquidationModal: React.FC<Props> = ({
       setSavedSuccessfully(true);
       refreshData();
     } catch (error: any) {
+      setLoading(false);
       setErrorMessage(
         error.response?.data?.message ||
           error.message ||
@@ -298,7 +403,7 @@ const ViewLiquidationModal: React.FC<Props> = ({
     }));
   };
 
-  const fetchApprovers = async (userId: number, currentUserId: number) => {
+  const fetchApprovers = async (userId: number) => {
     setFetchingApprovers(true);
     try {
       const token = localStorage.getItem("token");
@@ -306,8 +411,8 @@ const ViewLiquidationModal: React.FC<Props> = ({
         throw new Error("Token is missing");
       }
 
-      const response = await axios.get<Approver[]>(
-        `http://localhost:8000/api/custom-approvers/?user_id=${currentUserId}`, // Use currentUserId in the query parameter
+      const response = await axios.get(
+        `http://localhost:8000/api/custom-approvers/${userId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -315,23 +420,63 @@ const ViewLiquidationModal: React.FC<Props> = ({
         }
       );
 
-      const approversData = response.data;
+      const approversData = Array.isArray(response.data.data)
+        ? response.data.data
+        : [];
       setApprovers(approversData);
-      console.log("data", approversData);
+      console.log("Approvers:", approvers);
     } catch (error) {
       console.error("Failed to fetch approvers:", error);
     } finally {
       setFetchingApprovers(false);
     }
   };
-
+  const handlePrint = () => {
+    // Construct the data object to be passed
+    const data = {
+      id: record,
+      approvedBy: approvedBy,
+      notedBy: notedBy,
+      user: user,
+    };
+    console.log("dataas", data);
+  
+    localStorage.setItem("printData", JSON.stringify(data));
+    // Open a new window with PrintRefund component
+    const newWindow = window.open(`/print-liquidation`, "_blank");
+  
+    // Optional: Focus the new window
+    if (newWindow) {
+      newWindow.focus();
+    }
+  };
   return (
     <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="p-4 relative w-full px-10 md:mx-0 z-10 md:w-1/2 lg:w-10/12 space-y-auto h-4/5 overflow-scroll bg-white border-black rounded-t-lg shadow-lg">
+      <div className="p-4 relative w-full px-10 md:mx-0 z-10 md:w-1/2 lg:w-2/3 space-y-auto h-4/5 overflow-scroll bg-white border-black rounded-t-lg shadow-lg">
         <div className=" top-2 flex justify-end cursor-pointer sticky">
           <XMarkIcon className="h-6 w-6 text-black" onClick={closeModal} />
         </div>
         <div className="justify-start items-start flex flex-col space-y-2 w-full">
+        {!fetchingApprovers && !isFetchingApprovers && (
+  <>
+    <button
+      className="bg-blue-600 p-1 px-2 rounded-md text-white"
+      onClick={handlePrint}
+    >
+      Print
+    </button>
+    {printWindow && (
+      <PrintLiquidation
+        data={{
+          id: record,
+          approvedBy: approvedBy,
+          notedBy: notedBy,
+          user: user,
+        }}
+      />
+    )}
+  </>
+)}
           <h1 className="font-semibold text-[18px]">
             Liquidation of Actual Expense
           </h1>
@@ -340,11 +485,13 @@ const ViewLiquidationModal: React.FC<Props> = ({
             <p>Status:</p>
             <p
               className={`${
-                record.status === "Pending"
-                  ? "bg-yellow"
-                  : record.status === "Approved"
-                  ? "bg-green"
-                  : "bg-pink"
+                record.status.trim() === "Pending"
+                ? "bg-yellow"
+                : record.status.trim() === "Approved"
+                ? "bg-green"
+                : record.status.trim() === "Disapproved"
+                ? "bg-pink"
+                : ""
               } rounded-lg  py-1 w-1/3
              font-medium text-[14px] text-center ml-2 text-white`}
             >
@@ -685,7 +832,7 @@ const ViewLiquidationModal: React.FC<Props> = ({
                     <p className="font-semibold pl-2    ">SIGNATURE</p>
                   </td>
                   <td className={`${tableStyle}`}>
-                    <img src={record.form_data[0].signature}  />
+                    <img src={record.form_data[0].signature} />
                   </td>
                 </tr>
                 <tr>
@@ -706,10 +853,12 @@ const ViewLiquidationModal: React.FC<Props> = ({
             ) : (
               <select
                 className="border w-1/2 mt-2 h-10 border-black rounded-lg"
-                value={isEditing ? editedApprovers : editableRecord.approvers_id}
+                value={
+                  isEditing ? editedApprovers : editableRecord.approvers_id
+                }
                 onChange={(e) => {
                   const selectedApproverId = parseInt(e.target.value);
-                    console.log("Selected Approver ID:", selectedApproverId);
+                  console.log("Selected Approver ID:", selectedApproverId);
                   setEditedApprovers(selectedApproverId);
                 }}
                 disabled={!isEditing}
@@ -725,15 +874,179 @@ const ViewLiquidationModal: React.FC<Props> = ({
               </select>
             )}
           </div>
+          <div className="w-full flex-col justify-center items-center">
+            {isFetchingApprovers ? (
+              <div className="flex items-center justify-center w-full h-40">
+                <h1>Fetching..</h1>
+              </div>
+            ) : (
+              <div className="flex flex-wrap">
+                <div className="ml-5 mb-4">
+                  <h3 className="font-bold mb-3">Requested By:</h3>
+                  <div className="flex flex-row justify-start space-x-2">
+                    <div className="flex flex-col items-center justify-center text-center">
+                      <p className="relative inline-block uppercase font-medium text-center pt-6">
+                        <img
+                          className="absolute top-2"
+                          src={user.data?.signature}
+                          alt="avatar"
+                          width={120}
+                        />
+
+                        <span className="relative z-10 px-2">
+                          {user.data?.firstName} {user.data?.lastName}
+                        </span>
+                        <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black -mx-4"></span>
+                      </p>
+                      <p className="font-bold text-[12px] text-center">
+                        {user.data?.position}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mb-4 ml-5">
+                  <h3 className="font-bold mb-3">Noted By:</h3>
+                  <ul className="flex flex-row space-x-6">
+                    {notedBy.map((user, index) => (
+                      <li
+                        className="flex flex-row justify-start space-x-2"
+                        key={index}
+                      >
+                        <div className="flex flex-col items-center justify-center text-center">
+                          <p className="relative inline-block uppercase font-medium text-center pt-6">
+                            {user.status === "approved" && (
+                              <img
+                                className="absolute top-2"
+                                src={user.signature}
+                                alt="avatar"
+                                width={120}
+                              />
+                            )}
+                            <span className="relative z-10 px-2">
+                              {user.firstname} {user.lastname}
+                            </span>
+                            <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black -mx-4"></span>
+                          </p>
+                          <p className="font-bold text-[12px] text-center">
+                            {user.position}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="mb-4 ml-5">
+                  <h3 className="font-bold mb-3">Approved By:</h3>
+                  <ul className="flex flex-row space-x-6">
+                    {approvedBy.map((user, index) => (
+                      <li
+                        className="flex flex-row justify-start space-x-2"
+                        key={index}
+                      >
+                        <div className="flex flex-col items-center justify-center text-center">
+                          <p className="relative inline-block uppercase font-medium text-center pt-6">
+                            {user.status === "approved" && (
+                              <img
+                                className="absolute top-2"
+                                src={user.signature}
+                                alt="avatar"
+                                width={120}
+                              />
+                            )}
+                            <span className="relative z-10 px-2">
+                              {user.firstname} {user.lastname}
+                            </span>
+                            <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black -mx-4"></span>
+                          </p>
+                          <p className="font-bold text-[12px] text-center">
+                            {user.position}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+          </div>
           <div className="w-full">
-            <h1 className="flex">
-              Comments<p className="text-red-600">*</p>
-            </h1>
-            <textarea
-              className="border h-32 border-black rounded-md p-1 mt-2 w-full "
-              placeholder="e.g."
-              readOnly
-            />
+            <h1 className="font-bold">Attachments:</h1>
+            <div>
+            {attachmentUrl
+            .filter((_, index) => !removedAttachments.includes(index))
+            .map((url, index) => (
+                <div key={index} className="flex items-center space-x-2">
+                  <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-500">
+                  {url.split("/").pop()}
+                  </a>
+                 {isEditing && ( 
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveAttachment(index)}
+                    className="text-red-500"
+                  >
+                    Remove
+                  </button>
+                )}
+                </div>
+              ))}
+            </div>
+            {isEditing && (
+              <div>
+                <input
+                  type="file"
+                  multiple
+                  onChange={handleFileChange}
+                  className="mt-2"
+                />
+              </div>
+            )}
+          </div>
+          <div className="w-full">
+            <h2 className="text-lg font-bold mb-2">Comments</h2>
+            <ul className="flex flex-col w-full mb-4 space-y-4">
+              {notedBy
+                .filter((user) => user.comment)
+                .map((user, index) => (
+                  <div className="flex flex-row w-full" key={index}>
+                    <img
+                      alt="logo"
+                      className="cursor-pointer hidden sm:block"
+                      src={Avatar}
+                      height={35}
+                      width={45}
+                    />
+                    <li className="flex flex-col justify-between pl-2">
+                      <h3 className="font-bold text-lg">
+                        {user.firstname} {user.lastname}
+                      </h3>
+                      <p>{user.comment}</p>
+                    </li>
+                  </div>
+                ))}
+            </ul>
+            <ul className="flex flex-col w-full mb-4 space-y-4">
+              {approvedBy
+                .filter((user) => user.comment)
+                .map((user, index) => (
+                  <div className="flex flex-row w-full" key={index}>
+                    <img
+                      alt="logo"
+                      className="cursor-pointer hidden sm:block"
+                      src={Avatar}
+                      height={35}
+                      width={45}
+                    />
+                    <li className="flex flex-col justify-between pl-2">
+                      <h3 className="font-bold text-lg">
+                        {user.firstname} {user.lastname}
+                      </h3>
+                      <p>{user.comment}</p>
+                    </li>
+                  </div>
+                ))}
+            </ul>
           </div>
           <div className="md:absolute right-16 top-2 items-center">
             {isEditing ? (
