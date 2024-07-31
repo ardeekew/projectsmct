@@ -8,7 +8,6 @@ import { set } from "react-hook-form";
 import Avatar from "../assets/avatar.png";
 import PrintRefund from "../PrintRefund";
 
-
 type Props = {
   closeModal: () => void;
   record: Record;
@@ -32,7 +31,7 @@ type Record = {
   branch: string;
   date: string;
   user_id: number;
-  attachment:string;
+  attachment: string;
 };
 
 type FormData = {
@@ -108,8 +107,9 @@ const ViewRequestModal: React.FC<Props> = ({
 
         if (parsedAttachment.length > 0) {
           // Construct file URLs
-          const fileUrls = parsedAttachment.map(filePath =>
-            `http://localhost:8000/storage/${filePath.replace(/\\/g, '/')}`
+          const fileUrls = parsedAttachment.map(
+            (filePath) =>
+              `http://localhost:8000/storage/${filePath.replace(/\\/g, "/")}`
           );
           setAttachmentUrl(fileUrls);
         }
@@ -118,7 +118,7 @@ const ViewRequestModal: React.FC<Props> = ({
       console.error("Error parsing attachment:", error);
     }
   }, [record]);
- const fetchUser = async (id: number) => {
+  const fetchUser = async (id: number) => {
     setisFetchingUser(true);
     try {
       const token = localStorage.getItem("token");
@@ -159,14 +159,13 @@ const ViewRequestModal: React.FC<Props> = ({
           },
         }
       );
-     console.log("response", response.data);
+      console.log("response", response.data);
       const { notedby, approvedby } = response.data;
       setNotedBy(notedby);
       setApprovedBy(approvedby);
       setApprovers(approvers);
       console.log("notedby", notedby);
       console.log("approvedby", approvedby);
-     
     } catch (error) {
       console.error("Failed to fetch approvers:", error);
     } finally {
@@ -282,24 +281,26 @@ const ViewRequestModal: React.FC<Props> = ({
       formData.append("updated_at", new Date().toISOString());
       formData.append("approvers_id", JSON.stringify(editedApprovers));
 
-     formData.append(
+      formData.append(
         "form_data",
-        JSON.stringify([{
+        JSON.stringify([
+          {
             branch: editableRecord.form_data[0].branch,
             date:
               editedDate !== "" ? editedDate : editableRecord.form_data[0].date,
             status: editableRecord.status,
             grand_total: editableRecord.form_data[0].grand_total,
             items: newData,
-          }])
-        );
+          },
+        ])
+      );
 
-       // Append existing attachments
+      // Append existing attachments
       attachmentUrl.forEach((url, index) => {
-        const path = url.split('storage/attachments/')[1];
+        const path = url.split("storage/attachments/")[1];
         formData.append(`attachment_url_${index}`, path);
       });
-  
+
       // Append new attachments
       newAttachments.forEach((file) => {
         formData.append("new_attachments[]", file);
@@ -315,7 +316,6 @@ const ViewRequestModal: React.FC<Props> = ({
           },
         }
       );
-  
 
       console.log("Request refund updated successfully:", response.data);
       setLoading(false);
@@ -361,7 +361,7 @@ const ViewRequestModal: React.FC<Props> = ({
       setFetchingApprovers(false);
     }
   };
- const handlePrint = () => {
+  const handlePrint = () => {
     // Construct the data object to be passed
     const data = {
       id: record,
@@ -387,26 +387,26 @@ const ViewRequestModal: React.FC<Props> = ({
           <XMarkIcon className="h-6 w-6 text-black" onClick={closeModal} />
         </div>
         <div className="justify-start items-start flex flex-col space-y-4 w-full">
-        {!fetchingApprovers && !isFetchingApprovers && (
-  <>
-    <button
-      className="bg-blue-600 p-1 px-2 rounded-md text-white"
-      onClick={handlePrint}
-    >
-      Print
-    </button>
-    {printWindow && (
-      <PrintRefund
-        data={{
-          id: record,
-          approvedBy: approvedBy,
-          notedBy: notedBy,
-          user: user,
-        }}
-      />
-    )}
-  </>
-)}
+          {!fetchingApprovers && !isFetchingApprovers && (
+            <>
+              <button
+                className="bg-blue-600 p-1 px-2 rounded-md text-white"
+                onClick={handlePrint}
+              >
+                Print
+              </button>
+              {printWindow && (
+                <PrintRefund
+                  data={{
+                    id: record,
+                    approvedBy: approvedBy,
+                    notedBy: notedBy,
+                    user: user,
+                  }}
+                />
+              )}
+            </>
+          )}
           <h1 className="font-semibold text-[18px]">Refund Request</h1>
           <p className="font-medium text-[14px]">Request ID:#{record.id}</p>
           <div className="flex w-full md:w-1/2 items-center">
@@ -414,12 +414,12 @@ const ViewRequestModal: React.FC<Props> = ({
             <p
               className={`${
                 record.status.trim() === "Pending"
-                ? "bg-yellow"
-                : record.status.trim() === "Approved"
-                ? "bg-green"
-                : record.status.trim() === "Disapproved"
-                ? "bg-pink"
-                : ""
+                  ? "bg-yellow"
+                  : record.status.trim() === "Approved"
+                  ? "bg-green"
+                  : record.status.trim() === "Disapproved"
+                  ? "bg-pink"
+                  : ""
               } rounded-lg  py-1 w-1/3
              font-medium text-[14px] text-center ml-2 text-white`}
             >
@@ -687,31 +687,36 @@ const ViewRequestModal: React.FC<Props> = ({
                       </li>
                     ))}
                   </ul>
-                </div> 
+                </div>
               </div>
             )}
           </div>
           <div className="w-full">
             <h1 className="font-bold">Attachments:</h1>
             <div>
-            {attachmentUrl
-            .filter((_, index) => !removedAttachments.includes(index))
-            .map((url, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-500">
-                  {url.split("/").pop()}
-                  </a>
-                 {isEditing && ( 
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveAttachment(index)}
-                    className="text-red-500"
-                  >
-                    Remove
-                  </button>
-                )}
-                </div> 
-              ))}
+              {attachmentUrl
+                .filter((_, index) => !removedAttachments.includes(index))
+                .map((url, index) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500"
+                    >
+                      {url.split("/").pop()}
+                    </a>
+                    {isEditing && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveAttachment(index)}
+                        className="text-red-500"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                ))}
             </div>
             {isEditing && (
               <div>
@@ -723,49 +728,57 @@ const ViewRequestModal: React.FC<Props> = ({
                 />
               </div>
             )}
-          </div> 
+          </div>
           <div className="w-full">
-  <h2 className="text-lg font-bold mb-2">Comments</h2>
-  <ul className="flex flex-col w-full mb-4 space-y-4">
-    {notedBy.filter(user => user.comment).map((user, index) => (
-      <div className="flex flex-row w-full" key={index}>
-        <img
-          alt="logo"
-          className="cursor-pointer hidden sm:block"
-          src={Avatar}
-          height={35}
-          width={45}
-        />
-        <li className="flex flex-col justify-between pl-2">
-          <h3 className="font-bold text-lg">{user.firstname} {user.lastname}</h3>
-          <p>{user.comment}</p>
-        </li>
-      </div>
-    ))}
-  </ul>
-  <ul className="flex flex-col w-full mb-4 space-y-4">
-    {approvedBy.filter(user => user.comment).map((user, index) => (
-      <div className="flex flex-row w-full" key={index}>
-        <img
-          alt="logo"
-          className="cursor-pointer hidden sm:block"
-          src={Avatar}
-          height={35}
-          width={45}
-        />
-        <li className="flex flex-col justify-between pl-2">
-          <h3 className="font-bold text-lg">{user.firstname} {user.lastname}</h3>
-          <p>{user.comment}</p>
-        </li>
-      </div>
-    ))}
-  </ul>
-</div>
+            <h2 className="text-lg font-bold mb-2">Comments</h2>
+            <ul className="flex flex-col w-full mb-4 space-y-4">
+              {notedBy
+                .filter((user) => user.comment)
+                .map((user, index) => (
+                  <div className="flex flex-row w-full" key={index}>
+                    <img
+                      alt="logo"
+                      className="cursor-pointer hidden sm:block"
+                      src={Avatar}
+                      height={35}
+                      width={45}
+                    />
+                    <li className="flex flex-col justify-between pl-2">
+                      <h3 className="font-bold text-lg">
+                        {user.firstname} {user.lastname}
+                      </h3>
+                      <p>{user.comment}</p>
+                    </li>
+                  </div>
+                ))}
+            </ul>
+            <ul className="flex flex-col w-full mb-4 space-y-4">
+              {approvedBy
+                .filter((user) => user.comment)
+                .map((user, index) => (
+                  <div className="flex flex-row w-full" key={index}>
+                    <img
+                      alt="logo"
+                      className="cursor-pointer hidden sm:block"
+                      src={Avatar}
+                      height={35}
+                      width={45}
+                    />
+                    <li className="flex flex-col justify-between pl-2">
+                      <h3 className="font-bold text-lg">
+                        {user.firstname} {user.lastname}
+                      </h3>
+                      <p>{user.comment}</p>
+                    </li>
+                  </div>
+                ))}
+            </ul>
+          </div>
           <div className="md:absolute right-11 top-2 items-center">
             {isEditing ? (
               <div>
                 <button
-                  className="bg-primary text-white  items-center h-10 rounded-xl p-2"
+                  className="bg-primary text-white items-center h-10 rounded-xl p-2"
                   onClick={handleSaveChanges}
                 >
                   {loading ? (
@@ -775,20 +788,23 @@ const ViewRequestModal: React.FC<Props> = ({
                   )}
                 </button>
                 <button
-                  className="bg-red-600  rounded-xl text-white ml-2 p-2"
+                  className="bg-red-600 rounded-xl text-white ml-2 p-2"
                   onClick={handleCancelEdit}
                 >
                   Cancel
                 </button>
               </div>
             ) : (
-              <button
-                className="bg-blue-500 ml-2 rounded-xl p-2 flex text-white"
-                onClick={handleEdit}
-              >
-                <PencilIcon className="h-6 w-6 mr-2" />
-                Edit
-              </button>
+              !fetchingApprovers &&
+              !isFetchingApprovers && (
+                <button
+                  className="bg-blue-500 ml-2 rounded-xl p-2 flex text-white"
+                  onClick={handleEdit}
+                >
+                  <PencilIcon className="h-6 w-6 mr-2" />
+                  Edit
+                </button>
+              )
             )}
           </div>
         </div>

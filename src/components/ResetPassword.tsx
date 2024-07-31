@@ -6,11 +6,13 @@ import { useNavigate } from "react-router-dom";
 import { EyeIcon, EyeSlashIcon, XCircleIcon } from "@heroicons/react/24/solid";
 import axios from 'axios';
 
-const ForgotPassword: React.FC = () => {
+const ResetPassword: React.FC = () => {
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const navigate = useNavigate();
 
   const handleResetPassword = async () => {
@@ -19,16 +21,21 @@ const ForgotPassword: React.FC = () => {
     setSuccess(null); // Clear any previous success message
     setLoading(true); // Start the loading indicator
 console.log(email);
-    if (!email) {
+    if (!email && !password && !confirmPassword) {
       setError("Please enter your email address."); // Set error if no email is provided
       setLoading(false); // Stop the loading indicator
       return; // Exit the function early
     }
-
+    
+    if (password !== confirmPassword) {
+      setError("Passwords do not match"); // Set error if no email is provided
+      setLoading(false); // Stop the loading indicator
+      return; // Exit the function early
+    }
     try {
       // Send a POST request to the password reset endpoint using axios
-      const response = await axios.post("http://localhost:8000/api/password/email", {
-        email,
+      const response = await axios.post("http://localhost:8000/api/password/reset", {
+        email, password,
       });
       console.log(response.data);
 
@@ -65,10 +72,10 @@ console.log(email);
             </div>
           </Link>
           <h1 className="text-2xl font-semibold text-center p-4 mt-4">
-            Forgot your password?
+            Change your password
           </h1>
           <p className="text-center p-4">
-            We'll email you a secure link to reset the password for your account
+           Enter your new password
           </p>
           <div className="px-6">
             <p className="mb-2">Email</p>
@@ -78,13 +85,28 @@ console.log(email);
               onChange={(e) => setEmail(e.target.value)}
               className="w-full lg:max-w-[417px] lg:h-[56px] md:h-10  p-2 bg-gray-300 rounded-lg"
             />
+             <p className="my-2">Password</p>
+            <input
+              type="text"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full lg:max-w-[417px] lg:h-[56px] md:h-10  p-2 bg-gray-300 rounded-lg"
+            />
+             <p className="my-2">Confirm Password</p>
+            <input
+              type="text"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full lg:max-w-[417px] lg:h-[56px] md:h-10  p-2 bg-gray-300 rounded-lg"
+            />
+            {error && <p className="text-red-500 text-sm">{error}</p>}
           </div>
           <div className="px-6 pt-4">
             <button
               onClick={handleResetPassword}
               className="bg-primary  text-white py-2 px-4 rounded-lg w-full lg:max-w-[417px] lg:h-[56px]  md:h-10"
             >
-              Send Link
+              Change password
             </button>
             <Link to="/login">
               <button className="bg-gray-300 border-2 border-black mt-2   py-2 px-4 rounded-lg w-full lg:max-w-[417px] lg:h-[56px]  md:h-10 text-black">
@@ -111,4 +133,4 @@ console.log(email);
   );
 };
 
-export default ForgotPassword;
+export default ResetPassword;

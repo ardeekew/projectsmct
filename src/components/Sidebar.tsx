@@ -9,120 +9,166 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
   BookOpenIcon,
+  DocumentCheckIcon,
+  DocumentPlusIcon,
+  UserGroupIcon,
 } from "@heroicons/react/24/solid";
 import { Link } from "react-router-dom";
 import Nav from "./Nav";
+
 type Submenu = {
   title: string;
   path: string;
 };
+
 type NavItem = {
   title: string;
   submenu: boolean;
   icon: React.ElementType;
   path: string;
-  submenuItems?: Submenu[];
 };
 
 interface SidebarProps {
   darkMode: boolean;
   role: string;
+  isSidebarVisible: boolean;
+  toggleSidebar: () => void;
 }
 
-type Props = {};
-
-const listStyle =
-  "group flex ml-2 items-center text-[18px] text-gray-400 font-medium py-2 pr-10 px-2 gap-2  overflow-hidden cursor-pointer  rounded-lg";
-const pStyle = "group-hover:text-primary  font text-[20px]";
-const iconStyle = "size-[32px] group-hover:text-primary ";
-
-const Sidebar: React.FC<SidebarProps> = ({ darkMode, role }) => {
-  const [open, setOpen] = useState(window.innerWidth > 1024);
+const Sidebar: React.FC<SidebarProps> = ({ darkMode, role,  isSidebarVisible, toggleSidebar }) => {
+  const [open, setOpen] = useState(false);
   const [submenuOpen, setSubMenuOpen] = useState<string | null>(null);
+console.log(submenuOpen)
 
-  const handleDropdownClick = (title: string) => {
-    setSubMenuOpen(submenuOpen === title ? null : title);
-  };
+
 
   const navItems: NavItem[] =
     role === "approver"
       ? [
           {
             title: "Dashboard",
+            submenu: false,
             icon: ChartBarIcon,
             path: "/dashboard/approver",
-            submenu: false,
           },
           {
-            title: "Request",
+            title: "View Request",
+            submenu: false,
             icon: EnvelopeIcon,
+            path: "/request/rq",
+          },
+          {
+            title: "Create Request",
+            submenu: false,
+            icon: DocumentPlusIcon,
+            path: "/request/sr",
+          },
+          {
+            title: "Approve Request",
+            submenu: false,
+            icon: DocumentCheckIcon,
             path: "/request/approver",
-            submenu: true,
-            submenuItems: [
-              { title: "Create Request", path: "/request/sr" },
-              { title: "Approve Request", path: "/request/approver" },
-              { title: "View Request", path: "/request/rq" },
-              { title: "Custom Request", path: "/request/custom" },
-            ],
+          },
+          {
+            title: "Custom Request",
+            submenu: false,
+            icon: UserGroupIcon,
+            path: "/request/custom",
           },
         ]
       : role === "Admin"
       ? [
           {
             title: "Dashboard",
+            submenu: false,
             icon: ChartBarIcon,
             path: "/dashboard",
+          },
+          {
+            title: "View Request",
             submenu: false,
-          },
-          {
-            title: "Request",
             icon: EnvelopeIcon,
-            path: "/request/approver",
-            submenu: true,
-            submenuItems: [
-              { title: "View Request", path: "/request" },
-              { title: "Create Request", path: "/request/sr" },
-              { title: "Custom Request", path: "/request/custom" },
-            ],
+            path: "/request",
           },
           {
-            title: "Setup",
+            title: "Create Request",
+            submenu: false,
+            icon: EnvelopeIcon,
+            path: "/request/sr",
+          },
+          {
+            title: "Custom Request",
+            submenu: false,
+            icon: EnvelopeIcon,
+            path: "/request/custom",
+          },
+          {
+            title: "User",
+            submenu: false,
             icon: BeakerIcon,
             path: "/setup/User",
-            submenu: true,
-            submenuItems: [
-              { title: "User", path: "/setup/User" },
-              { title: "Branch", path: "/setup/Branch" },
-              { title: "Approver", path: "/setup/Approver" },
-              { title: "Area Manager", path: "/setup/AreaManager" },
-            ],
           },
-          { title: "Help", icon: BookOpenIcon, path: "/help", submenu: false },
+          {
+            title: "Branch",
+            submenu: false,
+            icon: BeakerIcon,
+            path: "/setup/Branch",
+          },
+          {
+            title: "Approver",
+            submenu: false,
+            icon: BeakerIcon,
+            path: "/setup/Approver",
+          },
+          {
+            title: "Area Manager",
+            submenu: false,
+            icon: BeakerIcon,
+            path: "/setup/AreaManager",
+          },
+          {
+            title: "Help",
+            submenu: false,
+            icon: BookOpenIcon,
+            path: "/help",
+          },
         ]
       : [
           {
             title: "Dashboard",
+            submenu: false,
             icon: ChartBarIcon,
             path: "/dashboard",
-            submenu: false,
           },
           {
-            title: "Request",
+            title: "View Request",
+            submenu: false,
             icon: EnvelopeIcon,
             path: "/request",
-            submenu: true,
-            submenuItems: [
-              { title: "View Request", path: "/request" },
-              { title: "Create Request", path: "/request/sr" },
-              { title: "Custom Request", path: "/request/custom" },
-            ],
           },
-          { title: "Help", icon: BookOpenIcon, path: "/help", submenu: false },
+          {
+            title: "Create Request",
+            submenu: false,
+            icon: EnvelopeIcon,
+            path: "/request/sr",
+          },
+          {
+            title: "Custom Request",
+            submenu: false,
+            icon: EnvelopeIcon,
+            path: "/request/custom",
+          },
+          {
+            title: "Help",
+            submenu: false,
+            icon: BookOpenIcon,
+            path: "/help",
+          },
         ];
 
   useEffect(() => {
     const handleResize = () => {
-      setOpen(window.innerWidth > 1200);
+   
     };
 
     window.addEventListener("resize", handleResize);
@@ -131,18 +177,19 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode, role }) => {
       window.removeEventListener("resize", handleResize);
     };
   }, []);
-
-  const handleResize = () => {
-    setOpen(window.innerWidth > 768);
-  };
+  console.log(open);
+  const listStyle =
+    "group flex ml-1 items-center text-[18px] text-gray-400 font-medium py-2 pr-2 px-2  gap-2  overflow-hidden cursor-pointer  rounded-lg";
+  const pStyle = "group-hover:text-primary  font text-lg";
+  const iconStyle = "size-[26px] group-hover:text-primary ";
   return (
-    <div className={`${darkMode ? "dark" : "light"}dark:bg-blackD h-lvh  `}>
+    <div className={`${darkMode ? "dark" : "light"} dark:bg-blackD h-full`}>
+      
       <div
-        className={`bg-white dark:bg-blackD h-lvh ${
-          open ? "w-[240px]" : "w-20"
-        }  `}
+        className={`bg-white dark:bg-blackD w-60
+        } h-full`}
       >
-        <div className="px-2  py-3 h-[68px] flex justify-between items-center border-b-[0.5px] border-gray">
+        <div className="px-2 py-3 h-[68px] flex justify-between items-center border-b-[0.5px] border-gray">
           <img
             src={Logo}
             height={34}
@@ -151,7 +198,7 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode, role }) => {
             onClick={() => setOpen(!open)}
           />
           <h1
-            className={`text-primary font-bold overflow-hidden mr-7 ${
+            className={`text-primary font-bold  mr-7 ${
               !open && "scale-0"
             } duration-500`}
           >
@@ -164,66 +211,39 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode, role }) => {
             onClick={() => setOpen(false)}
           />
         </div>
-        <div className="flex flex-col flex-grow overflow-hidden">
-          <ul className="mt-[65px] flex-1 overflow-y-auto">
+        <div className="flex flex-col   space-y-2">
+          <ul className="mt-[65px] flex-1 ">
             <p className="text-[12px] text-gray-400 px-3 w-fit">MENU</p>
-
-            {navItems.map((item) => (
-              <Link to={item.path} key={item.title}>
-                <li
-                  className={`${listStyle}  ${
-                    !open ? "" : "hover:bg-[#E0E0F9]"
-                  }`}
-                >
-                  <div
-                    className={`p-2 inline-block ${
-                      !open ? "hover:bg-[#E0E0F9] rounded-lg" : ""
+            <div className="space-y-5">
+              {navItems.map((item: NavItem) => (
+                <Link to={item.path} key={item.title}>
+                  <li
+                    className={`${listStyle} ${
+                      !open ? "" : "hover:bg-[#E0E0F9]"
                     }`}
                   >
-                    <item.icon className={iconStyle} />
-                  </div>
-                  <p className={`${pStyle} ${!open && "scale-0"}`}>
-                    {item.title}
-                  </p>
-                  {item.submenu &&
-                    open &&
-                    (submenuOpen === item.title ? (
-                      <ChevronUpIcon
-                        className="size-[20px]"
-                        onClick={() => handleDropdownClick(item.title)}
-                      />
-                    ) : (
-                      <ChevronDownIcon
-                        className="size-[20px]"
-                        onClick={() => handleDropdownClick(item.title)}
-                      />
-                    ))}
-                </li>
-                {item.submenu && submenuOpen === item.title && open && (
-                  <ul>
-                    {item.submenuItems?.map((submenuItem, index) =>
-                      open && submenuOpen === item.title ? (
-                        <Link to={submenuItem.path} key={index}>
-                          <li className=" hover:bg-[#E0E0F9] group text-sm flex ml-10 items-center text-[18px] text-gray-400 font-medium py-2 pr-10 px-2 gap-2  overflow-hidden cursor-pointer  rounded-lg">
-                            <div className="flex flex-row items-center gap-2">
-                              <p className="group-hover:text-primary ">
-                                {submenuItem.title}
-                              </p>
-                            </div>
-                          </li>
-                        </Link>
-                      ) : null
-                    )}
-                  </ul>
-                )}
-              </Link>
-            ))}
+                    <div
+                      className={`p-2
+                         ${
+                        !open ? "hover:bg-[#E0E0F9] rounded-lg" : ""
+                      }`}
+                    >
+                      <item.icon className={iconStyle} />
+                    </div>
+                    <p className={`${pStyle}`}>
+                      {item.title}
+                    </p>
+                  </li>
+                </Link>
+              ))}
+            </div>
           </ul>
+
           <Link to="/login">
             <div className="border-t flex justify-center items-center ">
-              <div className=" flex  h-5/6 p-2">
+              <div className="flex h-5/6 p-2">
                 <ArrowLeftStartOnRectangleIcon
-                  className={`${iconStyle}dark:text-white`}
+                  className={`${iconStyle} dark:text-white`}
                 />
               </div>
               <p

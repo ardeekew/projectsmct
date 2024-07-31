@@ -113,11 +113,12 @@ const ViewStockModal: React.FC<Props> = ({
     }
     try {
       // If record.attachment is a JSON string, parse it
-      if (typeof record.attachment === 'string') {
+      if (typeof record.attachment === "string") {
         const parsedAttachment = JSON.parse(record.attachment);
         // Handle the parsed attachment
-        const fileUrls = parsedAttachment.map((filePath: string) =>
-          `http://localhost:8000/storage/${filePath.replace(/\\/g, '/')}`
+        const fileUrls = parsedAttachment.map(
+          (filePath: string) =>
+            `http://localhost:8000/storage/${filePath.replace(/\\/g, "/")}`
         );
         setAttachmentUrl(fileUrls);
       } else {
@@ -161,7 +162,7 @@ const ViewStockModal: React.FC<Props> = ({
 
   const handleCancelEdit = () => {
     setIsEditing(false);
-   setAttachmentUrl(attachmentUrl);
+    setAttachmentUrl(attachmentUrl);
     setNewAttachments([]); // Clear new attachments
     setRemovedAttachments([]); // Reset removed attachments
     setCheckedPurpose(record.form_data[0].purpose);
@@ -216,7 +217,7 @@ const ViewStockModal: React.FC<Props> = ({
   const handleRemoveAttachment = (index: number) => {
     setRemovedAttachments((prevRemoved) => [...prevRemoved, index]);
   };
-  console.log('newAttach',newAttachments);
+  console.log("newAttach", newAttachments);
   const handleSaveChanges = async () => {
     if (
       !newData.every(
@@ -232,7 +233,7 @@ const ViewStockModal: React.FC<Props> = ({
       );
       return;
     }
-  
+
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
@@ -240,34 +241,37 @@ const ViewStockModal: React.FC<Props> = ({
         setErrorMessage("Token is missing");
         return;
       }
-  
+
       const formData = new FormData();
       formData.append("updated_at", new Date().toISOString());
       formData.append("approvers_id", JSON.stringify(editedApprovers));
-  
+
       formData.append(
         "form_data",
-        JSON.stringify([{
-          branch: editableRecord.form_data[0].branch,
-          date: editedDate !== "" ? editedDate : editableRecord.form_data[0].date,
-          status: editableRecord.status,
-          grand_total: editableRecord.form_data[0].grand_total,
-          purpose: checkedPurpose || editableRecord.form_data[0].purpose,
-          items: newData,
-        }])
+        JSON.stringify([
+          {
+            branch: editableRecord.form_data[0].branch,
+            date:
+              editedDate !== "" ? editedDate : editableRecord.form_data[0].date,
+            status: editableRecord.status,
+            grand_total: editableRecord.form_data[0].grand_total,
+            purpose: checkedPurpose || editableRecord.form_data[0].purpose,
+            items: newData,
+          },
+        ])
       );
 
       // Append existing attachments
       attachmentUrl.forEach((url, index) => {
-        const path = url.split('storage/attachments/')[1];
+        const path = url.split("storage/attachments/")[1];
         formData.append(`attachment_url_${index}`, path);
       });
-  
+
       // Append new attachments
       newAttachments.forEach((file) => {
         formData.append("new_attachments[]", file);
       });
-  
+
       const response = await axios.post(
         `http://localhost:8000/api/update-request/${record.id}`,
         formData,
@@ -278,7 +282,7 @@ const ViewStockModal: React.FC<Props> = ({
           },
         }
       );
-  
+
       console.log("Stock requisition updated successfully:", response.data);
       setLoading(false);
       setIsEditing(false);
@@ -293,9 +297,8 @@ const ViewStockModal: React.FC<Props> = ({
       );
     }
   };
-  
-  
-console.log("attachmentUrl", attachmentUrl);
+
+  console.log("attachmentUrl", attachmentUrl);
   console.log("record.attachment", record.attachment);
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -405,26 +408,26 @@ console.log("attachmentUrl", attachmentUrl);
           <XMarkIcon className="h-6 w-6 text-black" onClick={closeModal} />
         </div>
         <div className="justify-start items-start flex flex-col space-y-4 w-full">
-        {!fetchingApprovers && !isFetchingApprovers && (
-  <>
-    <button
-      className="bg-blue-600 p-1 px-2 rounded-md text-white"
-      onClick={handlePrint}
-    >
-      Print
-    </button>
-    {printWindow && (
-      <PrintStock
-        data={{
-          id: record,
-          approvedBy: approvedBy,
-          notedBy: notedBy,
-          user: user,
-        }}
-      />
-    )}
-  </>
-)}
+          {!fetchingApprovers && !isFetchingApprovers && (
+            <>
+              <button
+                className="bg-blue-600 p-1 px-2 rounded-md text-white"
+                onClick={handlePrint}
+              >
+                Print
+              </button>
+              {printWindow && (
+                <PrintStock
+                  data={{
+                    id: record,
+                    approvedBy: approvedBy,
+                    notedBy: notedBy,
+                    user: user,
+                  }}
+                />
+              )}
+            </>
+          )}
           <h1 className="font-semibold text-[18px]">Stock Requisition Slip</h1>
           <p className="font-medium text-[14px]">Request ID:#{record.id}</p>
           <div className="flex w-full md:w-1/2 items-center">
@@ -751,24 +754,29 @@ console.log("attachmentUrl", attachmentUrl);
           <div className="w-full">
             <h1 className="font-bold">Attachments:</h1>
             <div>
-            {attachmentUrl
-            .filter((_, index) => !removedAttachments.includes(index))
-            .map((url, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-500">
-                  {url.split("/").pop()}
-                  </a>
-                 {isEditing && ( 
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveAttachment(index)}
-                    className="text-red-500"
-                  >
-                    Remove
-                  </button>
-                )}
-                </div>
-              ))}
+              {attachmentUrl
+                .filter((_, index) => !removedAttachments.includes(index))
+                .map((url, index) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500"
+                    >
+                      {url.split("/").pop()}
+                    </a>
+                    {isEditing && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveAttachment(index)}
+                        className="text-red-500"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                ))}
             </div>
             {isEditing && (
               <div>
@@ -847,13 +855,16 @@ console.log("attachmentUrl", attachmentUrl);
                 </button>
               </div>
             ) : (
-              <button
-                className="bg-blue-500 ml-2 rounded-xl p-2 flex text-white"
-                onClick={handleEdit}
-              >
-                <PencilIcon className="h-6 w-6 mr-2" />
-                Edit
-              </button>
+              !fetchingApprovers &&
+              !isFetchingApprovers && (
+                <button
+                  className="bg-blue-500 ml-2 rounded-xl p-2 flex text-white"
+                  onClick={handleEdit}
+                >
+                  <PencilIcon className="h-6 w-6 mr-2" />
+                  Edit
+                </button>
+              )
             )}
           </div>
         </div>

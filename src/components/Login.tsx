@@ -64,6 +64,8 @@ const Login: React.FC = () => {
         localStorage.setItem("contact", response.data.contact);
         localStorage.setItem("branch_code", response.data.branch_code);
         localStorage.setItem("signature", response.data.signature);
+        localStorage.setItem("profile_picture", response.data.profile_picture);
+        localStorage.setItem("employee_id", response.data.employee_id);
       
         // Update context or state with user data if needed
         updateUser(
@@ -73,8 +75,8 @@ const Login: React.FC = () => {
           response.data.email,
           response.data.role,
           response.data.contact,
-          response.data.branch,
-          response.data.signature
+          response.data.profile_picture,
+          response.data.employee_id,
         );
         if (response.data.role === "approver") {
           navigate("/dashboard/approver");

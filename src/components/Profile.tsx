@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect , useRef} from "react";
 import Avatar2 from "./assets/avatar.png";
 import { Link } from "react-router-dom";
 import axios from "axios";
@@ -23,9 +23,12 @@ interface User {
   contact: string;
   signature: string;
   userName: string;
+  profile_picture: string;
+  position: string;
 }
 
 const Profile = ({ isdarkMode }: { isdarkMode: boolean }) => {
+  const inputRef = useRef<HTMLInputElement>(null);
   const [user, setUser] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
   const token = localStorage.getItem("token");
@@ -38,6 +41,7 @@ const Profile = ({ isdarkMode }: { isdarkMode: boolean }) => {
   const [successModal, setSuccessModal] = useState(false);
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [newProfilePic, setNewProfilePic] = useState<File | null>(null);
   useEffect(() => {
     const fetchUserInformation = async () => {
       try {
@@ -145,6 +149,51 @@ const closeSuccessModal = () => {
     // Render a component indicating that the user is not authenticated
     return <div>User not authenticated. Please log in.</div>;
   }
+  const handleProfilePicUpload = async () => {
+    if (!newProfilePic) {
+      console.error("No profile picture selected.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('profile_picture', newProfilePic);
+
+    try {
+      setLoading(true);
+      const response = await axios.post(
+        `http://localhost:8000/api/upload-profile-pic/${id}`,
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      if (response.data.status) {
+        setUser(prevUser => prevUser ? { ...prevUser, signature: response.data.data.signature } : null);
+      } else {
+        throw new Error(response.data.message || "Failed to upload profile picture");
+      }
+    } catch (error: any) {
+      console.error(
+        "Failed to upload profile picture:",
+        error.response?.data?.message || error.message
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleImageClick = () => {
+    inputRef.current?.click();
+  }
+  const baseUrl = 'http://localhost:8000/storage/profile_pictures/';
+
+  // Construct the URL for the profile picture
+  const profilePictureUrl = user.profile_picture 
+    ? `http://localhost:8000/storage/${user.profile_picture.replace(/\\/g, '/')}`
+    : Avatar2; 
 
   console.log("currentPassword:", currentPassword);
   console.log("newPassword:", newPassword);
@@ -152,18 +201,24 @@ const closeSuccessModal = () => {
   return (
     <div className="bg-graybg dark:bg-blackbg w-full h-screen pt-4 px-4 md:px-10 lg:px-30">
       <div className="bg-white rounded-[12px] flex flex-col w-full px-4 md:px-8 lg:px-10 xl:px-12 pt-[50px] space-x-6">
+
         <div className="mb-5 rounded-[12px] md:space-x-6 flex flex-col md:flex-row  md:items-start justify-center items-center">
-          <div className="mb-4 md:mb-0">
-            <img alt="logo" height={118} width={118} src={Avatar2} />
-          </div>
-          <div className="flex flex-col items-start justify-center text-left px-4 w-full max-w-80">
+         
+          <div className="flex flex-col items-start justify-center text-left px-4  pl-20 w-1/2">
+         <div className="flex">
+         
+          <img alt="logo" height={140} width={140}  src={profilePictureUrl} className="rounded-full"  />
+          <div className="flex flex-col ml-2">
             <h1 className="font-bold text-lg md:text-xl lg:text-2xl mt-10 text-left">
               {user.firstName} {user.lastName}
+            
             </h1>
-            <p className="text-primary">Upload new picture</p>
-
+            <p className="text-black italic font-semibold">{user.position}</p>
+            </div>  
+            </div>                                  
             <h1 className="font-semibold text-lg md:text-xl lg:text-2xl my-5 mt-5">
               User Information
+            
             </h1>
             <div className="grid grid-cols-1  gap-4 lg:gap-6 w-full">
               <div className="flex flex-col">

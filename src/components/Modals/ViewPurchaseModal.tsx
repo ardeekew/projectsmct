@@ -115,8 +115,9 @@ const ViewPurchaseModal: React.FC<Props> = ({
 
         if (parsedAttachment.length > 0) {
           // Construct file URLs
-          const fileUrls = parsedAttachment.map(filePath =>
-            `http://localhost:8000/storage/${filePath.replace(/\\/g, '/')}`
+          const fileUrls = parsedAttachment.map(
+            (filePath) =>
+              `http://localhost:8000/storage/${filePath.replace(/\\/g, "/")}`
           );
           setAttachmentUrl(fileUrls);
         }
@@ -293,7 +294,7 @@ const ViewPurchaseModal: React.FC<Props> = ({
   const handleRemoveAttachment = (index: number) => {
     setRemovedAttachments((prevRemoved) => [...prevRemoved, index]);
   };
-  console.log('newAttach',newAttachments);
+  console.log("newAttach", newAttachments);
   const handleSaveChanges = async () => {
     // Simple validation
     if (
@@ -322,9 +323,10 @@ const ViewPurchaseModal: React.FC<Props> = ({
       const formData = new FormData();
       formData.append("updated_at", new Date().toISOString());
       formData.append("approvers_id", JSON.stringify(editedApprovers));
-        formData.append(
-          "form_data",
-          JSON.stringify([{
+      formData.append(
+        "form_data",
+        JSON.stringify([
+          {
             branch: editableRecord.form_data[0].branch,
             date:
               editedDate !== "" ? editedDate : editableRecord.form_data[0].date,
@@ -333,29 +335,30 @@ const ViewPurchaseModal: React.FC<Props> = ({
             supplier: newSupplier,
             address: newAddress,
             items: newData,
-          }])
-        );
+          },
+        ])
+      );
 
-        attachmentUrl.forEach((url, index) => {
-          const path = url.split('storage/attachments/')[1];
-          formData.append(`attachment_url_${index}`, path);
-        });
-    
-        // Append new attachments
-        newAttachments.forEach((file) => {
-          formData.append("new_attachments[]", file);
-        });
+      attachmentUrl.forEach((url, index) => {
+        const path = url.split("storage/attachments/")[1];
+        formData.append(`attachment_url_${index}`, path);
+      });
 
-        const response = await axios.post(
-          `http://localhost:8000/api/update-request/${record.id}`,
-          formData,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
+      // Append new attachments
+      newAttachments.forEach((file) => {
+        formData.append("new_attachments[]", file);
+      });
+
+      const response = await axios.post(
+        `http://localhost:8000/api/update-request/${record.id}`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
       console.log("Purchase Modal updated successfully:", response.data);
       setLoading(false);
@@ -398,26 +401,26 @@ const ViewPurchaseModal: React.FC<Props> = ({
           <XMarkIcon className="h-6 w-6 text-black" onClick={closeModal} />
         </div>
         <div className="justify-start items-start flex flex-col space-y-4 w-full">
-        {!fetchingApprovers && !isFetchingApprovers && (
-  <>
-    <button
-      className="bg-blue-600 p-1 px-2 rounded-md text-white"
-      onClick={handlePrint}
-    >
-      Print
-    </button>
-    {printWindow && (
-      <PrintPurchase
-        data={{
-          id: record,
-          approvedBy: approvedBy,
-          notedBy: notedBy,
-          user: user,
-        }}
-      />
-    )}
-  </>
-)}
+          {!fetchingApprovers && !isFetchingApprovers && (
+            <>
+              <button
+                className="bg-blue-600 p-1 px-2 rounded-md text-white"
+                onClick={handlePrint}
+              >
+                Print
+              </button>
+              {printWindow && (
+                <PrintPurchase
+                  data={{
+                    id: record,
+                    approvedBy: approvedBy,
+                    notedBy: notedBy,
+                    user: user,
+                  }}
+                />
+              )}
+            </>
+          )}
           <h1 className="font-semibold text-[18px]">Purchase Modal</h1>
           <p className="font-medium text-[14px]">Request ID:#{record.id}</p>
           <div className="flex w-full md:w-1/2 items-center">
@@ -753,24 +756,29 @@ const ViewPurchaseModal: React.FC<Props> = ({
           <div className="w-full">
             <h1 className="font-bold">Attachments:</h1>
             <div>
-            {attachmentUrl
-            .filter((_, index) => !removedAttachments.includes(index))
-            .map((url, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-500">
-                  {url.split("/").pop()}
-                  </a>
-                 {isEditing && ( 
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveAttachment(index)}
-                    className="text-red-500"
-                  >
-                    Remove
-                  </button>
-                )}
-                </div>
-              ))}
+              {attachmentUrl
+                .filter((_, index) => !removedAttachments.includes(index))
+                .map((url, index) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500"
+                    >
+                      {url.split("/").pop()}
+                    </a>
+                    {isEditing && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveAttachment(index)}
+                        className="text-red-500"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                ))}
             </div>
             {isEditing && (
               <div>
@@ -833,7 +841,7 @@ const ViewPurchaseModal: React.FC<Props> = ({
             {isEditing ? (
               <div>
                 <button
-                  className="bg-primary text-white  items-center h-10 rounded-xl p-2"
+                  className="bg-primary text-white items-center h-10 rounded-xl p-2"
                   onClick={handleSaveChanges}
                 >
                   {loading ? (
@@ -843,14 +851,15 @@ const ViewPurchaseModal: React.FC<Props> = ({
                   )}
                 </button>
                 <button
-                  className="bg-red-600  rounded-xl text-white ml-2 p-2"
+                  className="bg-red-600 rounded-xl text-white ml-2 p-2"
                   onClick={handleCancelEdit}
                 >
                   Cancel
                 </button>
               </div>
             ) : (
-            
+              !fetchingApprovers &&
+              !isFetchingApprovers && (
                 <button
                   className="bg-blue-500 ml-2 rounded-xl p-2 flex text-white"
                   onClick={handleEdit}
@@ -858,7 +867,7 @@ const ViewPurchaseModal: React.FC<Props> = ({
                   <PencilIcon className="h-6 w-6 mr-2" />
                   Edit
                 </button>
-              
+              )
             )}
           </div>
         </div>

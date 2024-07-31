@@ -32,6 +32,7 @@ import PrintCash from '../components/PrintCash';
 import PrintCashDisbursement from '../components/PrintCashDisbursement';
 import PrintLiquidation from '../components/PrintLiquidation';
 import ViewRequestApprover from '../components/ViewRequestApprover';
+import ResetPassword from '../components/ResetPassword';
 
 interface RouterProps {
   isdarkMode: boolean;
@@ -122,6 +123,7 @@ const Router: React.FC<RouterProps> = ({isdarkMode}) => {
         <Route path="/print-cash" element={<PrintCash />} />
         <Route path="/print-cashDisbursement" element={<PrintCashDisbursement />} />
         <Route path="/print-liquidation" element={<PrintLiquidation />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         </Routes>
       </BrowserRouter>
     </div>

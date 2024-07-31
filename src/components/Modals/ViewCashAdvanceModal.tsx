@@ -24,7 +24,6 @@ interface Approver {
   signature: string;
   status: string;
   branch: string;
-
 }
 type Record = {
   id: number;
@@ -60,7 +59,6 @@ type FormData = {
   totalperDiem: string;
   totalExpense: string;
   short: string;
-
 };
 
 // Define the Item type
@@ -97,7 +95,9 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
   const [newTotalContingency, setNewTotalContingency] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [editedDate, setEditedDate] = useState("");
-  const [editedApprovers, setEditedApprovers] = useState<number>(record.approvers_id);
+  const [editedApprovers, setEditedApprovers] = useState<number>(
+    record.approvers_id
+  );
   const [loading, setLoading] = useState(false);
   const [approvers, setApprovers] = useState<Approver[]>([]);
   const [fetchingApprovers, setFetchingApprovers] = useState(false);
@@ -114,7 +114,7 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
   const [newAttachments, setNewAttachments] = useState<File[]>([]);
   const [originalAttachments, setOriginalAttachments] = useState<string[]>([]);
   const [removedAttachments, setRemovedAttachments] = useState<number[]>([]);
-  
+
   useEffect(() => {
     const currentUserId = localStorage.getItem("id");
     const attachments = JSON.parse(record.attachment);
@@ -126,7 +126,7 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
     setNewTotalHotel(record.form_data[0].totalHotel);
     setNewTotalFare(record.form_data[0].totalFare);
     setNewTotalContingency(record.form_data[0].totalContingency);
-    setEditedApprovers(record.approvers_id); 
+    setEditedApprovers(record.approvers_id);
     if (currentUserId) {
       fetchUser(record.user_id);
       fetchApprovers(userId);
@@ -139,8 +139,9 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
 
         if (parsedAttachment.length > 0) {
           // Construct file URLs
-          const fileUrls = parsedAttachment.map(filePath =>
-            `http://localhost:8000/storage/${filePath.replace(/\\/g, '/')}`
+          const fileUrls = parsedAttachment.map(
+            (filePath) =>
+              `http://localhost:8000/storage/${filePath.replace(/\\/g, "/")}`
           );
           setAttachmentUrl(fileUrls);
         }
@@ -174,7 +175,7 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
       setisFetchingUser(false);
     }
   };
- 
+
   const handleCancelEdit = () => {
     setIsEditing(false);
     setAttachmentUrl(attachmentUrl);
@@ -255,7 +256,7 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
       setErrorMessage("Itinerary and date cannot be empty.");
       return;
     }
-  
+
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
@@ -263,17 +264,18 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
         setErrorMessage("Token is missing");
         return;
       }
-  
+
       const formData = new FormData();
       formData.append("updated_at", new Date().toISOString());
       formData.append("approvers_id", JSON.stringify(editedApprovers));
 
-     
       formData.append(
         "form_data",
-        JSON.stringify([{
+        JSON.stringify([
+          {
             branch: editableRecord.form_data[0].branch,
-            date: editedDate !== "" ? editedDate : editableRecord.form_data[0].date,
+            date:
+              editedDate !== "" ? editedDate : editableRecord.form_data[0].date,
             status: editableRecord.status,
             grand_total: calculateGrandTotal(),
             items: newData,
@@ -281,20 +283,21 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
             totalHotel: newTotalHotel,
             totalFare: newTotalFare,
             totalContingency: newTotalContingency,
-          }])
-        );
-  
-       // Append existing attachments
-       attachmentUrl.forEach((url, index) => {
-        const path = url.split('storage/attachments/')[1];
+          },
+        ])
+      );
+
+      // Append existing attachments
+      attachmentUrl.forEach((url, index) => {
+        const path = url.split("storage/attachments/")[1];
         formData.append(`attachment_url_${index}`, path);
       });
-  
+
       // Append new attachments
       newAttachments.forEach((file) => {
         formData.append("new_attachments[]", file);
       });
-  
+
       const response = await axios.post(
         `http://localhost:8000/api/update-request/${record.id}`,
         formData,
@@ -305,7 +308,7 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
           },
         }
       );
-  
+
       console.log("Cash advance updated successfully:", response.data);
       setLoading(false);
       setIsEditing(false);
@@ -321,7 +324,6 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
       );
     }
   };
-  
 
   const handleItemChange = (
     index: number,
@@ -390,7 +392,7 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
       const { notedby, approvedby } = response.data;
       setNotedBy(notedby);
       setApprovedBy(approvedby);
-    
+
       console.log("notedby", notedby);
       console.log("approvedby", approvedby);
     } catch (error) {
@@ -400,57 +402,54 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
     }
   };
 
-
-
-const fetchApprovers = async (userId: number) => {
-  setFetchingApprovers(true);
-  try {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      throw new Error("Token is missing");
-    }
-
-    const response = await axios.get(
-      `http://localhost:8000/api/custom-approvers/${userId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+  const fetchApprovers = async (userId: number) => {
+    setFetchingApprovers(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("Token is missing");
       }
-    );
 
-    const approversData = Array.isArray(response.data.data)
-      ? response.data.data
-      : [];
-    setApprovers(approversData);
-console.log("Approvers: FATYATATA::", approversData);
-    
-  } catch (error) {
-    console.error("Failed to fetch approvers:", error);
-  } finally {
-    setFetchingApprovers(false);
-  }
-};
-const handlePrint = () => {
-  // Construct the data object to be passed
-  const data = {
-    id: record,
-    approvedBy: approvedBy,
-    notedBy: notedBy,
-    user: user,
+      const response = await axios.get(
+        `http://localhost:8000/api/custom-approvers/${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const approversData = Array.isArray(response.data.data)
+        ? response.data.data
+        : [];
+      setApprovers(approversData);
+      console.log("Approvers: FATYATATA::", approversData);
+    } catch (error) {
+      console.error("Failed to fetch approvers:", error);
+    } finally {
+      setFetchingApprovers(false);
+    }
   };
-  console.log("dataas", data);
+  const handlePrint = () => {
+    // Construct the data object to be passed
+    const data = {
+      id: record,
+      approvedBy: approvedBy,
+      notedBy: notedBy,
+      user: user,
+    };
+    console.log("dataas", data);
 
-  localStorage.setItem("printData", JSON.stringify(data));
-  // Open a new window with PrintRefund component
-  const newWindow = window.open(`/print-cash`, "_blank");
+    localStorage.setItem("printData", JSON.stringify(data));
+    // Open a new window with PrintRefund component
+    const newWindow = window.open(`/print-cash`, "_blank");
 
-  // Optional: Focus the new window
-  if (newWindow) {
-    newWindow.focus();
-  }
-};
-console.log(isFetchingApprovers, fetchingApprovers, printWindow);
+    // Optional: Focus the new window
+    if (newWindow) {
+      newWindow.focus();
+    }
+  };
+  console.log(isFetchingApprovers, fetchingApprovers, printWindow);
   return (
     <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 z-50">
       <div className="p-4 relative w-full mx-10 md:mx-0 z-10 md:w-1/2 lg:w-2/3 space-y-auto h-4/5 overflow-scroll bg-white border-black shadow-lg">
@@ -458,27 +457,27 @@ console.log(isFetchingApprovers, fetchingApprovers, printWindow);
           <XMarkIcon className="h-6 w-6 text-black" onClick={closeModal} />
         </div>
         <div className="justify-start items-start flex flex-col space-y-4 w-full">
-        {!fetchingApprovers && !isFetchingApprovers && (
-  <>
-    <button
-      className="bg-blue-600 p-1 px-2 rounded-md text-white"
-      onClick={handlePrint}
-    >
-      Print
-    </button>
-    {printWindow && (
-      <PrintCash
-        data={{
-          id: record,
-          approvedBy: approvedBy,
-          notedBy: notedBy,
-          user: user,
-        }}
-      />
-    )}
-  </>
-)}
-         
+          {!fetchingApprovers && !isFetchingApprovers && (
+            <>
+              <button
+                className="bg-blue-600 p-1 px-2 rounded-md text-white"
+                onClick={handlePrint}
+              >
+                Print
+              </button>
+              {printWindow && (
+                <PrintCash
+                  data={{
+                    id: record,
+                    approvedBy: approvedBy,
+                    notedBy: notedBy,
+                    user: user,
+                  }}
+                />
+              )}
+            </>
+          )}
+
           <h1 className="font-semibold text-[18px]">
             Application for Cash Advance
           </h1>
@@ -488,12 +487,12 @@ console.log(isFetchingApprovers, fetchingApprovers, printWindow);
             <p
               className={`${
                 record.status.trim() === "Pending"
-                ? "bg-yellow"
-                : record.status.trim() === "Approved"
-                ? "bg-green"
-                : record.status.trim() === "Disapproved"
-                ? "bg-pink"
-                : ""
+                  ? "bg-yellow"
+                  : record.status.trim() === "Approved"
+                  ? "bg-green"
+                  : record.status.trim() === "Disapproved"
+                  ? "bg-pink"
+                  : ""
               } rounded-lg  py-1 w-1/3
              font-medium text-[14px] text-center ml-2 text-white`}
             >
@@ -718,7 +717,9 @@ console.log(isFetchingApprovers, fetchingApprovers, printWindow);
                         readOnly={!isEditing}
                       />
                     ) : (
-                      parseFloat(editableRecord.form_data[0].totalBoatFare).toFixed(2)
+                      parseFloat(
+                        editableRecord.form_data[0].totalBoatFare
+                      ).toFixed(2)
                     )}
                   </td>
                 </tr>
@@ -736,7 +737,9 @@ console.log(isFetchingApprovers, fetchingApprovers, printWindow);
                         readOnly={!isEditing}
                       />
                     ) : (
-                      parseFloat(editableRecord.form_data[0].totalHotel).toFixed(2) 
+                      parseFloat(
+                        editableRecord.form_data[0].totalHotel
+                      ).toFixed(2)
                     )}
                   </td>
                 </tr>
@@ -767,7 +770,9 @@ console.log(isFetchingApprovers, fetchingApprovers, printWindow);
                         readOnly={!isEditing}
                       />
                     ) : (
-                      parseFloat(editableRecord.form_data[0].totalFare).toFixed(2)  
+                      parseFloat(editableRecord.form_data[0].totalFare).toFixed(
+                        2
+                      )
                     )}
                   </td>
                 </tr>
@@ -785,7 +790,9 @@ console.log(isFetchingApprovers, fetchingApprovers, printWindow);
                         readOnly={!isEditing}
                       />
                     ) : (
-                      parseFloat(editableRecord.form_data[0].totalContingency).toFixed(2) 
+                      parseFloat(
+                        editableRecord.form_data[0].totalContingency
+                      ).toFixed(2)
                     )}
                   </td>
                 </tr>
@@ -811,24 +818,26 @@ console.log(isFetchingApprovers, fetchingApprovers, printWindow);
               <p>Loading approvers...</p>
             ) : (
               <select
-              className="border w-1/2 mt-2 h-10 border-black rounded-lg"
-              value={isEditing ? editedApprovers : editableRecord.approvers_id}
-              onChange={(e) => {
-                const selectedApproverId = parseInt(e.target.value);
-                console.log("Selected Approver ID:", selectedApproverId);
-                setEditedApprovers(selectedApproverId);
-              }}
-              disabled={!isEditing}
-            >
-              <option value="" disabled>
-                Approver List
-              </option>
-              {approvers.map((approver) => (
-                <option key={approver.id} value={approver.id}>
-                  {approver.name}
+                className="border w-1/2 mt-2 h-10 border-black rounded-lg"
+                value={
+                  isEditing ? editedApprovers : editableRecord.approvers_id
+                }
+                onChange={(e) => {
+                  const selectedApproverId = parseInt(e.target.value);
+                  console.log("Selected Approver ID:", selectedApproverId);
+                  setEditedApprovers(selectedApproverId);
+                }}
+                disabled={!isEditing}
+              >
+                <option value="" disabled>
+                  Approver List
                 </option>
-              ))}
-            </select>
+                {approvers.map((approver) => (
+                  <option key={approver.id} value={approver.id}>
+                    {approver.name}
+                  </option>
+                ))}
+              </select>
             )}
           </div>
           <div className="w-full flex-col justify-center items-center ">
@@ -930,24 +939,29 @@ console.log(isFetchingApprovers, fetchingApprovers, printWindow);
           <div className="w-full">
             <h1 className="font-bold">Attachments:</h1>
             <div>
-            {attachmentUrl
-            .filter((_, index) => !removedAttachments.includes(index))
-            .map((url, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-500">
-                  {url.split("/").pop()}
-                  </a>
-                 {isEditing && ( 
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveAttachment(index)}
-                    className="text-red-500"
-                  >
-                    Remove
-                  </button>
-                )}
-                </div>
-              ))}
+              {attachmentUrl
+                .filter((_, index) => !removedAttachments.includes(index))
+                .map((url, index) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500"
+                    >
+                      {url.split("/").pop()}
+                    </a>
+                    {isEditing && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveAttachment(index)}
+                        className="text-red-500"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                ))}
             </div>
             {isEditing && (
               <div>
@@ -1009,7 +1023,7 @@ console.log(isFetchingApprovers, fetchingApprovers, printWindow);
             {isEditing ? (
               <div>
                 <button
-                  className="bg-primary text-white  items-center h-10 rounded-xl p-2"
+                  className="bg-primary text-white items-center h-10 rounded-xl p-2"
                   onClick={handleSaveChanges}
                 >
                   {loading ? (
@@ -1019,20 +1033,23 @@ console.log(isFetchingApprovers, fetchingApprovers, printWindow);
                   )}
                 </button>
                 <button
-                  className="bg-red-600  rounded-xl text-white ml-2 p-2"
+                  className="bg-red-600 rounded-xl text-white ml-2 p-2"
                   onClick={handleCancelEdit}
                 >
                   Cancel
                 </button>
               </div>
             ) : (
-              <button
-                className="bg-blue-500 ml-2 rounded-xl p-2 flex text-white"
-                onClick={handleEdit}
-              >
-                <PencilIcon className="h-6 w-6 mr-2" />
-                Edit
-              </button>
+              !fetchingApprovers &&
+              !isFetchingApprovers && (
+                <button
+                  className="bg-blue-500 ml-2 rounded-xl p-2 flex text-white"
+                  onClick={handleEdit}
+                >
+                  <PencilIcon className="h-6 w-6 mr-2" />
+                  Edit
+                </button>
+              )
             )}
           </div>
         </div>

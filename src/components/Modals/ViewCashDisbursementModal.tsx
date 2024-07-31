@@ -9,7 +9,6 @@ import PrintCash from "../PrintCashDisbursement";
 import Avatar from "../assets/avatar.png";
 import PrintCashDisbursement from "../PrintCashDisbursement";
 
-
 type Props = {
   closeModal: () => void;
   record: Record;
@@ -73,7 +72,9 @@ const ViewCashDisbursementModal: React.FC<Props> = ({
   const [editableRecord, setEditableRecord] = useState(record);
   const [newData, setNewData] = useState<Item[]>([]);
   const [isEditing, setIsEditing] = useState(false);
-  const [editedApprovers, setEditedApprovers] = useState<number>(record.approvers_id);
+  const [editedApprovers, setEditedApprovers] = useState<number>(
+    record.approvers_id
+  );
   const [editedDate, setEditedDate] = useState("");
   const [approvers, setApprovers] = useState<Approver[]>([]);
   const [fetchingApprovers, setFetchingApprovers] = useState(false);
@@ -91,7 +92,6 @@ const ViewCashDisbursementModal: React.FC<Props> = ({
   const [newAttachments, setNewAttachments] = useState<File[]>([]);
   const [originalAttachments, setOriginalAttachments] = useState<string[]>([]);
   const [removedAttachments, setRemovedAttachments] = useState<number[]>([]);
-
 
   useEffect(() => {
     const currentUserId = localStorage.getItem("id");
@@ -113,8 +113,9 @@ const ViewCashDisbursementModal: React.FC<Props> = ({
 
         if (parsedAttachment.length > 0) {
           // Construct file URLs
-          const fileUrls = parsedAttachment.map(filePath =>
-            `http://localhost:8000/storage/${filePath.replace(/\\/g, '/')}`
+          const fileUrls = parsedAttachment.map(
+            (filePath) =>
+              `http://localhost:8000/storage/${filePath.replace(/\\/g, "/")}`
           );
           setAttachmentUrl(fileUrls);
         }
@@ -186,7 +187,7 @@ const ViewCashDisbursementModal: React.FC<Props> = ({
       const { notedby, approvedby } = response.data;
       setNotedBy(notedby);
       setApprovedBy(approvedby);
-      
+
       console.log("notedby", notedby);
       console.log("approvedby", approvedby);
     } catch (error) {
@@ -289,38 +290,39 @@ const ViewCashDisbursementModal: React.FC<Props> = ({
 
       formData.append(
         "form_data",
-        JSON.stringify([{
+        JSON.stringify([
+          {
             branch: editableRecord.form_data[0].branch,
             date:
               editedDate !== "" ? editedDate : editableRecord.form_data[0].date,
             status: editableRecord.status,
             grand_total: editableRecord.form_data[0].grand_total,
             items: newData,
-          }])
-        );
+          },
+        ])
+      );
 
-        // Append existing attachments
-        attachmentUrl.forEach((url, index) => {
-          const path = url.split('storage/attachments/')[1];
-          formData.append(`attachment_url_${index}`, path);
-        });
-    
-        // Append new attachments
-        newAttachments.forEach((file) => {
-          formData.append("new_attachments[]", file);
-        });
-    
-        const response = await axios.post(
-          `http://localhost:8000/api/update-request/${record.id}`,
-          formData,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
-      
+      // Append existing attachments
+      attachmentUrl.forEach((url, index) => {
+        const path = url.split("storage/attachments/")[1];
+        formData.append(`attachment_url_${index}`, path);
+      });
+
+      // Append new attachments
+      newAttachments.forEach((file) => {
+        formData.append("new_attachments[]", file);
+      });
+
+      const response = await axios.post(
+        `http://localhost:8000/api/update-request/${record.id}`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
       console.log("Cash Disbursement updated successfully:", response.data);
       setLoading(false);
@@ -393,30 +395,30 @@ const ViewCashDisbursementModal: React.FC<Props> = ({
           <XMarkIcon className="h-6 w-6 text-black" onClick={closeModal} />
         </div>
         <div className="justify-start items-start flex flex-col space-y-4 w-full">
-        {!fetchingApprovers && !isFetchingApprovers && (
-  <>
-    <button
-      className="bg-blue-600 p-1 px-2 rounded-md text-white"
-      onClick={handlePrint}
-    >
-      Print
-    </button>
-    {printWindow && (
-      <PrintCashDisbursement
-        data={{
-          id: record,
-          approvedBy: approvedBy,
-          notedBy: notedBy,
-          user: user,
-        }}
-      />
-    )}
-  </>
-)}
+          {!fetchingApprovers && !isFetchingApprovers && (
+            <>
+              <button
+                className="bg-blue-600 p-1 px-2 rounded-md text-white"
+                onClick={handlePrint}
+              >
+                Print
+              </button>
+              {printWindow && (
+                <PrintCashDisbursement
+                  data={{
+                    id: record,
+                    approvedBy: approvedBy,
+                    notedBy: notedBy,
+                    user: user,
+                  }}
+                />
+              )}
+            </>
+          )}
           <h1 className="font-semibold text-[18px]">
             Cash Disbursement Requisition Slip
           </h1>
-          
+
           <p className="font-medium text-[14px]">Request ID:#{record.id}</p>
           <div className="flex w-full md:w-1/2 items-center">
             <p>Status:</p>
@@ -581,24 +583,26 @@ const ViewCashDisbursementModal: React.FC<Props> = ({
               <p>Loading approvers...</p>
             ) : (
               <select
-              className="border w-1/2 mt-2 h-10 border-black rounded-lg"
-              value={isEditing ? editedApprovers : editableRecord.approvers_id}
-              onChange={(e) => {
-                const selectedApproverId = parseInt(e.target.value);
-                console.log("Selected Approver ID:", selectedApproverId);
-                setEditedApprovers(selectedApproverId);
-              }}
-              disabled={!isEditing}
-            >
-              <option value="" disabled>
-                Approver List
-              </option>
-              {approvers.map((approver) => (
-                <option key={approver.id} value={approver.id}>
-                  {approver.name}
+                className="border w-1/2 mt-2 h-10 border-black rounded-lg"
+                value={
+                  isEditing ? editedApprovers : editableRecord.approvers_id
+                }
+                onChange={(e) => {
+                  const selectedApproverId = parseInt(e.target.value);
+                  console.log("Selected Approver ID:", selectedApproverId);
+                  setEditedApprovers(selectedApproverId);
+                }}
+                disabled={!isEditing}
+              >
+                <option value="" disabled>
+                  Approver List
                 </option>
-              ))}
-            </select>
+                {approvers.map((approver) => (
+                  <option key={approver.id} value={approver.id}>
+                    {approver.name}
+                  </option>
+                ))}
+              </select>
             )}
           </div>
           <div className="w-full flex-col justify-center items-center">
@@ -698,28 +702,32 @@ const ViewCashDisbursementModal: React.FC<Props> = ({
             )}
           </div>
 
-         
           <div className="w-full">
             <h1 className="font-bold">Attachments:</h1>
             <div>
-            {attachmentUrl
-            .filter((_, index) => !removedAttachments.includes(index))
-            .map((url, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-500">
-                  {url.split("/").pop()}
-                  </a>
-                 {isEditing && ( 
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveAttachment(index)}
-                    className="text-red-500"
-                  >
-                    Remove
-                  </button>
-                )}
-                </div>
-              ))}
+              {attachmentUrl
+                .filter((_, index) => !removedAttachments.includes(index))
+                .map((url, index) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500"
+                    >
+                      {url.split("/").pop()}
+                    </a>
+                    {isEditing && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveAttachment(index)}
+                        className="text-red-500"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                ))}
             </div>
             {isEditing && (
               <div>
@@ -778,11 +786,10 @@ const ViewCashDisbursementModal: React.FC<Props> = ({
             </ul>
           </div>
           <div className="md:absolute flex right-11 top-2 items-center">
-       
             {isEditing ? (
               <div>
                 <button
-                  className="bg-primary text-white  items-center h-10 rounded-xl p-2"
+                  className="bg-primary text-white items-center h-10 rounded-xl p-2"
                   onClick={handleSaveChanges}
                 >
                   {loading ? (
@@ -792,20 +799,23 @@ const ViewCashDisbursementModal: React.FC<Props> = ({
                   )}
                 </button>
                 <button
-                  className="bg-red-600  rounded-xl text-white ml-2 p-2"
+                  className="bg-red-600 rounded-xl text-white ml-2 p-2"
                   onClick={handleCancelEdit}
                 >
                   Cancel
                 </button>
               </div>
             ) : (
-              <button
-                className="bg-blue-500 ml-2 rounded-xl p-2 flex text-white"
-                onClick={handleEdit}
-              >
-                <PencilIcon className="h-6 w-6 mr-2" />
-                Edit
-              </button>
+              !fetchingApprovers &&
+              !isFetchingApprovers && (
+                <button
+                  className="bg-blue-500 ml-2 rounded-xl p-2 flex text-white"
+                  onClick={handleEdit}
+                >
+                  <PencilIcon className="h-6 w-6 mr-2" />
+                  Edit
+                </button>
+              )
             )}
           </div>
         </div>

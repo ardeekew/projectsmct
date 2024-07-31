@@ -6,8 +6,7 @@ import EditStockModalSuccess from "./EditStockModalSuccess";
 import { ClipLoader } from "react-spinners";
 import { PencilIcon } from "@heroicons/react/24/solid";
 import Avatar from "../assets/avatar.png";
-import PrintLiquidation
- from "../PrintLiquidation";
+import PrintLiquidation from "../PrintLiquidation";
 type Props = {
   closeModal: () => void;
   record: Record;
@@ -25,7 +24,6 @@ interface Approver {
   signature: string;
   status: string;
   branch: string;
-  
 }
 type Record = {
   id: number;
@@ -112,7 +110,7 @@ const ViewLiquidationModal: React.FC<Props> = ({
   const [newAttachments, setNewAttachments] = useState<File[]>([]);
   const [originalAttachments, setOriginalAttachments] = useState<string[]>([]);
   const [removedAttachments, setRemovedAttachments] = useState<number[]>([]);
-  
+
   useEffect(() => {
     const currentUserId = localStorage.getItem("id");
     const attachments = JSON.parse(record.attachment);
@@ -134,8 +132,9 @@ const ViewLiquidationModal: React.FC<Props> = ({
 
         if (parsedAttachment.length > 0) {
           // Construct file URLs
-          const fileUrls = parsedAttachment.map(filePath =>
-            `http://localhost:8000/storage/${filePath.replace(/\\/g, '/')}`
+          const fileUrls = parsedAttachment.map(
+            (filePath) =>
+              `http://localhost:8000/storage/${filePath.replace(/\\/g, "/")}`
           );
           setAttachmentUrl(fileUrls);
         }
@@ -222,7 +221,7 @@ const ViewLiquidationModal: React.FC<Props> = ({
       const { notedby, approvedby } = response.data;
       setNotedBy(notedby);
       setApprovedBy(approvedby);
-    
+
       console.log("notedby", notedby);
       console.log("approvedby", approvedby);
     } catch (error) {
@@ -293,10 +292,10 @@ const ViewLiquidationModal: React.FC<Props> = ({
       formData.append("updated_at", new Date().toISOString());
       formData.append("approvers_id", JSON.stringify(editedApprovers));
 
-
       formData.append(
         "form_data",
-        JSON.stringify([{
+        JSON.stringify([
+          {
             branch: editableRecord.form_data[0].branch,
             date:
               editedDate !== "" ? editedDate : editableRecord.form_data[0].date,
@@ -311,21 +310,21 @@ const ViewLiquidationModal: React.FC<Props> = ({
               parseFloat(newCashAdvance)
             ).toString(),
             signature: editableRecord.form_data[0].signature,
-          }])
-        );
-  
+          },
+        ])
+      );
 
       // Append existing attachments
       attachmentUrl.forEach((url, index) => {
-        const path = url.split('storage/attachments/')[1];
+        const path = url.split("storage/attachments/")[1];
         formData.append(`attachment_url_${index}`, path);
       });
-  
+
       // Append new attachments
       newAttachments.forEach((file) => {
         formData.append("new_attachments[]", file);
       });
-  
+
       const response = await axios.post(
         `http://localhost:8000/api/update-request/${record.id}`,
         formData,
@@ -440,11 +439,11 @@ const ViewLiquidationModal: React.FC<Props> = ({
       user: user,
     };
     console.log("dataas", data);
-  
+
     localStorage.setItem("printData", JSON.stringify(data));
     // Open a new window with PrintRefund component
     const newWindow = window.open(`/print-liquidation`, "_blank");
-  
+
     // Optional: Focus the new window
     if (newWindow) {
       newWindow.focus();
@@ -457,26 +456,26 @@ const ViewLiquidationModal: React.FC<Props> = ({
           <XMarkIcon className="h-6 w-6 text-black" onClick={closeModal} />
         </div>
         <div className="justify-start items-start flex flex-col space-y-2 w-full">
-        {!fetchingApprovers && !isFetchingApprovers && (
-  <>
-    <button
-      className="bg-blue-600 p-1 px-2 rounded-md text-white"
-      onClick={handlePrint}
-    >
-      Print
-    </button>
-    {printWindow && (
-      <PrintLiquidation
-        data={{
-          id: record,
-          approvedBy: approvedBy,
-          notedBy: notedBy,
-          user: user,
-        }}
-      />
-    )}
-  </>
-)}
+          {!fetchingApprovers && !isFetchingApprovers && (
+            <>
+              <button
+                className="bg-blue-600 p-1 px-2 rounded-md text-white"
+                onClick={handlePrint}
+              >
+                Print
+              </button>
+              {printWindow && (
+                <PrintLiquidation
+                  data={{
+                    id: record,
+                    approvedBy: approvedBy,
+                    notedBy: notedBy,
+                    user: user,
+                  }}
+                />
+              )}
+            </>
+          )}
           <h1 className="font-semibold text-[18px]">
             Liquidation of Actual Expense
           </h1>
@@ -486,12 +485,12 @@ const ViewLiquidationModal: React.FC<Props> = ({
             <p
               className={`${
                 record.status.trim() === "Pending"
-                ? "bg-yellow"
-                : record.status.trim() === "Approved"
-                ? "bg-green"
-                : record.status.trim() === "Disapproved"
-                ? "bg-pink"
-                : ""
+                  ? "bg-yellow"
+                  : record.status.trim() === "Approved"
+                  ? "bg-green"
+                  : record.status.trim() === "Disapproved"
+                  ? "bg-pink"
+                  : ""
               } rounded-lg  py-1 w-1/3
              font-medium text-[14px] text-center ml-2 text-white`}
             >
@@ -973,24 +972,29 @@ const ViewLiquidationModal: React.FC<Props> = ({
           <div className="w-full">
             <h1 className="font-bold">Attachments:</h1>
             <div>
-            {attachmentUrl
-            .filter((_, index) => !removedAttachments.includes(index))
-            .map((url, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-500">
-                  {url.split("/").pop()}
-                  </a>
-                 {isEditing && ( 
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveAttachment(index)}
-                    className="text-red-500"
-                  >
-                    Remove
-                  </button>
-                )}
-                </div>
-              ))}
+              {attachmentUrl
+                .filter((_, index) => !removedAttachments.includes(index))
+                .map((url, index) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500"
+                    >
+                      {url.split("/").pop()}
+                    </a>
+                    {isEditing && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveAttachment(index)}
+                        className="text-red-500"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                ))}
             </div>
             {isEditing && (
               <div>
@@ -1050,9 +1054,9 @@ const ViewLiquidationModal: React.FC<Props> = ({
           </div>
           <div className="md:absolute right-16 top-2 items-center">
             {isEditing ? (
-              <div className="mr-4">
+              <div>
                 <button
-                  className="bg-primary text-white  items-center h-10 rounded-xl p-2"
+                  className="bg-primary text-white items-center h-10 rounded-xl p-2"
                   onClick={handleSaveChanges}
                 >
                   {loading ? (
@@ -1062,20 +1066,23 @@ const ViewLiquidationModal: React.FC<Props> = ({
                   )}
                 </button>
                 <button
-                  className="bg-red-600  rounded-xl text-white ml-2 p-2"
+                  className="bg-red-600 rounded-xl text-white ml-2 p-2"
                   onClick={handleCancelEdit}
                 >
                   Cancel
                 </button>
               </div>
             ) : (
-              <button
-                className="bg-blue-500  rounded-xl p-2 flex text-white"
-                onClick={handleEdit}
-              >
-                <PencilIcon className="h-6 w-6 mr-2" />
-                Edit
-              </button>
+              !fetchingApprovers &&
+              !isFetchingApprovers && (
+                <button
+                  className="bg-blue-500 ml-2 rounded-xl p-2 flex text-white"
+                  onClick={handleEdit}
+                >
+                  <PencilIcon className="h-6 w-6 mr-2" />
+                  Edit
+                </button>
+              )
             )}
           </div>
         </div>
