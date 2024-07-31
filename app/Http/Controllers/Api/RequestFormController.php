@@ -14,6 +14,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use App\Notifications\ApprovalProcessNotification;
+use App\Events\NotificationEvent;
+
+
 
 class RequestFormController extends Controller
 {
@@ -27,7 +31,7 @@ class RequestFormController extends Controller
                 'form_type' => 'required|string',
                 'form_data' => 'required|string', // Temporarily string for decoding
                 'approvers_id' => 'required|exists:custom_approvers,id',
-                'attachment.*' => 'file|mimes:pdf,png,jpg,jpeg|max:2048',
+              'attachment.*' => 'file|mimes:pdf,png,jpg,jpeg',
             ]);
 
             $userID = $validated['user_id'];
@@ -223,6 +227,10 @@ class RequestFormController extends Controller
                 ]);
                 $level++;
             }
+            // Retrieve requester's first name and last name
+         $requester = User::find($userID);
+         $requesterFirstName = $requester->firstName;
+         $requesterLastName = $requester->lastName;
 
             if ($firstApprover) {
                 $firstApproverUser = User::find($firstApprover);
@@ -233,6 +241,10 @@ class RequestFormController extends Controller
                         ->first();
 
                     $firstname = $firstApproverUser->firstname;
+                    $firstApproverUser->notify(new ApprovalProcessNotification($firstApprovalProcess,$firstname,$requestForm,$requesterFirstName,$requesterLastName));
+
+                    $notificationCount = $firstApproverUser->unreadNotifications()->count();
+                    broadcast(new NotificationEvent($firstApproverUser->id, $notificationCount));
 
                     //$firstApproverUser->notify(new ApprovalProcessNotification($firstApprovalProcess, $firstname));
                 }
