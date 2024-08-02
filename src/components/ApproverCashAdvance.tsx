@@ -39,6 +39,7 @@ type Record = {
   branch: string;
   date: string;
   user_id: number;
+  attachment: string;
 };
 
 type FormData = {
@@ -97,7 +98,9 @@ const ApproverCashAdvance: React.FC<Props> = ({
   const [newTotalContingency, setNewTotalContingency] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [editedDate, setEditedDate] = useState("");
-  const [editedApprovers, setEditedApprovers] = useState<number>(record.approvers_id);
+  const [editedApprovers, setEditedApprovers] = useState<number>(
+    record.approvers_id
+  );
   const [loading, setLoading] = useState(false);
   const [approvers, setApprovers] = useState<Approver[]>([]);
   const [isFetchingApprovers, setisFetchingApprovers] = useState(false);
@@ -112,14 +115,17 @@ const ApproverCashAdvance: React.FC<Props> = ({
   const [isFetchingUser, setisFetchingUser] = useState(false);
   const [user, setUser] = useState<any>({});
   const [printWindow, setPrintWindow] = useState<Window | null>(null);
-  const [modalStatus, setModalStatus] = useState<'approved' | 'disapproved'>('approved');
+  const [attachmentUrl, setAttachmentUrl] = useState<string[]>([]);
+  const [modalStatus, setModalStatus] = useState<"approved" | "disapproved">(
+    "approved"
+  );
   let logo;
   if (user?.data?.branch === "Strong Motocentrum, Inc.") {
     logo = <img src={SMCTLogo} alt="SMCT Logo" />;
   } else if (user?.data?.branch === "Des Strong Motors, Inc.") {
     logo = <img src={DSMLogo} alt="DSM Logo" />;
   } else if (user?.data?.branch === "Des Appliance Plaza, Inc.") {
-    logo = <img src={DAPLogo} alt="DAP Logo"/>;
+    logo = <img src={DAPLogo} alt="DAP Logo" />;
   } else if (user?.data?.branch === "Honda Des, Inc.") {
     logo = <img src={HDILogo} alt="HDI Logo" />;
   } else {
@@ -136,10 +142,28 @@ const ApproverCashAdvance: React.FC<Props> = ({
     setNewTotalHotel(record.form_data[0].totalHotel);
     setNewTotalFare(record.form_data[0].totalFare);
     setNewTotalContingency(record.form_data[0].totalContingency);
-    setEditedApprovers(record.approvers_id); 
+    setEditedApprovers(record.approvers_id);
     if (currentUserId) {
       fetchUser(record.user_id);
       fetchCustomApprovers(record.id);
+    }
+    try {
+      // If record.attachment is a JSON string, parse it
+      if (typeof record.attachment === "string") {
+        const parsedAttachment = JSON.parse(record.attachment);
+        // Handle the parsed attachment
+        const fileUrls = parsedAttachment.map(
+          (filePath: string) =>
+            `http://localhost:8000/storage/${filePath.replace(/\\/g, "/")}`
+        );
+        setAttachmentUrl(fileUrls);
+      } else {
+        // Handle case where record.attachment is already an object
+        console.warn("Attachment is not a JSON string:", record.attachment);
+        // Optionally handle this case if needed
+      }
+    } catch (error) {
+      console.error("Error parsing attachment:", error);
     }
   }, [record]);
   const handleDisapprove = async () => {
@@ -166,12 +190,15 @@ const ApproverCashAdvance: React.FC<Props> = ({
 
       console.log("Stock requisition updated successfully:", response.data);
       setLoading(false);
-      setModalStatus('disapproved'); // Set modal status to 'disapproved'
+      setModalStatus("disapproved"); // Set modal status to 'disapproved'
       setShowSuccessModal(true);
       refreshData();
     } catch (error: any) {
       setLoading(false);
-      const errorMessage = error.response?.data?.message || error.message || "Failed to update stock requisition.";
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to update stock requisition.";
       console.error("Error disapproving request form:", errorMessage);
       setErrorMessage(errorMessage);
     }
@@ -195,7 +222,10 @@ const ApproverCashAdvance: React.FC<Props> = ({
     try {
       setApprovedLoading(true);
       console.log("Request Data:", requestData);
-      console.log("API Endpoint:", `http://localhost:8000/api/request-forms/${record.id}/process`);
+      console.log(
+        "API Endpoint:",
+        `http://localhost:8000/api/request-forms/${record.id}/process`
+      );
 
       const response = await axios.put(
         `http://localhost:8000/api/request-forms/${record.id}/process`,
@@ -205,12 +235,15 @@ const ApproverCashAdvance: React.FC<Props> = ({
 
       console.log("Stock requisition updated successfully:", response.data);
       setApprovedLoading(false);
-      setModalStatus('approved'); 
+      setModalStatus("approved");
       setShowSuccessModal(true);
       refreshData();
     } catch (error: any) {
       setApprovedLoading(false);
-      const errorMessage = error.response?.data?.message || error.message || "Failed to update stock requisition.";
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to update stock requisition.";
       console.error("Error approving request form:", errorMessage);
       setErrorMessage(errorMessage);
     }
@@ -228,8 +261,7 @@ const ApproverCashAdvance: React.FC<Props> = ({
     );
     return total.toString();
   };
- 
- 
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const options: Intl.DateTimeFormatOptions = {
@@ -242,7 +274,6 @@ const ApproverCashAdvance: React.FC<Props> = ({
 
   if (!record) return null;
 
-  
   const handleItemChange = (
     index: number,
     field: keyof Item,
@@ -353,7 +384,7 @@ const ApproverCashAdvance: React.FC<Props> = ({
     };
     console.log("dataas", data);
 
-    localStorage.setItem('printData', JSON.stringify(data));
+    localStorage.setItem("printData", JSON.stringify(data));
     // Open a new window with PrintRefund component
     const newWindow = window.open(`/print-cash`, "_blank");
 
@@ -370,46 +401,45 @@ const ApproverCashAdvance: React.FC<Props> = ({
           <XMarkIcon className="h-6 w-6 text-black" onClick={closeModal} />
         </div>
         {!isFetchingApprovers && (
-  <>
-    <button
-      className="bg-blue-600 p-1 px-2 rounded-md text-white"
-      onClick={handlePrint}
-    >
-      Print
-    </button>
-    {printWindow && (
-      <PrintCash
-        data={{
-          id: record,
-          approvedBy: approvedBy,
-          notedBy: notedBy,
-          user: user,
-        }}
-      />
-    )}
-  </>
-)}
-         <div className="flex flex-col justify-center items-center">
+          <>
+            <button
+              className="bg-blue-600 p-1 px-2 rounded-md text-white"
+              onClick={handlePrint}
+            >
+              Print
+            </button>
+            {printWindow && (
+              <PrintCash
+                data={{
+                  id: record,
+                  approvedBy: approvedBy,
+                  notedBy: notedBy,
+                  user: user,
+                }}
+              />
+            )}
+          </>
+        )}
+        <div className="flex flex-col justify-center items-center">
           <div className="justify-center w-1/2">{logo}</div>
           <h1 className="font-bold text-[18px] uppercase ">
-          Application for Cash Advance
+            Application for Cash Advance
           </h1>
           <div className=" ">{user?.data?.branch}</div>
         </div>
         <div className="justify-start items-start flex flex-col space-y-4 w-full">
-        
           <p className="font-medium text-[14px]">Request ID:#{record.id}</p>
           <div className="flex w-full md:w-1/2 items-center">
             <p>Status:</p>
             <p
               className={`${
                 record.status.trim() === "Pending"
-                ? "bg-yellow"
-                : record.status.trim() === "Approved"
-                ? "bg-green"
-                : record.status.trim() === "Disapproved"
-                ? "bg-pink"
-                : ""
+                  ? "bg-yellow"
+                  : record.status.trim() === "Approved"
+                  ? "bg-green"
+                  : record.status.trim() === "Disapproved"
+                  ? "bg-pink"
+                  : ""
               } rounded-lg  py-1 w-1/3
              font-medium text-[14px] text-center ml-2 text-white`}
             >
@@ -634,7 +664,9 @@ const ApproverCashAdvance: React.FC<Props> = ({
                         readOnly={!isEditing}
                       />
                     ) : (
-                      parseFloat(editableRecord.form_data[0].totalBoatFare).toFixed(2)
+                      parseFloat(
+                        editableRecord.form_data[0].totalBoatFare
+                      ).toFixed(2)
                     )}
                   </td>
                 </tr>
@@ -652,7 +684,9 @@ const ApproverCashAdvance: React.FC<Props> = ({
                         readOnly={!isEditing}
                       />
                     ) : (
-                      parseFloat(editableRecord.form_data[0].totalHotel).toFixed(2) 
+                      parseFloat(
+                        editableRecord.form_data[0].totalHotel
+                      ).toFixed(2)
                     )}
                   </td>
                 </tr>
@@ -683,7 +717,9 @@ const ApproverCashAdvance: React.FC<Props> = ({
                         readOnly={!isEditing}
                       />
                     ) : (
-                      parseFloat(editableRecord.form_data[0].totalFare).toFixed(2)  
+                      parseFloat(editableRecord.form_data[0].totalFare).toFixed(
+                        2
+                      )
                     )}
                   </td>
                 </tr>
@@ -701,7 +737,9 @@ const ApproverCashAdvance: React.FC<Props> = ({
                         readOnly={!isEditing}
                       />
                     ) : (
-                      parseFloat(editableRecord.form_data[0].totalContingency).toFixed(2) 
+                      parseFloat(
+                        editableRecord.form_data[0].totalContingency
+                      ).toFixed(2)
                     )}
                   </td>
                 </tr>
@@ -721,7 +759,7 @@ const ApproverCashAdvance: React.FC<Props> = ({
               </tbody>
             </table>
           </div>
-          
+
           <div className="w-full flex-col justify-center items-center">
             {isFetchingApprovers ? (
               <div className="flex items-center justify-center w-full h-40">
@@ -763,7 +801,7 @@ const ApproverCashAdvance: React.FC<Props> = ({
                       >
                         <div className="flex flex-col items-center justify-center text-center">
                           <p className="relative inline-block uppercase font-medium text-center pt-6">
-                          {user.status.toLowerCase() === "approved" && (
+                            {user.status.toLowerCase() === "approved" && (
                               <img
                                 className="absolute top-2"
                                 src={user.signature}
@@ -794,7 +832,7 @@ const ApproverCashAdvance: React.FC<Props> = ({
                       >
                         <div className="flex flex-col items-center justify-center text-center">
                           <p className="relative inline-block uppercase font-medium text-center pt-6">
-                          {user.status.toLowerCase() === "approved" && (
+                            {user.status.toLowerCase() === "approved" && (
                               <img
                                 className="absolute top-2"
                                 src={user.signature}
@@ -818,15 +856,32 @@ const ApproverCashAdvance: React.FC<Props> = ({
               </div>
             )}
           </div>
-    <div className="w-full">
+          <div className="w-full">
+            <h1 className="font-bold">Attachments:</h1>
+            <div>
+              {attachmentUrl.map((url, index) => (
+                <div key={index} className="flex items-center space-x-2">
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500"
+                  >
+                    {url.split("/").pop()}
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="w-full">
             <h1 className="flex">
               Comments<p className="text-red-600">*</p>
             </h1>
             <textarea
               className="border h-32 border-black rounded-md p-1 mt-2 w-full "
               placeholder="e.g."
-          value={comments}
-          onChange={(e) => setComments(e.target.value)}
+              value={comments}
+              onChange={(e) => setComments(e.target.value)}
             />
           </div>
           {record.status === "Pending" && (

@@ -315,12 +315,12 @@ const UpdateInformation = () => {
     fetchUserInformation();
   }, []);
   console.log(newPosition);
-  const profilePictureUrl = user?.profile_picture
-    ? `http://localhost:8000/storage/${user.profile_picture.replace(
-        /\\/g,
-        "/"
-      )}`
-    : Avatar3;
+  const profilePictureUrl = newProfilePic
+  ? URL.createObjectURL(newProfilePic) // Create a temporary URL for the new profile picture
+  : user?.profile_picture
+  ? `http://localhost:8000/storage/${user.profile_picture.replace(/\\/g, "/")}`
+  : Avatar3;
+
   const closeSuccessModal = () => {
     setShowSuccessModal(false);
     navigate("/profile");
@@ -460,8 +460,8 @@ const UpdateInformation = () => {
             <div className="mb-4 flex flex-col md:flex-row items-start ">
               <img
                 alt="logo"
-                height={118}
-                width={118}
+                height={100}
+                width={100}
                 src={profilePictureUrl}
                 className="rounded-full"
               />

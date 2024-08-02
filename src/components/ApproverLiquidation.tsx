@@ -41,6 +41,7 @@ type Record = {
   date: string;
   user_id: number;
   destination: string;
+  attachment: string;
 };
 
 type FormData = {
@@ -113,6 +114,7 @@ const ApproverLiquidation: React.FC<Props> = ({
   const [user, setUser] = useState<any>({});
   const [printWindow, setPrintWindow] = useState<Window | null>(null);
   const [isFetchingUser, setisFetchingUser] = useState(false);
+  const [attachmentUrl, setAttachmentUrl] = useState<string[]>([]);
   const [modalStatus, setModalStatus] = useState<'approved' | 'disapproved'>('approved');
   let logo;
   if (user?.data?.branch === "Strong Motocentrum, Inc.") {
@@ -138,6 +140,24 @@ const ApproverLiquidation: React.FC<Props> = ({
     if (currentUserId) {
       fetchCustomApprovers(record.id);
      
+    }
+    try {
+      // If record.attachment is a JSON string, parse it
+      if (typeof record.attachment === "string") {
+        const parsedAttachment = JSON.parse(record.attachment);
+        // Handle the parsed attachment
+        const fileUrls = parsedAttachment.map(
+          (filePath: string) =>
+            `http://localhost:8000/storage/${filePath.replace(/\\/g, "/")}`
+        );
+        setAttachmentUrl(fileUrls);
+      } else {
+        // Handle case where record.attachment is already an object
+        console.warn("Attachment is not a JSON string:", record.attachment);
+        // Optionally handle this case if needed
+      }
+    } catch (error) {
+      console.error("Error parsing attachment:", error);
     }
   }, [record]);
   const fetchUser = async (id: number) => {
@@ -864,6 +884,23 @@ const ApproverLiquidation: React.FC<Props> = ({
                 </div>
               </div>
             )}
+          </div>
+          <div className="w-full">
+            <h1 className="font-bold">Attachments:</h1>
+            <div>
+              {attachmentUrl.map((url, index) => (
+                <div key={index} className="flex items-center space-x-2">
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500"
+                  >
+                    {url.split("/").pop()}
+                  </a>
+                </div>
+              ))}
+            </div>
           </div>
           <div className="w-full">
             <h2 className="text-lg font-bold mb-2">Comments</h2>

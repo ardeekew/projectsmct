@@ -38,6 +38,7 @@ type Record = {
   branch: string;
   date: string;
   user_id: number;
+  attachment: string;
 };
 
 type FormData = {
@@ -100,8 +101,10 @@ const ApproversStock: React.FC<Props> = ({
   const [editedApprovers, setEditedApprovers] = useState<number>(
     record.approvers_id
   );
-  const [modalStatus, setModalStatus] = useState<'approved' | 'disapproved'>('approved');
-  
+  const [attachmentUrl, setAttachmentUrl] = useState<string[]>([]);
+  const [modalStatus, setModalStatus] = useState<"approved" | "disapproved">(
+    "approved"
+  );
 
   let logo;
   if (user?.data?.branch === "Strong Motocentrum, Inc.") {
@@ -119,6 +122,24 @@ const ApproversStock: React.FC<Props> = ({
     fetchUser(record.user_id);
     fetchCustomApprovers(record.id);
     setCheckedPurpose(record.form_data[0].purpose);
+    try {
+      // If record.attachment is a JSON string, parse it
+      if (typeof record.attachment === "string") {
+        const parsedAttachment = JSON.parse(record.attachment);
+        // Handle the parsed attachment
+        const fileUrls = parsedAttachment.map(
+          (filePath: string) =>
+            `http://localhost:8000/storage/${filePath.replace(/\\/g, "/")}`
+        );
+        setAttachmentUrl(fileUrls);
+      } else {
+        // Handle case where record.attachment is already an object
+        console.warn("Attachment is not a JSON string:", record.attachment);
+        // Optionally handle this case if needed
+      }
+    } catch (error) {
+      console.error("Error parsing attachment:", error);
+    }
   }, [record]);
 
   const fetchUser = async (id: number) => {
@@ -146,7 +167,7 @@ const ApproversStock: React.FC<Props> = ({
       setisFetchingUser(false);
     }
   };
-   const fetchCustomApprovers = async (id: number) => {
+  const fetchCustomApprovers = async (id: number) => {
     setisFetchingApprovers(true);
     try {
       const token = localStorage.getItem("token");
@@ -203,7 +224,10 @@ const ApproversStock: React.FC<Props> = ({
     try {
       setApprovedLoading(true);
       console.log("Request Data:", requestData);
-      console.log("API Endpoint:", `http://localhost:8000/api/request-forms/${record.id}/process`);
+      console.log(
+        "API Endpoint:",
+        `http://localhost:8000/api/request-forms/${record.id}/process`
+      );
 
       const response = await axios.put(
         `http://localhost:8000/api/request-forms/${record.id}/process`,
@@ -213,12 +237,15 @@ const ApproversStock: React.FC<Props> = ({
 
       console.log("Stock requisition updated successfully:", response.data);
       setApprovedLoading(false);
-      setModalStatus('approved'); 
+      setModalStatus("approved");
       setShowSuccessModal(true);
       refreshData();
     } catch (error: any) {
       setApprovedLoading(false);
-      const errorMessage = error.response?.data?.message || error.message || "Failed to update stock requisition.";
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to update stock requisition.";
       console.error("Error approving request form:", errorMessage);
       setErrorMessage(errorMessage);
     }
@@ -248,12 +275,15 @@ const ApproversStock: React.FC<Props> = ({
 
       console.log("Stock requisition updated successfully:", response.data);
       setLoading(false);
-      setModalStatus('disapproved'); // Set modal status to 'disapproved'
+      setModalStatus("disapproved"); // Set modal status to 'disapproved'
       setShowSuccessModal(true);
       refreshData();
     } catch (error: any) {
       setLoading(false);
-      const errorMessage = error.response?.data?.message || error.message || "Failed to update stock requisition.";
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to update stock requisition.";
       console.error("Error disapproving request form:", errorMessage);
       setErrorMessage(errorMessage);
     }
@@ -279,7 +309,7 @@ const ApproversStock: React.FC<Props> = ({
     }
   };
 
-  console.log('stats',user.data)
+  console.log("stats", user.data);
   return (
     <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50">
       <div className="p-4 relative w-full mx-10 md:mx-0 z-10 md:w-1/2 space-y-auto h-3/4 overflow-scroll bg-white border-black rounded-t-lg shadow-lg">
@@ -287,25 +317,25 @@ const ApproversStock: React.FC<Props> = ({
           <XMarkIcon className="h-6 w-6 text-black" onClick={closeModal} />
         </div>
         {!fetchingApprovers && !isFetchingApprovers && (
-  <>
-    <button
-      className="bg-blue-600 p-1 px-2 rounded-md text-white"
-      onClick={handlePrint}
-    >
-      Print
-    </button>
-    {printWindow && (
-      <PrintStock
-        data={{
-          id: record,
-          approvedBy: approvedBy,
-          notedBy: notedBy,
-          user: user,
-        }}
-      />
-    )}
-  </>
-)}
+          <>
+            <button
+              className="bg-blue-600 p-1 px-2 rounded-md text-white"
+              onClick={handlePrint}
+            >
+              Print
+            </button>
+            {printWindow && (
+              <PrintStock
+                data={{
+                  id: record,
+                  approvedBy: approvedBy,
+                  notedBy: notedBy,
+                  user: user,
+                }}
+              />
+            )}
+          </>
+        )}
         <div className="flex flex-col justify-center items-center">
           <div className="justify-center w-1/2">{logo}</div>
           <h1 className="font-bold text-[18px] uppercase ">
@@ -520,6 +550,23 @@ const ApproversStock: React.FC<Props> = ({
             )}
           </div>
           <div className="w-full">
+            <h1 className="font-bold">Attachments:</h1>
+            <div>
+              {attachmentUrl.map((url, index) => (
+                <div key={index} className="flex items-center space-x-2">
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500"
+                  >
+                    {url.split("/").pop()}
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="w-full">
             <h2 className="text-lg font-bold mb-2">Comments</h2>
             <textarea
               className="border h-auto  border-black rounded-md p-1 mt-2 w-full "
@@ -594,13 +641,13 @@ const ApproversStock: React.FC<Props> = ({
               </button>
             </div>
           )}
-        {showSuccessModal && (
-        <ApproveSuccessModal
-          closeModal={() => setShowSuccessModal(false)}
-          closeParentModal={closeModal}
-          status={modalStatus}
-        />
-      )}
+          {showSuccessModal && (
+            <ApproveSuccessModal
+              closeModal={() => setShowSuccessModal(false)}
+              closeParentModal={closeModal}
+              status={modalStatus}
+            />
+          )}
         </div>
       </div>
     </div>

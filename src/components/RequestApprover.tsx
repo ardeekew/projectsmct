@@ -34,6 +34,7 @@ type Record = {
   grand_total: string;
   grandTotal: string;
   approvers_id: number;
+  attachment: string;
 };
 
 type MyFormData = {
