@@ -7,8 +7,9 @@ import {
   ChevronUpIcon,
   EnvelopeIcon,
   Bars3Icon,
+  EnvelopeOpenIcon,
 } from "@heroicons/react/24/solid";
-import Avatar from "./assets/SMCT.png";
+import Avatar from "./assets/avatar.png";
 import { Link, useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import axios from "axios";
@@ -160,7 +161,13 @@ const Nav: React.FC<NavProps> = ({
       }
     };
 
+    // Initial fetch
     fetchNotifications();
+
+    // Set up polling interval
+    const intervalId = setInterval(fetchNotifications, 5000); // Poll every 5 seconds
+
+    return () => clearInterval(intervalId); 
   }, []);
 
   useEffect(() => {
@@ -275,7 +282,7 @@ const Nav: React.FC<NavProps> = ({
                 <ul>
                   <Link to="/profile" onClick={handleClose}>
                     <li className={`${listProfile}`}>My Profile</li>
-                  </Link>               
+                  </Link>
                   <Link to="/help" onClick={handleClose}>
                     <li className={`${listProfile}`}>Help</li>
                   </Link>
@@ -320,42 +327,55 @@ const Nav: React.FC<NavProps> = ({
             </div>
             {/* Notification */}
             {isOpenNotif && (
-          <div
-          className="w-80 -right-11 bg-white absolute top-11 border-2 border-black z-40 overflow-y-auto max-h-80" // Updated class
-          ref={dropdownRef}
-        >
-          <ul>
-            {notifications.length === 0 ? (
-              <li className="px-4 py-4 text-center text-gray-500">No notifications yet</li>
-            ) : (
-              notifications.slice(0, 5).map((notif) => (
-                <Link to="/request/approver" key={notif.notification_id}>
-                  <li
-                    className="px-4 hover:bg-[#E0E0F9] cursor-pointer py-4 border-b flex items-center justify-around"
-                    onClick={() => handleNotificationClick(notif.notification_id)}
-                  >
-                    <div className="flex justify-evenly items-center w-full">
-                      <div className="size-8 flex items-center justify-center w-10 py-2 bg-black rounded-full">
-                        <EnvelopeIcon className={`${iconNotifcation}`} />
-                      </div>
-                      <div className="mx-2">
-                        <p className="text-primary text-sm">
-                          {notif.data.message}
-                        </p>
-                        <p className="text-gray-400 px-10 text-sm">
-                          {formatDate(notif.data.created_at)}
-                        </p>
-                      </div>
-                    </div>
-                  </li>
-                </Link>
-              ))
-            )}
-          </ul>
-        </div>
-        
-        
-            
+              <div
+                className="w-72 md:w-96 -right-11 bg-white absolute top-11 border-2 border-black z-40 overflow-y-auto max-h-80" // Updated class
+                ref={dropdownRef}
+              >
+                <ul>
+                  {notifications.length === 0 ? (
+                    <li className="px-4 py-4 text-center text-gray-500">
+                      No notifications yet
+                    </li>
+                  ) : (
+                    notifications.slice(0, 5).map((notif) => (
+                      <Link to="/request/approver" key={notif.notification_id}>
+                        <div className="flex justify-between w-full">
+                        <li
+                          className="px-4 hover:bg-[#E0E0F9] cursor-pointer py-4 border-b flex items-center justify-around"
+                          onClick={() =>
+                            handleNotificationClick(notif.notification_id)
+                          }
+                        >
+                          <div className="flex justify-around items-center w-full">
+                            <div className="size-10 flex items-center justify-center w-10  bg-black rounded-full">
+                              {/* Notification Icon */}
+                              {notifications.length > 0 &&
+                                (notif.read_at === null ? (
+                                  <EnvelopeIcon
+                                    className={`${iconNotifcation}`}
+                                  />
+                                ) : (
+                                  <EnvelopeOpenIcon
+                                    className={`${iconNotifcation}`}
+                                  />
+                                ))}
+                            </div>
+                            <div className="mx-2">
+                            <p className={`text-primary text-sm ${notif.read_at === null ? "font-bold" : ""}`}>
+                                {notif.data.message}
+                              </p>
+                              <p className="text-gray-400 px-10 text-sm">
+                                {formatDate(notif.data.created_at)}
+                              </p>
+                            </div>
+                          </div>
+                        </li>
+                        </div>
+                      </Link>
+                    ))
+                  )}
+                </ul>
+              </div>
             )}
           </div>
         </div>

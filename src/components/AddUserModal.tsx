@@ -27,6 +27,9 @@ const schema = z
     branchCode: z.string().nonempty(),
     confirmPassword: z.string().min(5).max(20),
     role: z.string().nonempty(),
+    position: z.string().nonempty(),
+    branch: z.string().nonempty(),
+    employee_id: z.string().min(2).max(30),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -254,6 +257,7 @@ const AddUserModal = ({
     register,
     reset,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<UserCredentials>({
     resolver: zodResolver(schema),
@@ -262,6 +266,44 @@ const AddUserModal = ({
   if (!modalIsOpen) {
     return null;
   }
+
+  const handleBranchCodeChange = (selectedBranchCode: string) => {
+    setValue("branchCode", selectedBranchCode);
+    if ([
+      "AKLA", "ALEN", "ALIC", "ANTI", "ANTIP", "BANTA", "BAYB", "BINAN",
+      "BOHK", "BOHL", "CAGL", "CALAP", "CALAP2", "CALI", "CARMB", "CARMO",
+      "CARS", "CATAR", "DASMA", "DIPL", "FAMY", "GUIN", "GUIN2", "JAGN",
+      "LIPA", "LOAY", "MADRI", "MALA", "MANG", "MANL", "MANP", "MOLS",
+      "NAIC", "OZAL", "PAGS", "SAGBA", "SALA", "SANJ", "SANP", "SDAV",
+      "SDIP", "SARG", "SILA", "SLAP", "SLAS", "SLIL", "SMCT", "SROS",
+      "TALI", "TANZ", "TANZ2", "TRINI2", "TUBI", "VALEN", "YATI", "ZAML"
+    ].includes(selectedBranchCode)) {
+      setValue("branch", "Strong Motocentrum, Inc.");
+    } else if ([
+      "AURO", "BALA", "BUHA", "BULU", "CARMCDO", "DIGOS", "DONC", "DSMBL",
+      "DSMC", "DSMCA", "DSMD", "DSMD2", "DSMM", "DSMPO", "DSMSO", "DSMTG",
+      "DSMV", "ELSA", "ILIG", "JIMEDSM", "KABA2", "KATI", "LABA", "MARA",
+      "MATI", "RIZA", "TACU", "TORI", "CERI", "VILLA", "VISA", "CARC",
+      "CARC2", "CARMC2", "CATM", "COMPO", "DAAN", "DSMA", "DSMAO", "DSMB",
+      "DSMBN", "DSMCN", "DSMDB", "DSMDM", "DSMDN", "DSMK", "DSMLN", "DSMP",
+      "DSMSB", "DSMT", "DSMT2", "DSMTA", "ILOI", "LAHU", "LAPU 2", "MAND",
+      "MAND2", "MEDE", "PARD", "PARD2", "REMI", "REMI2", "SANT", "TUBU",
+      "UBAY", "BOGO", "DSML", "CALIN"
+    ].includes(selectedBranchCode)) {
+      setValue("branch", "Des Strong Motors, Inc.");
+    } else if ([
+      "ALAD", "AURD", "BALD", "BONI", "BUUD", "CALD", "CAMD", "DAPI", "DIPD", "DIPD2", "ILID", "IMED", "INIT2", "IPID", "JIME", "KABD", "LABD", "LILD", "MANO", "MARA2", "MARD", "MOLD", "MOLD2", "NUND2", "OROD", "OZAD", "PUTD", "RIZD", "SANM", "SIND", "SUCD", "TUBOD", "VITA"
+    ].includes(selectedBranchCode)) {
+      setValue("branch", "Des Appliance Plaza, Inc.");
+    } else if (["HO"].includes(selectedBranchCode)) {
+      setValue("branch", "Head Office");
+    } else {
+      setValue("branch", "Honda Des, Inc.");
+    }
+  };
+  const capitalizeWords = (str: string) => {
+    return str.replace(/\b\w+/g, (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
+  };
  const submitData = async (data: UserCredentials) => {
   
     try {
@@ -274,12 +316,15 @@ const AddUserModal = ({
         email: data.email,
         password: data.password,
         userName: data.userName,
-        firstName: data.firstName,
-        lastName: data.lastName,
+        firstName: capitalizeWords(data.firstName),
+        lastName: capitalizeWords(data.lastName),
         contact: data.contact,
         branch_code: data.branchCode,
-        role: data.role,
         confirmPassword: data.password,
+        position: data.position,
+        role: "User",
+        branch: data.branch,
+        employee_id: data.employee_id,
       });
 
       console.log("response", response.data);
@@ -404,33 +449,7 @@ const AddUserModal = ({
                   )}
                 </div>
             </div>
-            <div>
-              <p className={`${pStyle}`}>Role</p>
-              <Controller
-                    name="role"
-                    control={control}
-                    render={({ field }) => (
-                      <select
-                        {...field}
-                        className={`${inputStyle}`}
-                      >
-                        <option value="">Select role</option>
-                        {roleOptions.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                  />
-                  <div>
-                    {errors.role && (
-                      <span className="text-red-500 text-xs">
-                        {errors.role.message}
-                      </span>
-                    )}
-                  </div>
-            </div>
+           
             <div className="">
               <p className={`${pStyle}`}>Branch Code</p>
               <Controller
@@ -440,6 +459,7 @@ const AddUserModal = ({
                       <select
                         {...field}
                         className={`${inputStyle}`}
+                        onChange={(e) =>{ field.onChange(e); handleBranchCodeChange(e.target.value)}}
                       >
                         <option value="">Select branch</option>
                         {branchOptions.map((option) => (
@@ -459,6 +479,72 @@ const AddUserModal = ({
                     )}
                   </div>
             </div>
+            <div className="">
+            <p className={`${pStyle}`}>Branch </p>
+                <Controller
+                  name="branch"
+                  control={control}
+                  render={({ field }) => (
+                    <input
+                      {...field}
+                    readOnly
+                    className={`${inputStyle}`}
+            
+                    />
+                  )}
+                />
+                {errors.branch && (
+                  <span className="text-red-500 text-xs">
+                    {errors.branch.message}
+                  </span>
+                )}
+              </div>
+              <div className="">
+              <p className={`${pStyle}`}>Employee ID </p>
+                <input
+                  type="text"
+                  {...register("employee_id")}
+                  placeholder="Enter your employee ID"
+                  className={`${inputStyle}`}
+                />
+                <div>
+                  {errors.employee_id && (
+                    <span className="text-red-500 text-xs">
+                      {" "}
+                      {errors.employee_id.message}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="">
+                <h1 className={`${pStyle}`}>Position</h1>
+                <div className="relative">
+                  <Controller
+                    name="position"
+                    control={control}
+                    render={({ field }) => (
+                      <select
+                        {...field}
+                        className={`${inputStyle}`}
+                      >
+                        <option value="">Select Position</option>
+                        {roleOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  />
+                  <div>
+                    {errors.position && (
+                      <span className="text-red-500 text-xs">
+                        {errors.position.message}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                </div>
           </div>
           <h1 className="mx-5 md:mx-10  md:ml-4 mt-8 text-[20px] font-medium">PASSWORD</h1>
           <div className="border-b "></div>

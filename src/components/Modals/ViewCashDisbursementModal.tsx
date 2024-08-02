@@ -646,7 +646,7 @@ const ViewCashDisbursementModal: React.FC<Props> = ({
                       >
                         <div className="flex flex-col items-center justify-center text-center">
                           <p className="relative inline-block uppercase font-medium text-center pt-6">
-                            {user.status === "approved" && (
+                            {user.status.toLowerCase() === "approved" && (
                               <img
                                 className="absolute top-2"
                                 src={user.signature}
@@ -677,7 +677,7 @@ const ViewCashDisbursementModal: React.FC<Props> = ({
                       >
                         <div className="flex flex-col items-center justify-center text-center">
                           <p className="relative inline-block uppercase font-medium text-center pt-6">
-                            {user.status === "approved" && (
+                            {user.status.toLowerCase() === "approved" && (
                               <img
                                 className="absolute top-2"
                                 src={user.signature}

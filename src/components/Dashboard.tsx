@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import DataTable from "react-data-table-component";
 import ClipLoader from "react-spinners/ClipLoader";
+import { set } from "react-hook-form";
 
 interface FormData {
   purpose: string;
@@ -62,7 +63,10 @@ const innerLogo = "lg:w-[48px] lg:h-[51px] w-[40px] h-[45px] flex justify-center
 const Dashboard: React.FC = () => {
   const [requests, setRequests] = useState<Request[]>([]);
   const [loading, setLoading] = useState(false);
-
+  const [totalRequestsSent, setTotalRequestsSent] = useState<number | null>(null);
+  const [totalApprovedRequests, setTotalApprovedRequests] = useState<number | null>(null);
+  const [totalPendingRequests, setTotalPendingRequests] = useState<number | null>(null);
+  const [totalDisapprovedRequests, setTotalDisapprovedRequests] = useState<number | null>(null);
   const userId = localStorage.getItem("id");
 
   useEffect(() => {
@@ -79,6 +83,7 @@ const Dashboard: React.FC = () => {
         Authorization: `Bearer ${token}`,
       };
 
+      // Fetch requests data
       axios
         .get(`http://localhost:8000/api/view-request`, { headers })
         .then((response) => {
@@ -87,14 +92,29 @@ const Dashboard: React.FC = () => {
           } else {
             console.error("Unexpected data format:", response.data);
           }
-          setLoading(false);
         })
         .catch((error) => {
           console.error("Error fetching requests data:", error);
+        });
+
+      // Fetch total requests sent
+      axios
+        .get(`http://localhost:8000/api/total-request-sent/${userId}`, { headers })
+        .then((response) => {
+          console.log("Total requests sent:", response.data);
+          setTotalRequestsSent(response.data.totalRequestSent);
+          setTotalPendingRequests(response.data.totalPendingRequest);
+          setTotalApprovedRequests(response.data.totalApprovedRequest)
+          setTotalDisapprovedRequests(response.data.totalDisapprovedRequest);
+          setLoading(false);
+        })
+        .catch((error) => {
+          console.error("Error fetching total requests sent:", error);
           setLoading(false);
         });
     }
   }, [userId]);
+
 
   const sortedRequests = requests.sort((a, b) => b.id - a.id);
 
@@ -193,7 +213,7 @@ const Dashboard: React.FC = () => {
             <p className="text-[16px] font-semibold mt-[30px] ml-[17px] absolute">
               Request Sent
             </p>
-            <p className="text-[40px] font-bold bottom-6 mx-5 absolute">3</p>
+            <p className="text-[40px] font-bold bottom-6 mx-5 absolute">{totalRequestsSent}</p>
           </div>
         </div>
         <div className={`${boxWhite} hover:-translate-y-1 hover:scale-110`}>
@@ -206,7 +226,7 @@ const Dashboard: React.FC = () => {
             <p className="text-[16px] font-semibold mt-[30px] ml-[17px] absolute">
               Approved Requests
             </p>
-            <p className="text-[40px] font-bold bottom-6 mx-5 absolute">1</p>
+            <p className="text-[40px] font-bold bottom-6 mx-5 absolute">{totalApprovedRequests}</p>
           </div>
         </div>
 
@@ -220,7 +240,7 @@ const Dashboard: React.FC = () => {
             <p className="text-[16px] font-semibold mt-[30px] mx-[17px] absolute">
               Pending Requests
             </p>
-            <p className="text-[40px] font-bold bottom-6 mx-5 absolute">3</p>
+            <p className="text-[40px] font-bold bottom-6 mx-5 absolute">{totalPendingRequests}</p>
           </div>
         </div>
       </div>

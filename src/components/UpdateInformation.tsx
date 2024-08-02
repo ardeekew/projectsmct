@@ -34,6 +34,7 @@ const schema = z.object({
     message: "Contact number must be 11 digits",
   }),
   userName: z.string().nonempty("Username is required"),
+  position: z.string().nonempty("Position is required"),
 });
 
 const roleOptions = [
@@ -233,8 +234,9 @@ const branchOptions = [
   { value: "ZAML", label: "ZAML" },
 ];
 
-const pinputStyle = "font-medium border-2 border-black rounded-[12px] p-2";
-const baseUrl = 'http://localhost:8000/storage/profile_pictures/';
+const pinputStyle =
+  "font-medium border-2 border-black rounded-[12px] p-2 w-full";
+const baseUrl = "http://localhost:8000/storage/profile_pictures/";
 const UpdateInformation = () => {
   const signatureRef = useRef<SignatureCanvas>(null);
   const {
@@ -257,13 +259,15 @@ const UpdateInformation = () => {
   const [newPosition, setNewPosition] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showSignatureSuccess, setShowSignatureSuccess] = useState(false);
   const [loading, setLoading] = useState(true);
   const id = localStorage.getItem("id");
   const [signatureEmpty, setSignatureEmpty] = useState(false);
   const [signature, setSignature] = useState<SignatureCanvas | null>(null);
+  const [signatureButton, setSignatureButton] = useState(false);
   const navigate = useNavigate();
   const [newProfilePic, setNewProfilePic] = useState<File | null>(null);
-
+  const token = localStorage.getItem("token");
   useEffect(() => {
     const fetchUserInformation = async () => {
       try {
@@ -293,6 +297,7 @@ const UpdateInformation = () => {
           setNewContact(response.data.data.contact);
           setNewUserName(response.data.data.userName);
           setNewPosition(response.data.data.position);
+          setNewRole(response.data.data.role);
         } else {
           throw new Error(
             response.data.message || "Failed to fetch user information"
@@ -309,75 +314,84 @@ const UpdateInformation = () => {
 
     fetchUserInformation();
   }, []);
-  const profilePictureUrl = user?.profile_picture 
-  ? `http://localhost:8000/storage/${user.profile_picture.replace(/\\/g, '/')}`
-  : Avatar3; 
+  console.log(newPosition);
+  const profilePictureUrl = user?.profile_picture
+    ? `http://localhost:8000/storage/${user.profile_picture.replace(
+        /\\/g,
+        "/"
+      )}`
+    : Avatar3;
   const closeSuccessModal = () => {
     setShowSuccessModal(false);
+    navigate("/profile");
+  };
+  const closeSignatureSuccess = () => {
+    setSignatureButton(false);
     navigate("/profile");
   };
   const onSubmit: SubmitHandler<User> = async (data) => {
     try {
       setSubmitting(true);
-      if (signatureIsEmpty()) {
-        setSignatureEmpty(true);
+
+      const token = localStorage.getItem("token");
+      const id = localStorage.getItem("id");
+
+      if (!token || !id) {
+        console.error("Token or ID is missing");
         setSubmitting(false);
         return;
       }
-  
-      const signatureDataURL = signature?.toDataURL("image/png");
-      const token = localStorage.getItem("token");
-      const id = localStorage.getItem("id");
-  
-      if (!token || !id) {
-        console.error("Token or ID is missing");
-        return;
-      }
-  
+
       const formData = new FormData();
-      formData.append("firstName", data.firstName);
-      formData.append("lastName", data.lastName);
-      formData.append("email", data.email);
-      formData.append("branch_code", data.branch_code);
-      formData.append("contact", data.contact);
-      formData.append("userName", data.userName);
-      formData.append("position", data.position);
-           formData.append("signature", signatureDataURL || ""); // Add signature
+      formData.append("firstName", data.firstName || "");
+      formData.append("lastName", data.lastName || "");
+      formData.append("email", data.email || "");
+      formData.append("branch_code", data.branch_code || "");
+      formData.append("contact", data.contact || "");
+      formData.append("userName", data.userName || "");
+      formData.append("position", data.position || ""); // Ensure position is correctly appended
+      formData.append("role", data.role || "");
+
       if (newProfilePic) {
-        formData.append("profile_picture", newProfilePic); // Add profile picture
+        formData.append("profile_picture", newProfilePic); // Ensure newProfilePic is a File object
       }
-  
+
+      // Log FormData for debugging
+      console.log("FormData entries:");
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}: ${value}`);
+      }
+
       const response = await axios.post(
         `http://localhost:8000/api/update-profile/${id}`,
         formData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data", // Set content type for file upload
+            "Content-Type": "multipart/form-data",
           },
         }
       );
-  
+
       console.log("User information updated successfully:", response.data);
       setSubmitting(false);
       setShowSuccessModal(true);
     } catch (error: any) {
       console.error(
         "Failed to update user information:",
-        error.response.data || error.message
+        error.response?.data || error.message
       );
       setSubmitting(false);
       setShowSuccessModal(true);
     }
   };
-  
 
   const handleClear = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     signature?.clear();
   };
-  
-console.log(newProfilePic)
+
+  console.log(newProfilePic);
   const saveSignature = () => {
     if (signatureRef.current) {
       const signatureImage = signatureRef.current.toDataURL();
@@ -401,6 +415,38 @@ console.log(newProfilePic)
   const handleImageClick = () => {
     inputRef.current?.click();
   };
+
+  const handleSaveSignature = async () => {
+    if (signatureRef.current) {
+      setSignatureButton(true);
+      // Convert the signature to a data URL
+      const signatureDataURL = signatureRef.current.toDataURL();
+      console.log("Signature Data URL:", signatureDataURL); // Check the console to verify the data
+
+      try {
+        // Send the data URL to the backend API
+        const response = await axios.post(
+          `http://localhost:8000/api/update-signature/${id}`, // Ensure the URL is correct
+          { signature: signatureDataURL },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`, // Ensure token is valid
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        setSignatureButton(false);
+        console.log(response.data); // Check the response for success or error messages
+      } catch (error) {
+        setSignatureButton(false);
+        console.error("Error saving signature:", error); // Log any errors
+      }
+    } else {
+      setSignatureButton(false);
+      console.error("Signature reference is not set."); // Log if signatureRef.current is null
+    }
+  };
+
   const handleProfilePicUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setNewProfilePic(file); // Store the selected file in state
@@ -408,10 +454,10 @@ console.log(newProfilePic)
   };
   return (
     <div className="bg-graybg dark:bg-blackbg w-full h-screen pt-4 px-4 md:px-10 lg:px-30">
-      <div className="bg-white  rounded-[12px] flex  w-full  px-4 md:px-[88px] pt-[50px] space-x-6">
-        <div className="mb-5 rounded-[12px] w-full  flex flex-col md:flex-row justify-between">
-          <div>
-            <div className="mb-4  flex flex-row ">
+      <div className="bg-white rounded-[12px] flex flex-col md:flex-row w-full px-4 md:px-[88px] pt-[50px] space-y-6 md:space-x-6 md:space-y-0">
+        <div className="mb-5 rounded-[12px] w-full flex flex-col md:flex-row justify-between">
+          <div className="flex flex-col w-full">
+            <div className="mb-4 flex flex-col md:flex-row items-start ">
               <img
                 alt="logo"
                 height={118}
@@ -419,12 +465,14 @@ console.log(newProfilePic)
                 src={profilePictureUrl}
                 className="rounded-full"
               />
-              <div className="flex flex-col ml-4">
-                <h1 className="font-bold text-lg md:text-[20px] mt-10 text-left">
+              <div className="flex flex-col ml-4 mt-4 ">
+                <h1 className="font-bold text-lg md:text-[20px] text-left">
                   {user?.firstName} {user?.lastName}
                 </h1>
                 <div onClick={handleImageClick}>
-                  <p className="text-primary">Upload new picture</p>
+                  <p className="text-primary cursor-pointer">
+                    Upload new picture
+                  </p>
                   <input
                     type="file"
                     ref={inputRef}
@@ -434,14 +482,14 @@ console.log(newProfilePic)
                 </div>
               </div>
             </div>
-            <div></div>
-            <div className="flex flex-col w-full  items-start justify-center text-left px-4 ">
-              <h1 className="font-semibold text-lg md:text-[20px]  my-5 mt-8">
+
+            <div className="flex flex-col w-full text-left">
+              <h1 className="font-semibold text-lg md:text-[20px] my-5 mt-8">
                 User Information
               </h1>
               {user && (
-                <form onSubmit={handleSubmit(onSubmit)}>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 space-x-0 lg:gap-4 w-full ">
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 w-full">
                     <div className="w-full flex flex-col">
                       <p className="text-gray-400">First Name</p>
                       <Controller
@@ -452,7 +500,7 @@ console.log(newProfilePic)
                           <input
                             {...field}
                             type="text"
-                            className={`${pinputStyle}`}
+                            className={`${pinputStyle} w-full`}
                             onChange={(e) => {
                               field.onChange(e);
                               setNewFirstName(e.target.value);
@@ -537,7 +585,6 @@ console.log(newProfilePic)
                           </select>
                         )}
                       />
-
                       {errors.branch_code && (
                         <span className="text-red-500">
                           {errors.branch_code.message}
@@ -593,7 +640,7 @@ console.log(newProfilePic)
                       )}
                     </div>
                     <div className="w-full flex flex-col">
-                      <p className="text-gray-400">Role</p>
+                      <p className="text-gray-400">Position</p>
                       <Controller
                         name="position"
                         control={control}
@@ -615,16 +662,16 @@ console.log(newProfilePic)
                           </select>
                         )}
                       />
-                      {errors.role && (
+                      {errors.position && (
                         <span className="text-red-500">
-                          {errors.role.message}
+                          {errors.position.message}
                         </span>
                       )}
                     </div>
                   </div>
                   <button
                     type="submit"
-                    className="bg-black text-white w-full  h-[48px] rounded-[12px]  mt-4 mb-8"
+                    className="bg-black text-white w-full h-[48px] rounded-[12px] mt-4 mb-8"
                   >
                     {submitting ? (
                       <ClipLoader color="#36d7b7" />
@@ -641,20 +688,18 @@ console.log(newProfilePic)
               )}
             </div>
           </div>
-          <div className="w-1/2 mb-4 flex flex-col">
+          <div className="w-full md:w-1/2 mb-4 flex flex-col">
             <h1 className="lg:text-lg text-base mb-2">Signature</h1>
             {user?.signature ? (
-              // Display user's signature as image
               <img
                 src={user.signature}
                 alt="User Signature"
                 className="sigCanvas border border-black h-28 w-full"
               />
             ) : (
-              // Display signature canvas for user to draw
               <SignatureCanvas
                 penColor="black"
-                ref={(ref) => setSignature(ref)}
+                ref={signatureRef}
                 canvasProps={{
                   className: "sigCanvas border border-black h-20 w-full",
                 }}
@@ -674,16 +719,27 @@ console.log(newProfilePic)
                   Clear
                 </button>
                 <button
-                  onClick={saveSignature}
-                  className="bg-primary text-white p-1 rounded-lg"
+                  onClick={handleSaveSignature}
+                  className={`bg-primary text-white p-2 rounded-lg flex items-center ${
+                    signatureButton ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                  disabled={signatureButton}
                 >
-                  Save
+                  {signatureButton ? (
+                    <ClipLoader
+                      color="#ffffff" // Adjust the color to match your design
+                      size={24} // Adjust the size if needed
+                      className="mr-2"
+                    />
+                  ) : null}
+                  {signatureButton ? "Saving..." : "Save"}
                 </button>
               </div>
             )}
           </div>
         </div>
       </div>
+
       {showSuccessModal && (
         <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 flex-col ">
           <div className="bg-white relative w-1/4 flex flex-col items-center justify-center rounded-md ">
@@ -703,6 +759,32 @@ console.log(newProfilePic)
               <button
                 className=" bg-primary p-2 w-1/2 rounded-[12px] text-white font-extrabold"
                 onClick={closeSuccessModal}
+              >
+                OKAY
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {signatureButton && (
+        <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 flex-col ">
+          <div className="bg-white relative w-1/4 flex flex-col items-center justify-center rounded-md ">
+            <FontAwesomeIcon
+              icon={faCircleCheck}
+              className="size-20 text-primary absolute -top-6  "
+            />
+            <div>
+              <h1 className="mt-20 text-[28px] font-bold text-center">
+                Success
+              </h1>
+              <p className="my-7  text-gray-400 font-semibold text-center">
+                Signature Added!
+              </p>
+            </div>
+            <div className="bg-graybg w-full rounded-b-lg flex justify-center items-center p-4">
+              <button
+                className=" bg-primary p-2 w-1/2 rounded-[12px] text-white font-extrabold"
+                onClick={closeSignatureSuccess}
               >
                 OKAY
               </button>

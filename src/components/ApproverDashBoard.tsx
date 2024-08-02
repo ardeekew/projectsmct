@@ -90,7 +90,7 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
     { name: string; pv: any }[]
   >([]);
   const [barChartData, setBarChartData] = useState<
-    { name: string; pv: number }[]
+    { name: string; Request: number }[]
   >([]);
   const [isFetching, setIsFetching] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("thisMonth");
@@ -155,8 +155,7 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
     const today = new Date();
     let startDate: Date;
     let endDate: Date;
-
-    // Determine date range based on selected filter
+  
     if (selectedFilter === "thisMonth") {
       startDate = startOfMonth(today);
       endDate = endOfMonth(today);
@@ -164,16 +163,15 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
       startDate = startOfYear(today);
       endDate = endOfYear(today);
     } else {
-      return; // Handle other filters as needed
+      return;
     }
-
+  
     const aggregatedData: { [key: string]: number } = {};
-
+  
     requests.forEach((record) => {
-      const recordDate = new Date(record.created_at); // Use created_at instead of date
-
+      const recordDate = new Date(record.created_at);
       if (recordDate >= startDate && recordDate <= endDate) {
-        const monthName = format(recordDate, "MMM"); // Format to month name (e.g., Jan, Feb)
+        const monthName = format(recordDate, "MMM");
         if (aggregatedData[monthName]) {
           aggregatedData[monthName] += 1;
         } else {
@@ -181,31 +179,19 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
         }
       }
     });
-
-    // Ensure all months are included, even if they have zero requests
+  
     const allMonths = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
     ];
-
+  
     const areaChartData = allMonths.map((month) => ({
       name: month,
-      pv: aggregatedData[month] || 0,
+      pv: Math.floor(aggregatedData[month] || 0), // Ensure whole numbers
     }));
-
+  
     setAreaChartData(areaChartData);
-    console.log("Area chart data:", areaChartData);
   };
+  
 
   const processBarChartData = (requests: Request[]) => {
     const today = new Date();
@@ -228,7 +214,7 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
     const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const barChartData = weekDays.map((day) => ({
       name: day,
-      pv: Math.floor(aggregatedData[day] || 0),
+      Request: Math.floor(aggregatedData[day] || 0),
     }));
 
     setBarChartData(barChartData);
@@ -341,25 +327,31 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
       </div>
       <div className="flex gap-4">
         <div className="flex-7 py-10 bg-white drop-shadow-lg w-full rounded-[12px] h-[327px] mt-4">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
-              width={500}
-              height={400}
-              data={areaChartData}
-              margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-            >
-              <CartesianGrid strokeDasharray="3 " />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Area
-                type="monotone"
-                dataKey="pv"
-                stroke="#1E9AFF"
-                fill="#389DF1"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+        <ResponsiveContainer width="100%" height="100%">
+  <AreaChart
+    width={500}
+    height={400}
+    data={areaChartData}
+    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+  >
+    <CartesianGrid strokeDasharray="3 " />
+    <XAxis dataKey="name" />
+    <YAxis
+      domain={[0, 'auto']} // Ensure the Y-axis starts from 0 and scales automatically
+      ticks={[1, 2, 3, 4, 5, 6]} // Set specific ticks for whole numbers
+      tickFormatter={(value) => Math.floor(value).toString()} // Ensure whole number display
+    />
+    <Tooltip />
+    <Area
+      type="monotone"
+      dataKey="pv"
+      stroke="#1E9AFF"
+      fill="#389DF1"
+    />
+  </AreaChart>
+</ResponsiveContainer>
+
+
         </div>
         <div className="flex-3 pb-10 pt-2 bg-white w-full drop-shadow-lg lg:w-2/4 rounded-[12px] h-[327px] mt-4">
           <h1 className="text-center font-bold text-lg">THIS WEEK</h1>
@@ -377,7 +369,7 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
                 allowDecimals={false}
               />
               <Tooltip />
-              <Bar dataKey="pv" fill="#8884d8" />
+              <Bar dataKey="Request" fill="#8884d8" />
             </BarChart>
           </ResponsiveContainer>
         </div>

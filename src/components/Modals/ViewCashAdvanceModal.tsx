@@ -840,13 +840,13 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
               </select>
             )}
           </div>
-          <div className="w-full flex-col justify-center items-center ">
+          <div className="w-full flex-col justify-center items-center">
             {isFetchingApprovers ? (
-              <div className="flex items-center justify-evenly w-full h-40 ">
+              <div className="flex items-center justify-center w-full h-40">
                 <h1>Fetching..</h1>
               </div>
             ) : (
-              <div className="flex flex-wrap justify-start ">
+              <div className="flex flex-wrap">
                 <div className="ml-5 mb-4">
                   <h3 className="font-bold mb-3">Requested By:</h3>
                   <div className="flex flex-row justify-start space-x-2">
@@ -881,7 +881,7 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
                       >
                         <div className="flex flex-col items-center justify-center text-center">
                           <p className="relative inline-block uppercase font-medium text-center pt-6">
-                            {user.status === "approved" && (
+                            {user.status.toLowerCase() === "approved" && (
                               <img
                                 className="absolute top-2"
                                 src={user.signature}
@@ -912,7 +912,7 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
                       >
                         <div className="flex flex-col items-center justify-center text-center">
                           <p className="relative inline-block uppercase font-medium text-center pt-6">
-                            {user.status === "approved" && (
+                            {user.status.toLowerCase() === "approved" && (
                               <img
                                 className="absolute top-2"
                                 src={user.signature}

@@ -54,72 +54,102 @@ const PrintLiquidation: React.FC<PrintRefundProps> = ({ data }) => {
     if (storedData) {
       const parsedData = JSON.parse(storedData);
       setPrintData(parsedData); // Set the printData state
+      console.log(parsedData);
     }
-    window.print();
+  
     localStorage.removeItem('printData');
   }, []);
 
-  const tableStyle = "border border-black px-4 py-4";
-
+  const tableStyle = "border border-black  py-4";
+  useEffect(() => {
+    if (printData !== null) {
+      window.print();
+      localStorage.removeItem('printData'); // Clean up after printing
+    }
+  }, [printData]);
   return (
-    <div className="print-container p-5">
-      <style>
-        {`
-          @media print {
-            .print-container {
-              padding: 10px;
-              margin: 0;
-              max-height: 5.5in; /* Set max-height to half of bond paper */
-              overflow: hidden; /* Hide overflow to ensure content fits */
-            }
+    <div className="print-container  ">
+    <style>
+  {`
+    @media print {
+      .print-container {
+        padding: 10px;
+        margin: 0;
+      }
 
-            table {
-              width: 80%;
-              border-collapse: collapse;
-              margin-bottom: 20px;
-            }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+        table-layout: fixed; /* Ensures table width is constrained */
+      }
 
-            th, td {
-              padding: 8px;
-              border: 1px solid black;
-              vertical-align: top;
-              font-size: 10px;
-            }
+      th, td {
+        padding: 6px; /* Reduced padding to fit content better */
+        border: 1px solid black;
+        vertical-align: top;
+        font-size: 10px; /* Adjust font size to fit content */
+      }
 
-            .summary-table {
-              width: 100%;
-            }
+      .summary-table {
+        width: 100%;
+      }
 
-            .flex-wrap {
-              flex-wrap: wrap;
-            }
+      .flex-wrap {
+        flex-wrap: wrap;
+      }
 
-            .justify-between {
-              justify-content: space-between;
-            }
+      .justify-between {
+        justify-content: space-between;
+      }
 
-            .font-bold {
-              font-weight: bold;
-            }
+      .font-bold {
+        font-weight: bold;
+      }
 
-            .underline {
-              text-decoration: underline;
-            }
+      .underline {
+        text-decoration: underline;
+      }
 
-            .text-center {
-              text-align: center;
-            }
+      .text-center {
+        text-align: center;
+      }
 
-            .uppercase {
-              text-transform: uppercase;
-            }
-          }
-        `}
-      </style>
-      <div className="border-2 border-black px-10">
-        <div className="flex flex-col justify-center items-center">
-          <div className="justify-center w-1/2 mt-10">{logo}</div>
-          <h1 className="font-bold text-lg uppercase">Application for Cash Advance</h1>
+      .uppercase {
+        text-transform: uppercase;
+      }
+
+      .two-column {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+      }
+
+      /* Adjust padding and margins */
+      .print-container {
+        padding: 10px;
+        margin: 0;
+      }
+
+      /* Ensure the table fits within the container */
+      table {
+        width: 100%;
+        max-width: 100%;
+        border-collapse: collapse;
+      }
+
+      /* Adjust padding for table cells */
+      th, td {
+        padding: 4px; /* Reduced padding */
+        font-size: 10px; /* Smaller font size */
+      }
+    }
+  `}
+</style>
+      <div className="border-2 border-black px-4">
+      <div className="flex flex-col justify-center items-center">
+      <div className="justify-center w-1/2 mt-10">{logo}</div>
+          <h1 className="font-bold text-lg uppercase">liquidation of actual expense</h1>
           <div className="flex flex-col items-center font-bold mt-2">
             <h1 className="font-medium text-[16px] uppercase underline">
               {printData?.user.data.branch || ''}
@@ -127,8 +157,8 @@ const PrintLiquidation: React.FC<PrintRefundProps> = ({ data }) => {
             <h1 className="text-lg">BRANCH</h1>
           </div>
         </div>
-
-        <table className="border-collapse w-full border-black border mt-10">
+        <div className="table-container">
+        <table className="border-collapse w-full border-black border mt-10 px-5">
           <thead>
             <tr>
               <th className="border w-10 border-black bg-[#8EC7F7]">Date</th>
@@ -196,10 +226,11 @@ const PrintLiquidation: React.FC<PrintRefundProps> = ({ data }) => {
             ))}
           </tbody>
         </table>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 w-full md:gap-2 mt-10">
+        </div>
+        <div className="two-column grid grid-cols-2 gap-6 mt-10">
+        <div>
           <table className="border border-black w-full">
-            <tbody>
+            <tbody className="w-full">
               <tr>
                 <td className="border border-black px-2 py-1 font-semibold">
                   TOTAL EXPENSE
@@ -208,61 +239,139 @@ const PrintLiquidation: React.FC<PrintRefundProps> = ({ data }) => {
                   {printData?.id.form_data[0].totalExpense}
                 </td>
               </tr>
+             
               <tr>
                 <td className="border border-black px-2 py-1 font-semibold">
-                  AMOUNT CASH ADVANCE
+                  CASH Advance
                 </td>
                 <td className="border border-black px-2 py-1 font-bold">
-                  {printData?.id.form_data[0].amountCashAdvance}
+                  {printData?.id.form_data[0].cashAdvance}
                 </td>
               </tr>
               <tr>
                 <td className="border border-black px-2 py-1 font-semibold">
-                  CASH RETURNABLE
+                  Short
                 </td>
                 <td className="border border-black px-2 py-1 font-bold">
-                  {printData?.id.form_data[0].cashReturnable}
-                </td>
-              </tr>
-              <tr>
-                <td className="border border-black px-2 py-1 font-semibold">
-                  REIMBURSABLE
-                </td>
-                <td className="border border-black px-2 py-1 font-bold">
-                  {printData?.id.form_data[0].reimbursable}
+                  {printData?.id.form_data[0].short}
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-
-        <div className="grid grid-cols-2 w-full mt-10">
-          <div className="flex flex-col items-center w-full">
-            <div className="flex flex-col items-center border-t border-black p-2 w-full">
-              <span className="font-bold uppercase">
-                {printData?.notedByUser?.name || "N/A"}
-              </span>
-              <span>Noted By</span>
-            </div>
-          </div>
-          <div className="flex flex-col items-center w-full">
-            <div className="flex flex-col items-center border-t border-black p-2 w-full">
-              <span className="font-bold uppercase">
-                {printData?.approvedByUser?.name || "N/A"}
-              </span>
-              <span>Approved By</span>
-            </div>
-          </div>
+      
+        <div>
+          <table className="border border-black w-full">
+            <tbody>
+              <tr>
+                <td className="border border-black px-2 py-1 font-semibold">
+                  NAME OF EMPLOYEE
+                </td>
+                <td className="border border-black px-2 py-1 font-bold">
+                {printData?.user.data.lastName},   {printData?.user.data.firstName}
+                </td>
+              </tr>
+              <tr>
+                <td className="border border-black px-2 py-1 font-semibold">
+                  SIGNATURE
+                </td>
+                <td className="border border-black px-2 py-1 font-bold">
+                  <img src={printData?.user.data.signature} alt="Signature" />
+                </td>
+              </tr>
+              <tr>
+                <td className="border border-black px-2 py-1 font-semibold">
+                EMPLOYEE NO.
+                </td>
+                <td className="border border-black px-2 py-1 font-bold">
+                  {printData?.user.data.employee_id}
+                </td>
+              </tr>
+            
+            </tbody>
+          </table>
         </div>
+        </div>
+        <div className="mt-4 w-full">
+          <div className="flex flex-wrap justify-between w-full">
+            {/* Requested By Section */}
+            <div className="mb-4 flex-grow">
+              <h3 className="font-bold mb-3">Requested By:</h3>
+              <div className="flex flex-col items-center justify-center text-center relative pt-8">
+                <img
+                  className="absolute top-2"
+                  src={printData?.user.data.signature}
+                  alt="avatar"
+                  width={120}
+                />
+                <p className="relative z-10 px-2 underline font-bold">
+                  {printData?.user.data.firstName}{" "}
+                  {printData?.user.data.lastName}
+                </p>
+                <p className="font-bold text-xs text-center">
+                  {printData?.user.data.position}
+                </p>
+              </div>
+            </div>
 
-        <div className="mt-10">
-          <div className="flex justify-center">
-            <div className="w-full">
-              <p className="text-sm font-semibold">Purpose of Cash Advance:</p>
-              <p className="text-sm">{printData?.id.form_data[0].purpose}</p>
+            {/* Noted By Section */}
+            <div className="mb-4 flex-grow">
+              <h3 className="font-bold mb-3">Noted By:</h3>
+              <div className="flex flex-wrap justify-around">
+                {printData?.notedBy.map((approver: any, index: number) => (
+                  <div
+                    key={index}
+                    className="flex flex-col  mr-2 relative pt-8"
+                  >
+                    {approver.status === "Approved" && (
+                      <img
+                        className="absolute top-2"
+                        src={approver.signature}
+                        alt=""
+                        width={120}
+                      />
+                    )}
+                    <p className="underline text-center font-bold">
+                      {approver.firstname} {approver.lastname}
+                    </p>
+                    <p className="font-bold text-xs text-center">
+                      {approver.position}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Approved By Section */}
+            <div className="mb-4 flex-grow">
+              <h3 className="font-bold mb-3">Approved By:</h3>
+              <div className="flex flex-wrap justify-evenly">
+                {printData?.approvedBy.map((approver: any, index: number) => (
+                  <div
+                    key={index}
+                    className="flex flex-col justify-start items-center mr-2 relative pt-8"
+                  >
+                    {approver.status === "Approved" && (
+                      <img
+                        className="absolute top-2"
+                        src={approver.signature}
+                        alt=""
+                        width={120}
+                      />
+                    )}
+                    <p className="underline text-center font-bold">
+                      {approver.firstname} {approver.lastname}
+                    </p>
+                    <p className="font-bold text-xs text-center">
+                      {approver.position}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+</div>
+      
       </div>
     </div>
   );

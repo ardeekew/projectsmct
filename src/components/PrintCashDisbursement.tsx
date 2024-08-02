@@ -55,14 +55,19 @@ const PrintCashDisbursement: React.FC<PrintRefundProps> = ({ data }) => {
       const parsedData = JSON.parse(storedData);
       setPrintData(parsedData); // Set the printData state
     }
-    window.print();
+    
    
     localStorage.removeItem('printData');
   }, []);
-
+  useEffect(() => {
+    if (printData !== null) {
+      window.print();
+      localStorage.removeItem('printData'); // Clean up after printing
+    }
+  }, [printData]);
   if (!printData) return <div>Loading...</div>; 
   console.log("printData", printData);
-  const tableStyle = " border-black border";
+  const tableStyle = "border-b border-black";
   return (
     <div className="print-container  ">
       <div className="border-2 border-black px-4 pt-2">
@@ -76,7 +81,7 @@ const PrintCashDisbursement: React.FC<PrintRefundProps> = ({ data }) => {
             <h1 className="text-lg">BRANCH</h1>
           </div>
         </div>
-        <div className="flex justify-end">
+        <div className="flex justify-end pr-6">
           <p className=" mb-2 flex font-bold  ">
             Date:{" "}
             <p className="underline ml-2">
@@ -86,21 +91,21 @@ const PrintCashDisbursement: React.FC<PrintRefundProps> = ({ data }) => {
         </div>
       
         <div className="flex justify-center w-full">
-          <table className="border  border-black w-full ">
+          <table className="w-full border-separate border-spacing-x-4">
             <thead className="">
-              <tr className={`${tableStyle} `}>
-                <th className={`${tableStyle}`}>Quantity</th>
-                <th className={`${tableStyle}`}>Description</th>
-                <th className={`${tableStyle}`}>Unit Cost</th>
-                <th className={`${tableStyle}`}>Total Amount</th>
-                <th className={`${tableStyle}`}>Remarks</th>
+              <tr>
+                <th>Quantity</th>
+                <th>Description</th>
+                <th>Unit Cost</th>
+                <th>Total Amount</th>
+                <th>Remarks</th>
               </tr>
             </thead>
             <tbody>
               {printData?.id?.form_data.map((formData: any, index: number) => (
                 <React.Fragment key={index}>
                   {formData.items?.map((item: any, itemIndex: number) => (
-                    <tr key={itemIndex}>
+                    <tr key={itemIndex} className="text-center">
                       <td className={`${tableStyle}`}>{item.quantity}</td>
                       <td className={`${tableStyle}`}>{item.description}</td>
                       <td className={`${tableStyle}`}>{item.unitCost}</td>
@@ -124,7 +129,7 @@ const PrintCashDisbursement: React.FC<PrintRefundProps> = ({ data }) => {
             </tbody>
           </table>
         </div>
-        <p className="uppercase font-bold mt-2">
+        <p className="uppercase font-bold mt-2 ml-4">
           Grand Total: {printData?.id?.form_data?.[0]?.grand_total || ''}
         </p>
 
@@ -159,7 +164,7 @@ const PrintCashDisbursement: React.FC<PrintRefundProps> = ({ data }) => {
                     key={index}
                     className="flex flex-col  mr-2 relative pt-8"
                   >
-                    {approver.status === "approved" && (
+                    {approver.status === "Approved" && (
                       <img
                         className="absolute top-2"
                         src={approver.signature}
@@ -187,7 +192,7 @@ const PrintCashDisbursement: React.FC<PrintRefundProps> = ({ data }) => {
                     key={index}
                     className="flex flex-col justify-start items-center mr-2 relative pt-8"
                   >
-                    {approver.status === "approved" && (
+                    {approver.status === "Approved" && (
                       <img
                         className="absolute top-2"
                         src={approver.signature}

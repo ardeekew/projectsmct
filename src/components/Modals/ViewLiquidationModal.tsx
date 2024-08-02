@@ -845,34 +845,6 @@ const ViewLiquidationModal: React.FC<Props> = ({
               </table>
             </div>
           </div>
-          <div className="w-full pr-12">
-            <h1>Approvers</h1>
-            {fetchingApprovers ? (
-              <p>Loading approvers...</p>
-            ) : (
-              <select
-                className="border w-1/2 mt-2 h-10 border-black rounded-lg"
-                value={
-                  isEditing ? editedApprovers : editableRecord.approvers_id
-                }
-                onChange={(e) => {
-                  const selectedApproverId = parseInt(e.target.value);
-                  console.log("Selected Approver ID:", selectedApproverId);
-                  setEditedApprovers(selectedApproverId);
-                }}
-                disabled={!isEditing}
-              >
-                <option value="" disabled>
-                  Approver List
-                </option>
-                {approvers.flat().map((approver) => (
-                  <option key={approver.id} value={approver.id}>
-                    {approver.name}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
           <div className="w-full flex-col justify-center items-center">
             {isFetchingApprovers ? (
               <div className="flex items-center justify-center w-full h-40">
@@ -914,7 +886,7 @@ const ViewLiquidationModal: React.FC<Props> = ({
                       >
                         <div className="flex flex-col items-center justify-center text-center">
                           <p className="relative inline-block uppercase font-medium text-center pt-6">
-                            {user.status === "approved" && (
+                            {user.status.toLowerCase() === "approved" && (
                               <img
                                 className="absolute top-2"
                                 src={user.signature}
@@ -945,7 +917,7 @@ const ViewLiquidationModal: React.FC<Props> = ({
                       >
                         <div className="flex flex-col items-center justify-center text-center">
                           <p className="relative inline-block uppercase font-medium text-center pt-6">
-                            {user.status === "approved" && (
+                            {user.status.toLowerCase() === "approved" && (
                               <img
                                 className="absolute top-2"
                                 src={user.signature}

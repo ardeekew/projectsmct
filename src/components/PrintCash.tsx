@@ -55,20 +55,26 @@ const PrintCash: React.FC<PrintRefundProps> = ({ data }) => {
       const parsedData = JSON.parse(storedData);
       setPrintData(parsedData); // Set the printData state
     }
-    window.print();
+
    
     localStorage.removeItem('printData');
   }, []);
+  useEffect(() => {
+    if (printData !== null) {
+      window.print();
+      localStorage.removeItem('printData'); // Clean up after printing
+    }
+  }, [printData]);
   console.log("printData", printData);
-  const tableStyle = " border-black border py-2 font-bold";
+  const tableStyle = " border-black border py-4 font-bold";
   return (
     <div className="print-container p-5 ">
        <style>
        {`
           @media print {
             .print-container {
-              padding: 10px;
-              margin: 0;
+              padding: 5px;
+              margin: 4px;
             }
 
             table {
@@ -271,7 +277,7 @@ const PrintCash: React.FC<PrintRefundProps> = ({ data }) => {
                     key={index}
                     className="flex flex-col  mr-2 relative pt-8"
                   >
-                    {approver.status === "approved" && (
+                    {approver.status === "Approved" && (
                       <img
                         className="absolute top-2"
                         src={approver.signature}
@@ -299,7 +305,7 @@ const PrintCash: React.FC<PrintRefundProps> = ({ data }) => {
                     key={index}
                     className="flex flex-col justify-start items-center mr-2 relative pt-8"
                   >
-                    {approver.status === "approved" && (
+                    {approver.status === "Approved" && (
                       <img
                         className="absolute top-2"
                         src={approver.signature}

@@ -10,6 +10,9 @@ import {
   BookOpenIcon,
   ArrowLeftCircleIcon,
   ArrowLeftStartOnRectangleIcon,
+  UserIcon,
+  BuildingOfficeIcon,
+  UserPlusIcon,
 } from "@heroicons/react/24/solid";
 import { Link } from "react-router-dom";
 
@@ -25,7 +28,7 @@ interface SidebarProps {
 }
 
 const Sidebar2: React.FC<SidebarProps> = ({ darkMode, role }) => {
-  const [open, setOpen] = useState(window.innerWidth > 1024);
+  const [open, setOpen] = useState(false);
 
   const navItems: NavItem[] =
     role === "approver"
@@ -35,30 +38,31 @@ const Sidebar2: React.FC<SidebarProps> = ({ darkMode, role }) => {
           { title: "Create Request", icon: DocumentPlusIcon, path: "/request/sr" },
           { title: "Approve Request", icon: DocumentCheckIcon, path: "/request/approver" },
           { title: "Custom Request", icon: UserGroupIcon, path: "/request/custom" },
+          { title: "Help", icon: BookOpenIcon, path: "/help" },
         ]
       : role === "Admin"
       ? [
           { title: "Dashboard", icon: ChartBarIcon, path: "/dashboard" },
           { title: "View Request", icon: EnvelopeIcon, path: "/request" },
-          { title: "Create Request", icon: EnvelopeIcon, path: "/request/sr" },
-          { title: "Custom Request", icon: EnvelopeIcon, path: "/request/custom" },
-          { title: "User", icon: BeakerIcon, path: "/setup/User" },
-          { title: "Branch", icon: BeakerIcon, path: "/setup/Branch" },
-          { title: "Approver", icon: BeakerIcon, path: "/setup/Approver" },
+          { title: "Create Request", icon: DocumentPlusIcon, path: "/request/sr" },
+          { title: "Custom Request", icon: UserGroupIcon, path: "/request/custom" },
+          { title: "User", icon: UserPlusIcon, path: "/setup/User" },
+          { title: "Branch", icon: BuildingOfficeIcon, path: "/setup/Branch" },
+          { title: "Approver", icon: UserIcon, path: "/setup/Approver" },
           { title: "Area Manager", icon: BeakerIcon, path: "/setup/AreaManager" },
           { title: "Help", icon: BookOpenIcon, path: "/help" },
         ]
       : [
           { title: "Dashboard", icon: ChartBarIcon, path: "/dashboard" },
           { title: "View Request", icon: EnvelopeIcon, path: "/request" },
-          { title: "Create Request", icon: EnvelopeIcon, path: "/request/sr" },
-          { title: "Custom Request", icon: EnvelopeIcon, path: "/request/custom" },
+          { title: "Create Request", icon: DocumentPlusIcon, path: "/request/sr" },
+          { title: "Custom Request", icon: UserGroupIcon, path: "/request/custom" },
           { title: "Help", icon: BookOpenIcon, path: "/help" },
         ];
 
   useEffect(() => {
     const handleResize = () => {
-     
+      // Your resize logic here
     };
 
     window.addEventListener("resize", handleResize);
@@ -67,9 +71,8 @@ const Sidebar2: React.FC<SidebarProps> = ({ darkMode, role }) => {
     };
   }, []);
 
-  const listStyle = "mx-2 group flex items-center text-[18px] text-gray-400 font-medium py-2 pr-3 px-2  cursor-pointer rounded-lg";
-  const pStyle = "group-hover:text-primary font text-lg px-2 ml-5 rounded-lg"; 
-  const pStyle1 = "group-hover:text-primary font text-lg px-2 rounded-lg"; 
+  const listStyle = "relative mx-2 group flex items-center text-[18px] text-gray-400 font-medium py-2 pr-3 px-2 cursor-pointer rounded-lg";
+  const pStyle = "group-hover:text-primary font text-lg px-2  rounded-lg"; 
   const iconStyle = "size-[32px] group-hover:text-primary";
 
   return (
@@ -84,7 +87,7 @@ const Sidebar2: React.FC<SidebarProps> = ({ darkMode, role }) => {
             onClick={() => setOpen(!open)}
           />
           <h1
-            className={`text-primary font-bold mr-7   ${open ? "visible" : "invisible"}`}
+            className={`text-primary font-bold mr-7 ${open ? "visible" : "invisible"}`}
           >
             Request Form
           </h1>
@@ -98,40 +101,42 @@ const Sidebar2: React.FC<SidebarProps> = ({ darkMode, role }) => {
           <div className="gap-2 w-full">
             {navItems.map((item) => (
               <Link to={item.path} key={item.title}>
-                <li
-                  className={`${listStyle} ${!open ? "" : "hover:bg-[#E7F1F9]"}`}
-                >
+                <li className={`${listStyle} ${!open ? "justify-center" : "hover:bg-[#E7F1F9]"}`}>
                   <div
                     className={`p-2 ${!open ? "hover:bg-[#D2E6F7] rounded-lg" : ""}`}
                   >
                     <item.icon className={iconStyle} />
                   </div>
                   {open ? (
-                  <div className={`flex-1 ${!open ? "hidden" : "block"}`}>
-                    <p className={`${pStyle1} truncate p-1`}>{item.title}</p>
-                  </div>
-                 ) : (
-                  <div className={`flex-1 `}>
-                    <p className={`${pStyle} truncate p-1 invisible bg-[#D2E6F7] group-hover:visible px-2 rounded-lg`}>{item.title}</p>
-                  </div>
+                    <div className={`flex-1 ${!open ? "hidden" : "block"}`}>
+                      <p className={`${pStyle} truncate p-1`}>{item.title}</p>
+                    </div>
+                  ) : (
+                    <div className={`relative group`}>
+                      <p
+                        className={`${pStyle} truncate p-1 absolute left-full ml-5 top-1/2 transform -translate-y-1/2 bg-[#D2E6F7] rounded-lg ${open ? "hidden" : "opacity-0 invisible group-hover:opacity-100 group-hover:visible"} transition-opacity`}
+                      >
+                        {item.title}
+                      </p>
+                    </div>
                   )}
                 </li>
               </Link>
             ))}
-              <Link to="/login">
-            <div className="border-t flex justify-center items-center ">
-              <div className="flex h-5/6 p-2">
-                <ArrowLeftStartOnRectangleIcon
-                  className={`${iconStyle} dark:text-white`}
-                />
+            <Link to="/login">
+              <div className="border-t flex justify-center items-center ">
+                <div className="flex h-5/6 p-2">
+                  <ArrowLeftStartOnRectangleIcon
+                    className={`${iconStyle} dark:text-white`}
+                  />
+                </div>
+                <p
+                  className={`${pStyle} ${!open ? "hidden" : ""} dark:text-white`}
+                >
+                  Logout
+                </p>
               </div>
-              <p
-                className={`${pStyle} ${!open ? "hidden" : ""} dark:text-white`}
-              >
-                Logout
-              </p>
-            </div>
-          </Link>
+            </Link>
           </div>
         </ul>
       </div>
