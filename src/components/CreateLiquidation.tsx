@@ -347,10 +347,7 @@ const CreateLiquidation = (props: Props) => {
         parseFloat(totalExpense) - parseFloat(cashAdvance)
       ).toFixed(2);
 
-      if (file.length === 0) {
-        console.log("No file selected");
-        return;
-    }
+      
     const formData = new FormData();
 
       // Append each file to FormData

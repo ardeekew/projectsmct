@@ -186,7 +186,44 @@ const CustomRequest = (props: Props) => {
   }, [userId]);
   
 
-  const deleteUser = async () => {};
+  const deleteUser = async () => {
+    try {
+      if (!userId || !selectedUser) {
+        console.error("User ID or selected user is missing");
+        return;
+      }
+  
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("Token is missing");
+        return;
+      }
+  
+      const headers = {
+        Authorization: `Bearer ${token}`,
+      };
+  
+      // Properly interpolate selectedUser.id into the URL
+      const response = await axios.delete(
+        `http://localhost:8000/api/delete-custom-approvers/${selectedUser.id}`,
+        { headers }
+      );
+  
+      if (response.data.message === 'Custom approvers deleted successfully') {
+        console.log("Custom approvers deleted successfully");
+        closeDeleteModal();
+        openDeleteSuccessModal();
+        refreshData();
+      } else {
+        console.error("Failed to delete user:", response.data.message);
+        // Handle error scenario, show error message or alert
+      }
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      // Handle error scenario, show error message or alert
+    }
+  };
+  
   const refreshData = () => {
     if (userId) {
       setLoading(true);
@@ -281,18 +318,12 @@ const CustomRequest = (props: Props) => {
   };
 
 
-  const viewModalShow = (row: Record) => {
+
+
+
+  const deleteModalShow = (row: Record) => {
+    console.log(row)
     setSelectedUser(row);
-    setViewModalIsOpen(true);
-    console.log("opened view modal");
-  };
-
-  const viewModalClose = () => {
-    setSelectedUser(null);
-    setViewModalIsOpen(false);
-  };
-
-  const deleteModalShow = () => {
     setDeleteModal(true);
   };
 
@@ -300,7 +331,8 @@ const CustomRequest = (props: Props) => {
     setDeleteModal(false);
   };
 
-  const editModalShow = () => {
+  const editModalShow = (row: Record) => {
+    setSelectedUser(row);
     setEditModal(true);
   };
 
@@ -401,27 +433,20 @@ const CustomRequest = (props: Props) => {
       ),
     },
 
-    
-    
-    {
+     {
       name: "Modify",
       cell: (row: Record) => (
         <div className="flex space-x-2 ">
           <PencilSquareIcon
-            className="text-primary size-10 cursor-pointer "
-            onClick={editModalShow}
+            className="text-primary size-8 cursor-pointer "
+            onClick={() => editModalShow(row)}
           />
          
           <TrashIcon
-            className="text-[#A30D11] size-10 cursor-pointer"
-            onClick={deleteModalShow}
+            className="text-[#A30D11] size-8 cursor-pointer"
+            onClick={() => deleteModalShow(row)}
           />
-          <button
-            className="bg-primary text-white w-full px-4 rounded-[12px]"
-            onClick={() => viewModalShow(row)}
-          >
-            View
-          </button>
+          
         </div>
       ),
       width: "14%",

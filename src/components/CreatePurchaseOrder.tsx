@@ -175,10 +175,7 @@ const onSubmit = async (data: any) => {
         }
       });
 
-      if (file.length === 0) {
-        console.log("No file selected");
-        return;
-    }
+    
 
     const formData = new FormData();
 

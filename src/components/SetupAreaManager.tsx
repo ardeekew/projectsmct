@@ -461,7 +461,11 @@ const columns = [
             </div>
           </div>
           {isLoading ? (
-        <p>Loading...</p>
+        <div className="flex justify-center items-center">
+          <ClipLoader color="#36d7b7" />
+        </div>
+      ) : areaManagerList.length === 0 ? (
+        <p className="text-center text-gray-600">No area managers yet</p>
       ) : (
         <DataTable
           columns={columns}

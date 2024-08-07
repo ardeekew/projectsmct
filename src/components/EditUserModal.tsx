@@ -4,7 +4,9 @@ import axios from "axios";
 import ClipLoader from "react-spinners/ClipLoader";
 import EyeSlashIcon from "@heroicons/react/24/solid/EyeSlashIcon";
 import { EyeIcon } from "@heroicons/react/24/solid";
+import { set } from "react-hook-form";
 
+type EntityType = "User" | "Branch" | "Custom" | "Approver";
 const EditUserModal = ({
   editModal,
   editModalClose,
@@ -16,7 +18,7 @@ const EditUserModal = ({
   editModal: boolean;
   editModalClose: any;
   openSuccessModal: any;
-  entityType: string;
+  entityType: EntityType;
   selectedUser: any;
   refreshData: any;
 }) => {
@@ -34,19 +36,82 @@ const EditUserModal = ({
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
+  const [showConfirmPassword, setShowConfirmPassword] =
+    useState<boolean>(false);
+  const [notedBy, setNotedBy] = useState<number[]>([]);
+  const [approvedBy, setApprovedBy] = useState<number[]>([]);
+  const [approvers, setApprovers] = useState<any[]>([]);
+  const [name, setName] = useState<string>("");
+  
+  useEffect(() => {
+    if (entityType === "Custom") {
+      const fetchApprovers = async () => {
+        try {
+          setLoading(true);
+          const response = await axios.get(
+            "http://localhost:8000/api/view-approvers",
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
+          console.log("Approvers:", response.data);
+
+          if (response.data && Array.isArray(response.data.data)) {
+            setApprovers(response.data.data);
+          } else {
+            console.error(
+              "Unexpected response format from API:",
+              response.data
+            );
+          }
+
+          setLoading(false);
+        } catch (error) {
+          console.error("Error fetching approvers:", error);
+          setLoading(false);
+        }
+      };
+
+      fetchApprovers();
+    }
+  }, []);
+  useEffect(() => {
+    if (editModal && selectedUser) {
+      setName(selectedUser.name || "");
+      // Set the approvedBy state when the modal opens
+      setApprovedBy(selectedUser.approved_by || []);
+      setNotedBy(selectedUser.noted_by || []);
+    }
+  }, [editModal, selectedUser]);
+  const toggleNotedBy = (userId: number) => {
+    setNotedBy((prevNotedBy) =>
+      prevNotedBy.includes(userId)
+        ? prevNotedBy.filter((id) => id !== userId)
+        : [...prevNotedBy, userId]
+    );
+  };
+
+  const toggleApprovedBy = (userId: number) => {
+    setApprovedBy((prevApprovedBy) =>
+      prevApprovedBy.includes(userId)
+        ? prevApprovedBy.filter((id) => id !== userId)
+        : [...prevApprovedBy, userId]
+    );
+  };
 
   useEffect(() => {
     if (selectedUser) {
-      setFirstName(selectedUser.firstname);
-      setLastName(selectedUser.lastname);
-      setEmail(selectedUser.email);
-      setUsername(selectedUser.username);
-      setContact(selectedUser.contact);
-      setEditedBranch(selectedUser.branch);
-      setEditedRole(selectedUser.role);
-      setEditedBranchCode(selectedUser.branch_code);
-      setEditedPosition(selectedUser.position);
+      setFirstName(selectedUser.firstname || "");
+      setLastName(selectedUser.lastname || "");
+      setEmail(selectedUser.email || "");
+      setUsername(selectedUser.username || "");
+      setContact(selectedUser.contact || "");
+      setEditedBranch(selectedUser.branch || "");
+      setEditedBranchCode(selectedUser.branch_code || "");
+      setEditedRole(selectedUser.role || "");
+      setEditedPosition(selectedUser.position || "");
     }
   }, [selectedUser]);
 
@@ -65,9 +130,358 @@ const EditUserModal = ({
     }
     editModalClose();
   };
+  const handleBranchCodeChange = (selectedBranchCode: string) => {
+    setEditedBranchCode(selectedBranchCode);
+
+    if (
+      [
+        "AKLA",
+        "ALEN",
+        "ALIC",
+        "ANTI",
+        "ANTIP",
+        "BANTA",
+        "BAYB",
+        "BINAN",
+        "BOHK",
+        "BOHL",
+        "CAGL",
+        "CALAP",
+        "CALAP2",
+        "CALI",
+        "CARMB",
+        "CARMO",
+        "CARS",
+        "CATAR",
+        "DASMA",
+        "DIPL",
+        "FAMY",
+        "GUIN",
+        "GUIN2",
+        "JAGN",
+        "LIPA",
+        "LOAY",
+        "MADRI",
+        "MALA",
+        "MANG",
+        "MANL",
+        "MANP",
+        "MOLS",
+        "NAIC",
+        "OZAL",
+        "PAGS",
+        "SAGBA",
+        "SALA",
+        "SANJ",
+        "SANP",
+        "SDAV",
+        "SDIP",
+        "SARG",
+        "SILA",
+        "SLAP",
+        "SLAS",
+        "SLIL",
+        "SMCT",
+        "SROS",
+        "TALI",
+        "TANZ",
+        "TANZ2",
+        "TRINI2",
+        "TUBI",
+        "VALEN",
+        "YATI",
+        "ZAML",
+      ].includes(selectedBranchCode)
+    ) {
+      setEditedBranch("Strong Motocentrum, Inc.");
+    } else if (
+      [
+        "AURO",
+        "BALA",
+        "BUHA",
+        "BULU",
+        "CARMCDO",
+        "DIGOS",
+        "DONC",
+        "DSMBL",
+        "DSMC",
+        "DSMCA",
+        "DSMD",
+        "DSMD2",
+        "DSMM",
+        "DSMPO",
+        "DSMSO",
+        "DSMTG",
+        "DSMV",
+        "ELSA",
+        "ILIG",
+        "JIMEDSM",
+        "KABA2",
+        "KATI",
+        "LABA",
+        "MARA",
+        "MATI",
+        "RIZA",
+        "TACU",
+        "TORI",
+        "CERI",
+        "VILLA",
+        "VISA",
+        "CARC",
+        "CARC2",
+        "CARMC2",
+        "CATM",
+        "COMPO",
+        "DAAN",
+        "DSMA",
+        "DSMAO",
+        "DSMB",
+        "DSMBN",
+        "DSMCN",
+        "DSMDB",
+        "DSMDM",
+        "DSMDN",
+        "DSMK",
+        "DSMLN",
+        "DSMP",
+        "DSMSB",
+        "DSMT",
+        "DSMT2",
+        "DSMTA",
+        "ILOI",
+        "LAHU",
+        "LAPU 2",
+        "MAND",
+        "MAND2",
+        "MEDE",
+        "PARD",
+        "PARD2",
+        "REMI",
+        "REMI2",
+        "SANT",
+        "TUBU",
+        "UBAY",
+        "BOGO",
+        "DSML",
+        "CALIN",
+      ].includes(selectedBranchCode)
+    ) {
+      setEditedBranch("Des Strong Motors, Inc.");
+    } else if (
+      [
+        "ALAD",
+        "AURD",
+        "BALD",
+        "BONI",
+        "BUUD",
+        "CALD",
+        "CAMD",
+        "DAPI",
+        "DIPD",
+        "DIPD2",
+        "ILID",
+        "IMED",
+        "INIT2",
+        "IPID",
+        "JIME",
+        "KABD",
+        "LABD",
+        "LILD",
+        "MANO",
+        "MARA2",
+        "MARD",
+        "MOLD",
+        "MOLD2",
+        "NUND2",
+        "OROD",
+        "OZAD",
+        "PUTD",
+        "RIZD",
+        "SANM",
+        "SIND",
+        "SUCD",
+        "TUBOD",
+        "VITA",
+      ].includes(selectedBranchCode)
+    ) {
+      setEditedBranch("Des Appliance Plaza, Inc.");
+    } else if (["HO"].includes(selectedBranchCode)) {
+      setEditedBranch("Head Office");
+    } else {
+      setEditedBranch("Honda Des, Inc.");
+    }
+  };
+
+  const branchOptions = [
+    "",
+    "AKLA",
+    "ALEN",
+    "ALAH",
+    "ALIC",
+    "ANTI",
+    "ANTIP",
+    "AURD",
+    "AURH",
+    "AURO",
+    "BALA",
+    "BALAM",
+    "BALD",
+    "BANTA",
+    "BAYB",
+    "BINAN",
+    "BOGO",
+    "BOHK",
+    "BOHL",
+    "BONI",
+    "BUUD",
+    "BUUH",
+    "BULU",
+    "CALA",
+    "CALAP",
+    "CALAP2",
+    "CALD",
+    "CALH",
+    "CALI",
+    "CARC",
+    "CARC2",
+    "CARMC",
+    "CARMC2",
+    "CARMCDO",
+    "CARMO",
+    "CATAR",
+    "CATM",
+    "COMPO",
+    "CAGL",
+    "CAMD",
+    "CAMH",
+    "DAAN",
+    "DASMA",
+    "DAPI",
+    "DATH",
+    "DIGOS",
+    "DIPD",
+    "DIPD2",
+    "DIPL",
+    "DSMA",
+    "DSMAO",
+    "DSMCA",
+    "DSMB",
+    "DSMBL",
+    "DSMBN",
+    "DSMDB",
+    "DSMD",
+    "DSMD2",
+    "DSMDN",
+    "DSMC",
+    "DSMCN",
+    "DSMM",
+    "DSMP",
+    "DSMSB",
+    "DSMSO",
+    "DSMT",
+    "DSMT2",
+    "DSMTA",
+    "DSMTG",
+    "DSMDM",
+    "ELSA",
+    "FAMY",
+    "GUSA",
+    "GUIN",
+    "GUIN2",
+    "HO",
+    "ILOI",
+    "ILID",
+    "ILIG",
+    "IMED",
+    "INIT",
+    "INAB",
+    "IPIH",
+    "IPID",
+    "JAGN",
+    "JIME",
+    "JIMEDSM",
+    "KABA",
+    "KABA2",
+    "KATI",
+    "LABA",
+    "LABD",
+    "LAHU",
+    "LAPU",
+    "LILD",
+    "LIPA",
+    "MADRI",
+    "MAND",
+    "MAND2",
+    "MANL",
+    "MANO",
+    "MANP",
+    "MANG",
+    "MARA",
+    "MARA2",
+    "MARD",
+    "MARH",
+    "MATI",
+    "MEDE",
+    "MIPU",
+    "MOLD",
+    "MOLD2",
+    "MOLS",
+    "NAIC",
+    "NUND2",
+    "OROD",
+    "OROH",
+    "OROH2",
+    "OZAD",
+    "OZAH",
+    "OZAL",
+    "PARD",
+    "PARD2",
+    "PARD3",
+    "PAGS",
+    "PUTD",
+    "REMI",
+    "REMI2",
+    "RIZA",
+    "RIZD",
+    "SALA",
+    "SANM",
+    "SANJ",
+    "SANP",
+    "SDAV",
+    "SDIP",
+    "SILA",
+    "SIND",
+    "SINDA",
+    "SLAP",
+    "SLIL",
+    "SMCT",
+    "SROS",
+    "SUCD",
+    "TACU",
+    "TALI",
+    "TANH",
+    "TANZ",
+    "TANZ2",
+    "TORI",
+    "TRINI",
+    "TRINI2",
+    "TUBI",
+    "TUBOD",
+    "TUBU",
+    "UBAY",
+    "UBAYMB",
+    "VETH",
+    "VILLA",
+    "VILLA2",
+    "VALEN",
+    "YATI",
+    "ZAML",
+  ];
 
   const handleUpdate = async () => {
-    if (
+    // Validation based on entityType
+    if (entityType === "User") {
+      if (
         firstname.trim() === "" ||
         lastname.trim() === "" ||
         email.trim() === "" ||
@@ -77,77 +491,144 @@ const EditUserModal = ({
         editedBranchCode.trim() === "" ||
         editedRole.trim() === "" ||
         editedPosition.trim() === ""
-    ) {
+      ) {
         setErrorMessage("Please fill out all required fields.");
         return;
+      }
+    } else if (entityType === "Branch") {
+      if (editedBranch.trim() === "" || editedBranchCode.trim() === "") {
+        setErrorMessage("Please fill out all required fields.");
+        return;
+      }
+    } else if (entityType === "Custom") {
+      if (notedBy.length === 0 || approvedBy.length === 0) {
+        setErrorMessage(
+          "You must select at least one noted by and one approved by."
+        );
+        return;
+      }
+    } else {
+      setErrorMessage("Invalid entity type.");
+      return;
     }
 
     // Check if password is entered and matches confirmPassword
     if (password.trim() !== confirmPassword.trim()) {
-        setErrorMessage("Passwords do not match.");
-        return;
+      setErrorMessage("Passwords do not match.");
+      return;
     }
 
     try {
-        setLoading(true);
-        const token = localStorage.getItem("token");
-        // Define type for updatedData
-        interface UpdatedData {
-            id: any;
-            firstName: string;
-            lastName: string;
-            email: string;
-            userName: string;
-            contact: string;
-            branch: string;
-            branch_code: string;
-            role: string;
-            position: string;
-            password?: string; // Make password optional
-        }
-        // Create updatedData object
-        const updatedData: UpdatedData = {
-            id: selectedUser.id,
-            firstName: firstname,
-            lastName: lastname,
-            email: email,
-            userName: username,
-            contact: contact,
-            branch: editedBranch,
-            branch_code: editedBranchCode,
-            role: editedRole,
-            position: editedPosition,
-        };
+      setLoading(true);
+      const token = localStorage.getItem("token");
 
-        // Include password fields only if a new password is provided
-        if (password.trim() !== "") {
-            updatedData.password = password.trim();
-        }
+      // Define type for updatedData
+      interface UpdatedData {
+        id: any;
+        firstName: string;
+        lastName: string;
+        email: string;
+        userName: string;
+        contact: string;
+        branch?: string; // Optional for Branch entityType
+        branch_code?: string; // Optional for Branch entityType
+        role?: string; // Optional for User entityType
+        position?: string; // Optional for User entityType
+        password?: string; // Make password optional
+        notedBy?: number[];
+        approvedBy?: number[];
+      }
 
-        const response = await axios.put(
-            `http://localhost:8000/api/update-profile/${selectedUser.id}`,
-            updatedData,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-            }
+      // Create updatedData object
+      const updatedData: UpdatedData = {
+        id: selectedUser.id,
+        firstName: firstname,
+        lastName: lastname,
+        email: email,
+        userName: username,
+        contact: contact,
+        branch:
+          entityType === "Branch" || entityType === "User"
+            ? editedBranch
+            : undefined,
+        branch_code:
+          entityType === "Branch" || entityType === "User"
+            ? editedBranchCode
+            : undefined,
+
+        role: entityType === "User" ? editedRole : undefined,
+        position: entityType === "User" ? editedPosition : undefined,
+        password: password.trim() !== "" ? password.trim() : undefined,
+      };
+
+      // Include password field only if a new password is provided
+      if (password.trim() !== "") {
+        updatedData.password = password.trim();
+      }
+
+      // Perform the API request based on entityType
+      let response;
+      if (entityType === "Branch") {
+        response = await axios.post(
+          `http://localhost:8000/api/update-branch/${selectedUser.id}`,
+          updatedData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
         );
+        console.log("Response from server (Branch):", response.data);
+      } else if (entityType === "User") {
+        response = await axios.post(
+          `http://localhost:8000/api/update-profile/${selectedUser.id}`,
+          updatedData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        console.log("Response from server (User):", response.data);
+      } else if (entityType === "Custom") {
+        try {
 
-        console.log("Response from server:", response.data);
-        refreshData();
-        setLoading(false);
-        openSuccessModal();
-        setErrorMessage(""); // Clear error message on success
+       
+          const response = await axios.post(
+            `http://localhost:8000/api/update-approvers/${selectedUser.id}`,
+            {
+              approved_by: approvedBy,
+              noted_by: notedBy,
+              name: name,
+              // Include other fields as necessary
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+          console.log(response)
+          console.log("Response from server (Custom):", response.data);
+        } catch (error) {
+          console.error("Error updating approvers:", error);
+        }
+      }
+
+      // Handle success
+      refreshData();
+      openSuccessModal();
+      setErrorMessage(""); // Clear error message on success
     } catch (error) {
-        setErrorMessage("Failed to update user. Please try again.");
-        console.error("Error updating user:", error);
+      setErrorMessage("Failed to update. Please try again.");
+      console.error("Error updating:", error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-};
-
-
+  };
 
   if (!editModal) {
     return null;
@@ -163,8 +644,9 @@ const EditUserModal = ({
       "Position",
       "Role",
       "Branch Code",
+      "Branch Name",
     ],
-    Branch: ["Branch Name", "Branch Code"],
+    Branch: ["Branch", "BranchCode"],
     Manager: ["Manager Name", "Manager ID", "Branch Code"],
   };
 
@@ -203,7 +685,7 @@ const EditUserModal = ({
     { label: "User", value: "User" },
   ];
 
-  const branchOptions = [
+  const branch = [
     "Des Strong Appliance, Inc.",
     "Des Strong Motors, Inc.",
     "Strong Motocentrum, Inc.",
@@ -217,23 +699,9 @@ const EditUserModal = ({
     { label: "Area Manager", value: "Area Manager" },
     { label: "Admin", value: "Admin" },
   ];
-const setPassowrder = (value:any) => {
-  setPassword(value);
-  if (confirmPassword !== '' && value !== confirmPassword) {
-    setErrorMessage("Passwords do not match.");
-  } else {
-    setErrorMessage("");
-  }
-};
 
-const setConfirmPasasdasword = (value:any) => {
-  setConfirmPassword(value);
-  if (password !== value) {
-    setErrorMessage("Passwords do not match.");
-  } else {
-    setErrorMessage("");
-  }
-};
+  console.log("selectedUser", selectedUser);
+
   return (
     <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 flex-col">
       <div className="p-4 w-10/12 md:w-2/5 relative bg-primary flex justify-center mx-20 border-b rounded-t-[12px]">
@@ -259,17 +727,23 @@ const setConfirmPasasdasword = (value:any) => {
                 >
                   {positionOptions.map((option, index) => (
                     <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
+                      {option.label}
+                    </option>
                   ))}
                 </select>
               ) : field === "Branch Code" ? (
-                <input
-                  type="text"
+                <select
                   className={`${inputStyle}`}
                   value={editedBranchCode}
-                  onChange={(e) => setEditedBranchCode(e.target.value)}
-                />
+                  onChange={(e) => handleBranchCodeChange(e.target.value)}
+                >
+                  <option value="">Select branch</option>
+                  {branchOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
               ) : (
                 <>
                   {field === "Position" ? (
@@ -285,19 +759,28 @@ const setConfirmPasasdasword = (value:any) => {
                       ))}
                     </select>
                   ) : field === "Branch Name" ? (
-                    <select
+                    <input
                       className={`${inputStyle}`}
                       value={editedBranch}
-                      onChange={(e) => setEditedBranch(e.target.value)}
-                    >
-                      {branchOptions.map((option, index) => (
-                        <option key={index} value={option}>
+                      readOnly
+                    />
+                  ) : field === "Branch" ? (
+                    <select className={`${inputStyle}`} value={editedBranch}>
+                      {" "}
+                      <option value="">Select branch</option>
+                      {branch.map((option) => (
+                        <option key={option} value={option}>
                           {option}
                         </option>
                       ))}
                     </select>
-                  ) 
-                : (
+                  ) : field === "BranchCode" ? (
+                    <input
+                      className={`${inputStyle}`}
+                      value={editedBranchCode}
+                      onChange={(e) => setEditedBranchCode(e.target.value)}
+                    />
+                  ) : (
                     <input
                       type="text"
                       className={`${inputStyle}`}
@@ -312,6 +795,10 @@ const setConfirmPasasdasword = (value:any) => {
                           ? username
                           : field === "Contact"
                           ? contact
+                          : field === "Branch Code"
+                          ? branch
+                          : field === "Branch Name"
+                          ? branch
                           : ""
                       }
                       onChange={(e) =>
@@ -333,58 +820,78 @@ const setConfirmPasasdasword = (value:any) => {
               )}
             </div>
           ))}
-          {/* Password fields */}
-          {entityType === "User" && (
-  <>
-    <div>
-      <p className={`${pStyle}`}>Enter Password</p>
-      <div className="flex justify-center items-center relative w-full">
-        <input
-          type={showPassword ? "text" : "password"}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Enter password"
-          className={`${inputStyle}`}
-        />
-        {showPassword ? (
-          <EyeSlashIcon
-            className="size-[24px] absolute right-3 cursor-pointer"
-            onClick={() => setShowPassword(!showPassword)}
-          />
-        ) : (
-          <EyeIcon
-            className="size-[24px] absolute right-3 cursor-pointer"
-            onClick={() => setShowPassword(!showPassword)}
-          />
-        )}
-      </div>
-    </div>
-    <div>
-      <p className={`${pStyle}`}>Confirm Password</p>
-      <div className="flex justify-center items-center relative w-full">
-        <input
-          type={showConfirmPassword ? "text" : "password"}
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          placeholder="Confirm password"
-          className={`${inputStyle}`}
-        />
-        {showConfirmPassword ? (
-          <EyeSlashIcon
-            className="size-[24px] absolute right-3 cursor-pointer"
-            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-          />
-        ) : (
-          <EyeIcon
-            className="size-[24px] absolute right-3 cursor-pointer"
-            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-          />
-        )}
-      </div>
-    </div>
-  </>
-)}
-        </div>  
+        
+         
+</div>
+          {entityType === "Custom" && (
+            <div className=" flex flex-col  mx-4 lg:mx-20 ">
+           <div className="grid grid-cols-2 w-full">
+                <div className="">
+                  <p className={`${pStyle}`}>Name</p>
+                  <input
+                    type="text"
+                    className="w-full border border-black rounded-md p-1"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                  {errorMessage && (
+                    <p className="text-red-500">{errorMessage}</p>
+                  )}
+                </div>
+                
+                  </div>
+                <div className="flex space-x-6 w-full">
+               
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 mt-4 ">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Noted By
+                </label>
+                {approvers.map((person) => (
+                  <div key={person.user_id} className="flex items-center py-1">
+                    <input
+                      type="checkbox"
+                      id={`noted_by_${person.user_id}`}
+                      checked={notedBy.includes(person.user_id)}
+                      onChange={() => toggleNotedBy(person.user_id)}
+                      className="mr-2 size-6"
+                    />
+                    <label
+                      htmlFor={`noted_by_${person.user_id}`}
+                      className="text-lg"
+                    >
+                      {person.firstname} {person.lastname}
+                    </label>
+                  </div>
+                ))}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Approved By
+                </label>
+                {approvers.map((person) => (
+                  <div key={person.user_id} className="flex items-center py-1">
+                    <input
+                      type="checkbox"
+                      id={`approved_by_${person.user_id}`}
+                      checked={approvedBy.includes(person.user_id)}
+                      onChange={() => toggleApprovedBy(person.user_id)}
+                      className="mr-2 size-6"
+                    />
+                    <label
+                      htmlFor={`approved_by_${person.user_id}`}
+                      className="text-lg"
+                    >
+                      {person.firstname} {person.lastname}
+                    </label>
+                  </div>
+                ))}
+              </div>
+              </div>
+            </div>
+          )}
+     
         <div className="mx-10 mt-4">
           {errorMessage && <p className="text-red-600">{errorMessage}</p>}
         </div>

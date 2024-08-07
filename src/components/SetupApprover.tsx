@@ -293,10 +293,7 @@ const SetupApprover = (props: Props) => {
       name: "Modify",
       cell: (row: Record) => (
         <div className="flex space-x-2">
-           <PencilSquareIcon
-            className="text-primary size-8 cursor-pointer"
-            onClick={() => editModalShow(row)}
-          />
+           
           <TrashIcon
             className="text-[#A30D11] size-8 cursor-pointer"
             onClick={() => deleteModalShow(row)}

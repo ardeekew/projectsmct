@@ -176,11 +176,7 @@ const CreateCashDisbursement = (props: Props) => {
         }
       });
 
-      if (file.length === 0) {
-        console.log("No file selected");
-        return;
-    }
-
+  
     const formData = new FormData();
 
      // Append each file to FormData

@@ -16,8 +16,8 @@ const AddCustomModal = ({
   entityType: string;
   refreshData: () => void;
 }) => {
-  const [notedBy, setNotedBy] = useState<number[]>([]); // Change to store IDs only
-  const [approvedBy, setApprovedBy] = useState<number[]>([]); // Change to store IDs only
+  const [notedBy, setNotedBy] = useState<number[]>([]); 
+  const [approvedBy, setApprovedBy] = useState<number[]>([]);
   const [name, setName] = useState<string>("");
  
   const [errorMessage, setErrorMessage] = useState("");

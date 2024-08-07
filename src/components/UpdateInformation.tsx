@@ -23,20 +23,28 @@ interface User {
   userName: string;
   position: string;
   profile_picture: string;
+  branch: string;
 }
 
 const schema = z.object({
   firstName: z.string().nonempty("First name is required"),
   lastName: z.string().nonempty("Last name is required"),
   email: z.string().email("Invalid email format"),
+
   branch_code: z.string().nonempty("Branch code is required"),
+  role: z.string().nonempty("Role is required"),
   contact: z.string().refine((value) => /^\d{11}$/.test(value), {
     message: "Contact number must be 11 digits",
   }),
   userName: z.string().nonempty("Username is required"),
   position: z.string().nonempty("Position is required"),
 });
-
+const adminOptions=[
+  {label:"", value:""},
+  {label:"Admin", value:"Admin"},
+  {label:"User", value:"User"},
+  {label:"Approver", value:"approver"},
+]
 const roleOptions = [
   { label: "", value: "" },
   { label: "Accounting Clerk", value: "Accounting Clerk" },
@@ -242,6 +250,7 @@ const UpdateInformation = () => {
   const {
     control,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<User>({
     resolver: zodResolver(schema),
@@ -254,6 +263,8 @@ const UpdateInformation = () => {
   const [newEmail, setNewEmail] = useState("");
   const [newBranch, setNewBranch] = useState("");
   const [newContact, setNewContact] = useState("");
+  const [newBranchName, setNewBranchName] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const [newUserName, setNewUserName] = useState("");
   const [newRole, setNewRole] = useState("");
   const [newPosition, setNewPosition] = useState("");
@@ -298,6 +309,7 @@ const UpdateInformation = () => {
           setNewUserName(response.data.data.userName);
           setNewPosition(response.data.data.position);
           setNewRole(response.data.data.role);
+          setNewBranchName(response.data.data.branch);
         } else {
           throw new Error(
             response.data.message || "Failed to fetch user information"
@@ -314,12 +326,15 @@ const UpdateInformation = () => {
 
     fetchUserInformation();
   }, []);
-  console.log(newPosition);
+
   const profilePictureUrl = newProfilePic
-  ? URL.createObjectURL(newProfilePic) // Create a temporary URL for the new profile picture
-  : user?.profile_picture
-  ? `http://localhost:8000/storage/${user.profile_picture.replace(/\\/g, "/")}`
-  : Avatar3;
+    ? URL.createObjectURL(newProfilePic) // Create a temporary URL for the new profile picture
+    : user?.profile_picture
+    ? `http://localhost:8000/storage/${user.profile_picture.replace(
+        /\\/g,
+        "/"
+      )}`
+    : Avatar3;
 
   const closeSuccessModal = () => {
     setShowSuccessModal(false);
@@ -329,39 +344,56 @@ const UpdateInformation = () => {
     setSignatureButton(false);
     navigate("/profile");
   };
+  console.log(errors);
   const onSubmit: SubmitHandler<User> = async (data) => {
+    console.log("Form Data Submitted:", data); // Log form data
+  
     try {
       setSubmitting(true);
-
+  
+      // Get current values (original values should be stored somewhere)
+      const originalBranchCode = user?.branch_code; // Replace with actual way to get original value
+      const originalBranch = user?.branch; // Replace with actual way to get original value
+  
+      // Ensure required fields are provided
+      if (!data.firstName || !data.lastName || !data.email || !data.contact || !data.userName || !data.position || !data.role) {
+        setErrorMessage("Please fill out all required fields.");
+        setSubmitting(false);
+        return;
+      }
+  
       const token = localStorage.getItem("token");
       const id = localStorage.getItem("id");
-
+  
       if (!token || !id) {
         console.error("Token or ID is missing");
         setSubmitting(false);
         return;
       }
-
+  
       const formData = new FormData();
-      formData.append("firstName", data.firstName || "");
-      formData.append("lastName", data.lastName || "");
-      formData.append("email", data.email || "");
-      formData.append("branch_code", data.branch_code || "");
-      formData.append("contact", data.contact || "");
-      formData.append("userName", data.userName || "");
-      formData.append("position", data.position || ""); // Ensure position is correctly appended
-      formData.append("role", data.role || "");
-
+      formData.append("firstName", data.firstName);
+      formData.append("lastName", data.lastName);
+      formData.append("email", data.email);
+      formData.append("contact", data.contact);
+      formData.append("userName", data.userName);
+      formData.append("position", data.position);
+      formData.append("role", data.role);
+  
+      // Include branch_code and branch only if they are updated
+      formData.append("branch_code", data.branch_code || originalBranchCode || "");
+      formData.append("branch", data.branch || originalBranch || "");
+  
+      // Ensure profile picture is a File object before appending
       if (newProfilePic) {
-        formData.append("profile_picture", newProfilePic); // Ensure newProfilePic is a File object
+        formData.append("profile_picture", newProfilePic);
       }
-
-      // Log FormData for debugging
+  
       console.log("FormData entries:");
       for (let [key, value] of formData.entries()) {
         console.log(`${key}: ${value}`);
       }
-
+  
       const response = await axios.post(
         `http://localhost:8000/api/update-profile/${id}`,
         formData,
@@ -372,7 +404,7 @@ const UpdateInformation = () => {
           },
         }
       );
-
+  
       console.log("User information updated successfully:", response.data);
       setSubmitting(false);
       setShowSuccessModal(true);
@@ -385,7 +417,54 @@ const UpdateInformation = () => {
       setShowSuccessModal(true);
     }
   };
+  
 
+  const handleBranchCodeChange = (selectedBranchCode: string) => {
+    // Define branch code categories and their corresponding names
+    const strongMotocentrumCodes = [
+      "AKLA", "ALEN", "ALIC", "ANTI", "ANTIP", "BANTA", "BAYB", "BINAN", "BOHK", "BOHL", "CAGL", "CALAP", 
+      "CALAP2", "CALI", "CARMB", "CARMO", "CARS", "CATAR", "DASMA", "DIPL", "FAMY", "GUIN", "GUIN2", "JAGN", 
+      "LIPA", "LOAY", "MADRI", "MALA", "MANG", "MANL", "MANP", "MOLS", "NAIC", "OZAL", "PAGS", "SAGBA", "SALA", 
+      "SANJ", "SANP", "SDAV", "SDIP", "SARG", "SILA", "SLAP", "SLAS", "SLIL", "SMCT", "SROS", "TALI", "TANZ", 
+      "TANZ2", "TRINI2", "TUBI", "VALEN", "YATI", "ZAML"
+    ];
+  
+    const desStrongMotorsCodes = [
+      "AURO", "BALA", "BUHA", "BULU", "CARMCDO", "DIGOS", "DONC", "DSMBL", "DSMC", "DSMCA", "DSMD", "DSMD2", 
+      "DSMM", "DSMPO", "DSMSO", "DSMTG", "DSMV", "ELSA", "ILIG", "JIMEDSM", "KABA2", "KATI", "LABA", "MARA", 
+      "MATI", "RIZA", "TACU", "TORI", "CERI", "VILLA", "VISA", "CARC", "CARC2", "CARMC2", "CATM", "COMPO", 
+      "DAAN", "DSMA", "DSMAO", "DSMB", "DSMBN", "DSMCN", "DSMDB", "DSMDM", "DSMDN", "DSMK", "DSMLN", "DSMP", 
+      "DSMSB", "DSMT", "DSMT2", "DSMTA", "ILOI", "LAHU", "LAPU 2", "MAND", "MAND2", "MEDE", "PARD", "PARD2", 
+      "REMI", "REMI2", "SANT", "TUBU", "UBAY", "BOGO", "DSML", "CALIN"
+    ];
+  
+    const desAppliancePlazaCodes = [
+      "ALAD", "AURD", "BALD", "BONI", "BUUD", "CALD", "CAMD", "DAPI", "DIPD", "DIPD2", "ILID", "IMED", 
+      "INIT2", "IPID", "JIME", "KABD", "LABD", "LILD", "MANO", "MARA2", "MARD", "MOLD", "MOLD2", "NUND2", 
+      "OROD", "OZAD", "PUTD", "RIZD", "SANM", "SIND", "SUCD", "TUBOD", "VITA"
+    ];
+  
+    // Determine the branch name based on selected branch code
+    let branchName = "Honda Des, Inc."; // Default branch name
+  
+    if (strongMotocentrumCodes.includes(selectedBranchCode)) {
+      branchName = "Strong Motocentrum, Inc.";
+    } else if (desStrongMotorsCodes.includes(selectedBranchCode)) {
+      branchName = "Des Strong Motors, Inc.";
+    } else if (desAppliancePlazaCodes.includes(selectedBranchCode)) {
+      branchName = "Des Appliance Plaza, Inc.";
+    } else if (selectedBranchCode === "HO") {
+      branchName = "Head Office";
+    }
+  
+    // Update the branch name and branch code in state
+    setNewBranchName(branchName);
+    setValue("branch_code", selectedBranchCode);
+    setValue("branch", branchName);
+  };
+  
+  console.log(newBranchName);
+  console.log(newBranch);
   const handleClear = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     signature?.clear();
@@ -563,7 +642,7 @@ const UpdateInformation = () => {
                       )}
                     </div>
                     <div className="w-full flex flex-col">
-                      <p className="text-gray-400">Branch</p>
+                      <p className="text-gray-400">Branch Code</p>
                       <Controller
                         name="branch_code"
                         control={control}
@@ -572,11 +651,12 @@ const UpdateInformation = () => {
                           <select
                             {...field}
                             className={`${pinputStyle}`}
-                            onChange={(e) => {
-                              field.onChange(e);
-                              setNewBranch(e.target.value);
-                            }}
+                            value={field.value}
+                            onChange={(e) =>
+                              handleBranchCodeChange(e.target.value)
+                            }
                           >
+                            <option value="">Select branch</option>
                             {branchOptions.map((option, index) => (
                               <option key={index} value={option.value}>
                                 {option.label}
@@ -585,10 +665,23 @@ const UpdateInformation = () => {
                           </select>
                         )}
                       />
+
                       {errors.branch_code && (
                         <span className="text-red-500">
                           {errors.branch_code.message}
                         </span>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-gray-400">Branch</p>
+                      <input
+                        className={`${pinputStyle}`}
+                        value={newBranchName}
+                        onChange={(e) => setNewBranchName(e.target.value)}
+                        readOnly
+                      />
+                      {errorMessage && (
+                        <p className="text-red-500">{errorMessage}</p>
                       )}
                     </div>
                     <div className="w-full flex flex-col">
@@ -630,6 +723,7 @@ const UpdateInformation = () => {
                               field.onChange(e);
                               setNewUserName(e.target.value);
                             }}
+                          
                           />
                         )}
                       />
@@ -665,6 +759,31 @@ const UpdateInformation = () => {
                       {errors.position && (
                         <span className="text-red-500">
                           {errors.position.message}
+                        </span>
+                      )}
+                    </div>
+                    <div className="w-full flex flex-col">
+                      <p className="text-gray-400">Role</p>
+                      <Controller
+                        name="role"
+                        control={control}
+                        defaultValue={newRole}
+                        render={({ field }) => (
+                          <input
+                            {...field}
+                            type="text"
+                            className={`${pinputStyle}`}
+                            onChange={(e) => {
+                              field.onChange(e);
+                              setNewUserName(e.target.value);
+                            }}
+                          
+                          />
+                        )}
+                      />
+                      {errors.role && (
+                        <span className="text-red-500">
+                          {errors.role.message}
                         </span>
                       )}
                     </div>

@@ -17,7 +17,6 @@ const DeleteModal = ({ deleteModal, closeDeleteModal, openDeleteSuccessModal, en
     return null;
   }
 
-
   const handleDelete = async () => {
     try {
       setIsLoading(true);

@@ -79,8 +79,8 @@ const AddBranchModal = ({
       setLoading(false);
     }
   };
-
-   /*  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+ 
+     const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
       const selectedBranch = e.target.value;
       if ([
         "AKLA", "ALEN", "ALIC", "ANTI", "ANTIP", "BANTA", "BAYB", "BINAN",
@@ -113,44 +113,88 @@ const AddBranchModal = ({
       } else {
         setValue("branch", "Honda Des, Inc.");
       }
-    };
- */
+    }; 
+
   const onSubmit = (data: Branch) => {
     submitData(data);
   };
-
-/*   const submitAllBranches = async () => {
+ 
+ 
+    
+  const submitAllBranches = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+  
       const headers = {
         Authorization: `Bearer ${token}`,
       };
-
-      // Iterate over each branch code and submit
-      for (let i = 0; i < branchOptions.length; i++) {
+  
+      // List of branch codes
+      const branchOptions = [
+        "AKLA", "ALEN", "ALIC", "ANTI", "ANTIP", "BANTA", "BAYB", "BINAN",
+        "BOHK", "BOHL", "CAGL", "CALAP", "CALAP2", "CALI", "CARMB", "CARMO",
+        "CARS", "CATAR", "DASMA", "DIPL", "FAMY", "GUIN", "GUIN2", "JAGN",
+        "LIPA", "LOAY", "MADRI", "MALA", "MANG", "MANL", "MANP", "MOLS",
+        "NAIC", "OZAL", "PAGS", "SAGBA", "SALA", "SANJ", "SANP", "SDAV",
+        "SDIP", "SARG", "SILA", "SLAP", "SLAS", "SLIL", "SMCT", "SROS",
+        "TALI", "TANZ", "TANZ2", "TRINI2", "TUBI", "VALEN", "YATI", "ZAML",
+        "AURO", "BALA", "BUHA", "BULU", "CARMCDO", "DIGOS", "DONC", "DSMBL",
+        "DSMC", "DSMCA", "DSMD", "DSMD2", "DSMM", "DSMPO", "DSMSO", "DSMTG",
+        "DSMV", "ELSA", "ILIG", "JIMEDSM", "KABA2", "KATI", "LABA", "MARA",
+        "MATI", "RIZA", "TACU", "TORI", "CERI", "VILLA", "VISA", "CARC",
+        "CARC2", "CARMC2", "CATM", "COMPO", "DAAN", "DSMA", "DSMAO", "DSMB",
+        "DSMBN", "DSMCN", "DSMDB", "DSMDM", "DSMDN", "DSMK", "DSMLN", "DSMP",
+        "DSMSB", "DSMT", "DSMT2", "DSMTA", "ILOI", "LAHU", "LAPU 2", "MAND",
+        "MAND2", "MEDE", "PARD", "PARD2", "REMI", "REMI2", "SANT", "TUBU",
+        "UBAY", "BOGO", "DSML", "CALIN",
+        "ALAD", "AURD", "BALD", "BONI", "BUUD", "CALD", "CAMD", "DAPI", "DIPD", "DIPD2", "ILID", "IMED", "INIT2", "IPID", "JIME", "KABD", "LABD", "LILD", "MANO", "MARA2", "MARD", "MOLD", "MOLD2", "NUND2", "OROD", "OZAD", "PUTD", "RIZD", "SANM", "SIND", "SUCD", "TUBOD", "VITA",
+      ];
+  
+      const branchPromises = branchOptions.map(async (branchCode) => {
+        const branchName = getBranchName(branchCode);
         const requestData = {
-          branch: getBranchName(branchOptions[i]), // Get the corresponding branch name based on branch code
-          branch_code: branchOptions[i],
+          branch: branchName,
+          branch_code: branchCode,
         };
-        await axios.post("http://localhost:8000/api/add-branch", requestData, { headers });
-      }
-
-      // If all submissions are successful
-      setLoading(false);
+  
+        try {
+          const response = await axios.post(
+            "http://localhost:8000/api/add-branch",
+            requestData,
+            { headers }
+          );
+  
+          if (response.status !== 200 || !response.data.status) {
+            console.error(`Failed to add branch: ${branchCode}`, response.data);
+            throw new Error(`Failed to add branch: ${branchCode}`);
+          }
+        } catch (error) {
+          console.error("Error submitting branch:", branchCode, error);
+          throw error;
+        }
+      });
+  
+      await Promise.all(branchPromises);
+  
       openCompleteModal();
       refreshData();
       reset();
     } catch (error) {
       console.error("Registration Error:", error);
       alert("An error occurred during the registration process.");
+    } finally {
       setLoading(false);
     }
   };
- */
-  /* // Helper function to determine branch name based on branch code
-  const getBranchName = (branchCode: string) => {
-    if ([
+  
+  
+  // Helper function to determine branch name based on branch code
+  const getBranchName = (branchCode: string): string => {
+    const strongMotocentrumBranches = [
       "AKLA", "ALEN", "ALIC", "ANTI", "ANTIP", "BANTA", "BAYB", "BINAN",
       "BOHK", "BOHL", "CAGL", "CALAP", "CALAP2", "CALI", "CARMB", "CARMO",
       "CARS", "CATAR", "DASMA", "DIPL", "FAMY", "GUIN", "GUIN2", "JAGN",
@@ -158,9 +202,9 @@ const AddBranchModal = ({
       "NAIC", "OZAL", "PAGS", "SAGBA", "SALA", "SANJ", "SANP", "SDAV",
       "SDIP", "SARG", "SILA", "SLAP", "SLAS", "SLIL", "SMCT", "SROS",
       "TALI", "TANZ", "TANZ2", "TRINI2", "TUBI", "VALEN", "YATI", "ZAML"
-    ].includes(branchCode)) {
-      return "Strong Motocentrum, Inc.";
-    } else if ([
+    ];
+  
+    const desStrongMotorsBranches = [
       "AURO", "BALA", "BUHA", "BULU", "CARMCDO", "DIGOS", "DONC", "DSMBL",
       "DSMC", "DSMCA", "DSMD", "DSMD2", "DSMM", "DSMPO", "DSMSO", "DSMTG",
       "DSMV", "ELSA", "ILIG", "JIMEDSM", "KABA2", "KATI", "LABA", "MARA",
@@ -170,18 +214,25 @@ const AddBranchModal = ({
       "DSMSB", "DSMT", "DSMT2", "DSMTA", "ILOI", "LAHU", "LAPU 2", "MAND",
       "MAND2", "MEDE", "PARD", "PARD2", "REMI", "REMI2", "SANT", "TUBU",
       "UBAY", "BOGO", "DSML", "CALIN"
-    ].includes(branchCode)) {
-      return "Des Strong Motors, Inc.";
-    } else if ([
+    ];
+  
+    const desStrongMotorsApplianceBranches = [
       "ALAD", "AURD", "BALD", "BONI", "BUUD", "CALD", "CAMD", "DAPI", "DIPD", "DIPD2", "ILID", "IMED", "INIT2", "IPID", "JIME", "KABD", "LABD", "LILD", "MANO", "MARA2", "MARD", "MOLD", "MOLD2", "NUND2", "OROD", "OZAD", "PUTD", "RIZD", "SANM", "SIND", "SUCD", "TUBOD", "VITA"
-    ].includes(branchCode)) {
+    ];
+  
+    if (strongMotocentrumBranches.includes(branchCode)) {
+      return "Strong Motocentrum, Inc.";
+    } else if (desStrongMotorsBranches.includes(branchCode)) {
       return "Des Strong Motors, Inc.";
-    } else if (["HO"].includes(branchCode)) {
+    } else if (desStrongMotorsApplianceBranches.includes(branchCode)) {
+      return "Des Strong Appliance, Inc.";
+    } else if (branchCode === "HO") {
       return "Head Office";
     } else {
       return "Honda Des, Inc.";
     }
-  }; */
+  };
+  
 
   return modalIsOpen ? (
     <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 flex-col">
@@ -240,7 +291,7 @@ const AddBranchModal = ({
             >
               {loading ? <ClipLoader color="#36d7b7" /> : "Add"}
             </button>
-           
+        
           </div>
         </form>
       </div>

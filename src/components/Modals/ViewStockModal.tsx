@@ -662,93 +662,93 @@ const ViewStockModal: React.FC<Props> = ({
               </div>
             ) : (
               <div className="flex flex-wrap">
-                <div className="ml-5 mb-4">
-                  <h3 className="font-bold mb-3">Requested By:</h3>
-                  <div className="flex flex-row justify-start space-x-2">
-                    <div className="flex flex-col items-center justify-center text-center">
-                      <p className="relative inline-block uppercase font-medium text-center pt-6">
-                        <img
-                          className="absolute top-2"
-                          src={user.data?.signature}
-                          alt="avatar"
-                          width={120}
-                        />
+              <div className="ml-5 mb-4">
+                <h3 className="font-bold mb-3">Requested By:</h3>
+                <div className="flex flex-row justify-start space-x-2">
+                  <div className="flex flex-col items-center justify-center text-center">
+                    <p className="relative inline-block uppercase font-medium text-center pt-6">
+                      <img
+                        className="absolute top-2"
+                        src={user.data?.signature}
+                        alt="avatar"
+                        width={120}
+                      />
 
-                        <span className="relative z-10 px-2">
-                          {user.data?.firstName} {user.data?.lastName}
-                        </span>
-                        <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black -mx-4"></span>
-                      </p>
-                      <p className="font-bold text-[12px] text-center">
-                        {user.data?.position}
-                      </p>
-                    </div>
+                      <span className="relative z-10 px-2">
+                        {user.data?.firstName} {user.data?.lastName}
+                      </span>
+                      <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black -mx-4"></span>
+                    </p>
+                    <p className="font-bold text-[12px] text-center">
+                      {user.data?.position}
+                    </p>
                   </div>
                 </div>
-
-                <div className="mb-4 ml-5">
-                  <h3 className="font-bold mb-3">Noted By:</h3>
-                  <ul className="flex flex-row space-x-6">
-                    {notedBy.map((user, index) => (
-                      <li
-                        className="flex flex-row justify-start space-x-2"
-                        key={index}
-                      >
-                        <div className="flex flex-col items-center justify-center text-center">
-                          <p className="relative inline-block uppercase font-medium text-center pt-6">
-                            {user.status.toLowerCase() === "approved" && (
-                              <img
-                                className="absolute top-2"
-                                src={user.signature}
-                                alt="avatar"
-                                width={120}
-                              />
-                            )}
-                            <span className="relative z-10 px-2">
-                              {user.firstname} {user.lastname}
-                            </span>
-                            <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black -mx-4"></span>
-                          </p>
-                          <p className="font-bold text-[12px] text-center">
-                            {user.position}
-                          </p>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="mb-4 ml-5">
-                  <h3 className="font-bold mb-3">Approved By:</h3>
-                  <ul className="flex flex-row space-x-6">
-                    {approvedBy.map((user, index) => (
-                      <li
-                        className="flex flex-row justify-start space-x-2"
-                        key={index}
-                      >
-                        <div className="flex flex-col items-center justify-center text-center">
-                          <p className="relative inline-block uppercase font-medium text-center pt-6">
-                            {user.status.toLowerCase() === "approved" && (
-                              <img
-                                className="absolute top-2"
-                                src={user.signature}
-                                alt="avatar"
-                                width={120}
-                              />
-                            )}
-                            <span className="relative z-10 px-2">
-                              {user.firstname} {user.lastname}
-                            </span>
-                            <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black -mx-4"></span>
-                          </p>
-                          <p className="font-bold text-[12px] text-center">
-                            {user.position}
-                          </p>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
               </div>
+
+              <div className="mb-4 ml-5">
+                <h3 className="font-bold mb-3">Noted By:</h3>
+                <ul className="flex flex-row space-x-6">
+                  {notedBy.map((user, index) => (
+                    <li
+                      className="flex flex-row justify-start space-x-2"
+                      key={index}
+                    >
+                      <div className="flex flex-col items-center justify-center text-center">
+                        <p className="relative inline-block uppercase font-medium text-center pt-6">
+                          {user.status.toLowerCase() === "approved" && (
+                            <img
+                              className="absolute top-2"
+                              src={user.signature}
+                              alt="avatar"
+                              width={120}
+                            />
+                          )}
+                          <span className="relative z-10 px-2">
+                            {user.firstname} {user.lastname}
+                          </span>
+                          <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black -mx-4"></span>
+                        </p>
+                        <p className="font-bold text-[12px] text-center">
+                          {user.position}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="mb-4 ml-5">
+                <h3 className="font-bold mb-3">Approved By:</h3>
+                <ul className="flex flex-row space-x-6">
+                  {approvedBy.map((user, index) => (
+                    <li
+                      className="flex flex-row justify-start space-x-2"
+                      key={index}
+                    >
+                      <div className="flex flex-col items-center justify-center text-center">
+                        <p className="relative inline-block uppercase font-medium text-center pt-6">
+                          {user.status.toLowerCase() === "approved" && (
+                            <img
+                              className="absolute top-2"
+                              src={user.signature}
+                              alt="avatar"
+                              width={120}
+                            />
+                          )}
+                          <span className="relative z-10 px-2">
+                            {user.firstname} {user.lastname}
+                          </span>
+                          <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black -mx-4"></span>
+                        </p>
+                        <p className="font-bold text-[12px] text-center">
+                          {user.position}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
             )}
           </div>
           <div className="w-full">
