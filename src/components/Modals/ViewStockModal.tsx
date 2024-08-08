@@ -95,7 +95,7 @@ const ViewStockModal: React.FC<Props> = ({
   const [attachmentUrl, setAttachmentUrl] = useState<string[]>([]);
   const [newAttachments, setNewAttachments] = useState<File[]>([]);
   const [originalAttachments, setOriginalAttachments] = useState<string[]>([]);
-  const [removedAttachments, setRemovedAttachments] = useState<number[]>([]);
+  const [removedAttachments, setRemovedAttachments] = useState<(string | number)[]>([]);
   console.log("record", record);
   useEffect(() => {
     const attachments = JSON.parse(record.attachment);
@@ -215,89 +215,109 @@ const ViewStockModal: React.FC<Props> = ({
   };
 
   const handleRemoveAttachment = (index: number) => {
-    setRemovedAttachments((prevRemoved) => [...prevRemoved, index]);
-  };
-  console.log("newAttach", newAttachments);
-  const handleSaveChanges = async () => {
-    if (
-      !newData.every(
-        (item) =>
-          parseFloat(item.quantity) > 0 &&
-          parseFloat(item.unitCost) > 0 &&
-          item.description &&
-          item.description.trim() !== ""
-      )
-    ) {
-      setErrorMessage(
-        "Quantity and unit cost must be greater than 0, and description cannot be empty."
-      );
+    // Get the path of the attachment to be removed
+    const attachmentPath = attachmentUrl[index].split("storage/attachments/")[1];
+    
+    // Add the path to the removedAttachments state
+    setRemovedAttachments((prevRemoved) => [...prevRemoved, attachmentPath]);
+
+    // Remove the attachment from the current list
+    setAttachmentUrl((prevUrls) => prevUrls.filter((_, i) => i !== index));
+};
+
+  
+  
+  
+
+const handleSaveChanges = async () => {
+  if (
+    !newData.every(
+      (item) =>
+        parseFloat(item.quantity) > 0 &&
+        parseFloat(item.unitCost) > 0 &&
+        item.description &&
+        item.description.trim() !== ""
+    )
+  ) {
+    setErrorMessage(
+      "Quantity and unit cost must be greater than 0, and description cannot be empty."
+    );
+    return;
+  }
+
+  try {
+    setLoading(true);
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setErrorMessage("Token is missing");
       return;
     }
 
-    try {
-      setLoading(true);
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setErrorMessage("Token is missing");
-        return;
-      }
+    const formData = new FormData();
+    formData.append("updated_at", new Date().toISOString());
+    formData.append("approvers_id", JSON.stringify(editedApprovers));
 
-      const formData = new FormData();
-      formData.append("updated_at", new Date().toISOString());
-      formData.append("approvers_id", JSON.stringify(editedApprovers));
-
-      formData.append(
-        "form_data",
-        JSON.stringify([
-          {
-            branch: editableRecord.form_data[0].branch,
-            date:
-              editedDate !== "" ? editedDate : editableRecord.form_data[0].date,
-            status: editableRecord.status,
-            grand_total: editableRecord.form_data[0].grand_total,
-            purpose: checkedPurpose || editableRecord.form_data[0].purpose,
-            items: newData,
-          },
-        ])
-      );
-
-      // Append existing attachments
-      attachmentUrl.forEach((url, index) => {
-        const path = url.split("storage/attachments/")[1];
-        formData.append(`attachment_url_${index}`, path);
-      });
-
-      // Append new attachments
-      newAttachments.forEach((file) => {
-        formData.append("new_attachments[]", file);
-      });
-
-      const response = await axios.post(
-        `http://localhost:8000/api/update-request/${record.id}`,
-        formData,
+    formData.append(
+      "form_data",
+      JSON.stringify([
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+          branch: editableRecord.form_data[0].branch,
+          date:
+            editedDate !== "" ? editedDate : editableRecord.form_data[0].date,
+          status: editableRecord.status,
+          grand_total: editableRecord.form_data[0].grand_total,
+          purpose: checkedPurpose || editableRecord.form_data[0].purpose,
+          items: newData,
+        },
+      ])
+    );
 
-      console.log("Stock requisition updated successfully:", response.data);
-      setLoading(false);
-      setIsEditing(false);
-      setSavedSuccessfully(true);
-      refreshData();
-    } catch (error: any) {
-      setLoading(false);
-      setErrorMessage(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to update stock requisition."
-      );
-    }
-  };
+    // Append existing attachments
+    attachmentUrl.forEach((url, index) => {
+      const path = url.split("storage/attachments/")[1];
+      formData.append(`attachment_url_${index}`, path);
+    });
 
+    // Append new attachments
+    newAttachments.forEach((file, index) => {
+      formData.append("new_attachments[]", file);
+    });
+
+    // Append removed attachments
+    removedAttachments.forEach((path, index) => {
+      formData.append("removed_attachments[]", String(path));
+    });
+
+    const response = await axios.post(
+      `http://localhost:8000/api/update-request/${record.id}`,
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    console.log("Stock requisition updated successfully:", response.data);
+    setLoading(false);
+    setIsEditing(false);
+    setSavedSuccessfully(true);
+    setRemovedAttachments([]); // Clear removed attachments state
+    refreshData();
+  } catch (error: any) {
+    setLoading(false);
+    setErrorMessage(
+      error.response?.data?.message ||
+        error.message ||
+        "Failed to update stock requisition."
+    );
+  }
+};
+
+
+  
+  
   console.log("attachmentUrl", attachmentUrl);
   console.log("record.attachment", record.attachment);
   const formatDate = (dateString: string) => {
@@ -662,93 +682,93 @@ const ViewStockModal: React.FC<Props> = ({
               </div>
             ) : (
               <div className="flex flex-wrap">
-              <div className="ml-5 mb-4">
-                <h3 className="font-bold mb-3">Requested By:</h3>
-                <div className="flex flex-row justify-start space-x-2">
-                  <div className="flex flex-col items-center justify-center text-center">
-                    <p className="relative inline-block uppercase font-medium text-center pt-6">
-                      <img
-                        className="absolute top-2"
-                        src={user.data?.signature}
-                        alt="avatar"
-                        width={120}
-                      />
+                <div className="ml-5 mb-4">
+                  <h3 className="font-bold mb-3">Requested By:</h3>
+                  <div className="flex flex-row justify-start space-x-2">
+                    <div className="flex flex-col items-center justify-center text-center">
+                      <p className="relative inline-block uppercase font-medium text-center pt-6">
+                        <img
+                          className="absolute top-2"
+                          src={user.data?.signature}
+                          alt="avatar"
+                          width={120}
+                        />
 
-                      <span className="relative z-10 px-2">
-                        {user.data?.firstName} {user.data?.lastName}
-                      </span>
-                      <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black -mx-4"></span>
-                    </p>
-                    <p className="font-bold text-[12px] text-center">
-                      {user.data?.position}
-                    </p>
+                        <span className="relative z-10 px-2">
+                          {user.data?.firstName} {user.data?.lastName}
+                        </span>
+                        <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black -mx-4"></span>
+                      </p>
+                      <p className="font-bold text-[12px] text-center">
+                        {user.data?.position}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="mb-4 ml-5">
-                <h3 className="font-bold mb-3">Noted By:</h3>
-                <ul className="flex flex-row space-x-6">
-                  {notedBy.map((user, index) => (
-                    <li
-                      className="flex flex-row justify-start space-x-2"
-                      key={index}
-                    >
-                      <div className="flex flex-col items-center justify-center text-center">
-                        <p className="relative inline-block uppercase font-medium text-center pt-6">
-                          {user.status.toLowerCase() === "approved" && (
-                            <img
-                              className="absolute top-2"
-                              src={user.signature}
-                              alt="avatar"
-                              width={120}
-                            />
-                          )}
-                          <span className="relative z-10 px-2">
-                            {user.firstname} {user.lastname}
-                          </span>
-                          <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black -mx-4"></span>
-                        </p>
-                        <p className="font-bold text-[12px] text-center">
-                          {user.position}
-                        </p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+                <div className="mb-4 ml-5">
+                  <h3 className="font-bold mb-3">Noted By:</h3>
+                  <ul className="flex flex-row space-x-6">
+                    {notedBy.map((user, index) => (
+                      <li
+                        className="flex flex-row justify-start space-x-2"
+                        key={index}
+                      >
+                        <div className="flex flex-col items-center justify-center text-center">
+                          <p className="relative inline-block uppercase font-medium text-center pt-6">
+                            {user.status.toLowerCase() === "approved" && (
+                              <img
+                                className="absolute top-2"
+                                src={user.signature}
+                                alt="avatar"
+                                width={120}
+                              />
+                            )}
+                            <span className="relative z-10 px-2">
+                              {user.firstname} {user.lastname}
+                            </span>
+                            <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black -mx-4"></span>
+                          </p>
+                          <p className="font-bold text-[12px] text-center">
+                            {user.position}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="mb-4 ml-5">
+                  <h3 className="font-bold mb-3">Approved By:</h3>
+                  <ul className="flex flex-row space-x-6">
+                    {approvedBy.map((user, index) => (
+                      <li
+                        className="flex flex-row justify-start space-x-2"
+                        key={index}
+                      >
+                        <div className="flex flex-col items-center justify-center text-center">
+                          <p className="relative inline-block uppercase font-medium text-center pt-6">
+                            {user.status.toLowerCase() === "approved" && (
+                              <img
+                                className="absolute top-2"
+                                src={user.signature}
+                                alt="avatar"
+                                width={120}
+                              />
+                            )}
+                            <span className="relative z-10 px-2">
+                              {user.firstname} {user.lastname}
+                            </span>
+                            <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black -mx-4"></span>
+                          </p>
+                          <p className="font-bold text-[12px] text-center">
+                            {user.position}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
-              <div className="mb-4 ml-5">
-                <h3 className="font-bold mb-3">Approved By:</h3>
-                <ul className="flex flex-row space-x-6">
-                  {approvedBy.map((user, index) => (
-                    <li
-                      className="flex flex-row justify-start space-x-2"
-                      key={index}
-                    >
-                      <div className="flex flex-col items-center justify-center text-center">
-                        <p className="relative inline-block uppercase font-medium text-center pt-6">
-                          {user.status.toLowerCase() === "approved" && (
-                            <img
-                              className="absolute top-2"
-                              src={user.signature}
-                              alt="avatar"
-                              width={120}
-                            />
-                          )}
-                          <span className="relative z-10 px-2">
-                            {user.firstname} {user.lastname}
-                          </span>
-                          <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black -mx-4"></span>
-                        </p>
-                        <p className="font-bold text-[12px] text-center">
-                          {user.position}
-                        </p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
             )}
           </div>
           <div className="w-full">
@@ -789,6 +809,7 @@ const ViewStockModal: React.FC<Props> = ({
               </div>
             )}
           </div>
+
           <div className="w-full">
             <h2 className="text-lg font-bold mb-2">Comments</h2>
             <ul className="flex flex-col w-full mb-4 space-y-4">
@@ -856,7 +877,8 @@ const ViewStockModal: React.FC<Props> = ({
               </div>
             ) : (
               !fetchingApprovers &&
-              !isFetchingApprovers && (
+              !isFetchingApprovers &&
+              editableRecord.status === "Pending" && (
                 <button
                   className="bg-blue-500 ml-2 rounded-xl p-2 flex text-white"
                   onClick={handleEdit}

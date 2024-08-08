@@ -55,7 +55,7 @@ const Nav: React.FC<NavProps> = ({
   const [sidebar, setSidebar] = useState(false);
   const [UserID, setUserId] = useState("");
   const [unreadCount, setUnreadCount] = useState(0); // State to keep track of unread notifications
-
+  const [role, setRole] = useState("");
   const navigate = useNavigate();
 
   const handleClose = () => {
@@ -65,7 +65,7 @@ const Nav: React.FC<NavProps> = ({
   const toggleProfileDropdown = () => {
     setIsOpen((prev) => !prev);
   };
-
+console.log(notifications)
   const handleClickOutside = (event: MouseEvent) => {
     if (
       dropdownRef.current &&
@@ -126,6 +126,7 @@ const Nav: React.FC<NavProps> = ({
           setFirstName(response.data.data.firstName);
           setUserId(response.data.data.id);
           setProfilePicture(response.data.data.profile_picture);
+          setRole(response.data.data.role);
         } else {
           console.error("Unexpected response structure:", response.data);
         }
@@ -150,7 +151,7 @@ const Nav: React.FC<NavProps> = ({
         );
         const notificationsData = response.data.notifications;
         setNotifications(notificationsData);
-       
+
         // Count unread notifications
         const unreadNotifications = notificationsData.filter(
           (notif: any) => !notif.read_at
@@ -167,7 +168,7 @@ const Nav: React.FC<NavProps> = ({
     // Set up polling interval
     const intervalId = setInterval(fetchNotifications, 5000); // Poll every 5 seconds
 
-    return () => clearInterval(intervalId); 
+    return () => clearInterval(intervalId);
   }, []);
 
   useEffect(() => {
@@ -327,44 +328,63 @@ const Nav: React.FC<NavProps> = ({
             </div>
             {/* Notification */}
             {isOpenNotif && (
-  <div
-    className="w-96 md:w-[500px] bg-white absolute top-11 right-0 border-2 border-black z-40 overflow-y-auto max-h-80 rounded-lg shadow-lg"
-    ref={dropdownRef}
-  >
-    <ul>
-      {notifications.length === 0 ? (
-        <li className="px-4 py-4 text-center text-gray-500">No notifications yet</li>
-      ) : (
-        notifications.slice(0, 5).map((notif) => (
-          <Link to="/request/approver" key={notif.notification_id}>
-            <li
-              className="px-4 py-4 hover:bg-[#E0E0F9] cursor-pointer border-b flex items-center"
-              onClick={() => handleNotificationClick(notif.notification_id)}
-              aria-label={`Notification: ${notif.data.message}`}
-            >
-              <div className="w-12 h-12 flex items-center justify-center bg-black rounded-full">
-                {notif.read_at ? (
-                  <EnvelopeOpenIcon className="size-5 text-white" />
-                ) : (
-                  <EnvelopeIcon className="size-5 text-white" />
-                )}
-              </div>
-              <div className="ml-4 flex-1">
-                <p className={`text-primary text-sm ${notif.read_at ? "" : "font-bold"} text-center`}>
-                  {notif.data.message}
-                </p>
-                <p className="text-gray-400 text-sm text-center">
-                  {formatDate(notif.data.created_at)}
-                </p>
-              </div>
-            </li>
-          </Link>
-        ))
-      )}
-    </ul>
-  </div>
-)}
+              <div
+                className="w-96 md:w-[500px] bg-white absolute top-11 right-0 border-2 border-black z-40 overflow-y-auto max-h-80 rounded-lg shadow-lg"
+                ref={dropdownRef}
+              >
+                <ul>
+                  {notifications.length === 0 ? (
+                    <li className="px-4 py-4 text-center text-gray-500">
+                      No notifications yet
+                    </li>
+                  ) : (
+                    notifications.map((notif) => {
+                      // Determine the URL based on notif.type
+                      const linkTo =
+                        notif.type === "App\\Notifications\\ApprovalProcessNotification" ||
+                        notif.type === "App\\Notifications\\PreviousReturnRequestNotification"
+                          ? "/request/approver"
+                          : notif.type === "App\\Notifications\\EmployeeNotification" ||
+                            notif.type === "App\\Notifications\\ReturnRequestNotification"
+                          ? "/request/rq"
+                          : "/profile";
 
+                      return (
+                        <Link to={linkTo} key={notif.notification_id}>
+                          <li
+                            className="px-4 py-4 hover:bg-[#E0E0F9] cursor-pointer border-b flex items-center"
+                            onClick={() =>
+                              handleNotificationClick(notif.notification_id)
+                            }
+                            aria-label={`Notification: ${notif.data.message}`}
+                          >
+                            <div className="w-12 h-12 flex items-center justify-center bg-black rounded-full">
+                              {notif.read_at ? (
+                                <EnvelopeOpenIcon className="size-5 text-white" />
+                              ) : (
+                                <EnvelopeIcon className="size-5 text-white" />
+                              )}
+                            </div>
+                            <div className="ml-4 flex-1">
+                              <p
+                                className={`text-primary text-sm ${
+                                  notif.read_at ? "" : "font-bold"
+                                } text-center`}
+                              >
+                                {notif.data.message}
+                              </p>
+                              <p className="text-gray-400 text-sm text-center">
+                                {formatDate(notif.data.created_at)}
+                              </p>
+                            </div>
+                          </li>
+                        </Link>
+                      );
+                    })
+                  )}
+                </ul>
+              </div>
+            )}
           </div>
         </div>
       </nav>

@@ -1041,7 +1041,7 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
               </div>
             ) : (
               !fetchingApprovers &&
-              !isFetchingApprovers && (
+              !isFetchingApprovers && editableRecord.status === 'Pending' && (
                 <button
                   className="bg-blue-500 ml-2 rounded-xl p-2 flex text-white"
                   onClick={handleEdit}
