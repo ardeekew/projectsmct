@@ -472,7 +472,7 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
           <XMarkIcon className="h-6 w-6 text-black" onClick={closeModal} />
         </div>
         <div className="justify-start items-start flex flex-col space-y-4 w-full">
-          {!fetchingApprovers && !isFetchingApprovers && (
+          {!fetchingApprovers && !isFetchingApprovers && editableRecord.status === 'Approved' && (
             <>
               <button
                 className="bg-blue-600 p-1 px-2 rounded-md text-white"
