@@ -11,6 +11,19 @@ class AreaManagerController extends Controller
 {
 
 //CREATE AREA MANAGER
+public function getAreaManagers()
+{
+    try {
+        
+        $areaManagers = User::where('position', 'Area Manager')->get();
+
+        return response()->json(['area_managers' => $areaManagers], 200);
+
+    } catch (\Exception $e) {
+        return response()->json(['error' => 'Failed to fetch area managers', 'details' => $e->getMessage()], 500);
+    }
+}
+
 public function createAreaManager(Request $request)
 {
     $request->validate([
@@ -41,7 +54,7 @@ public function createAreaManager(Request $request)
 
 
 //EDIT/UPDATE AREA MANAGER
-public function updateAreaManager(Request $request, $user_id)
+public function updateAreaManager(Request $request, $id)
 {
     $request->validate([
         'user_id' => 'required|exists:users,id',
@@ -49,7 +62,7 @@ public function updateAreaManager(Request $request, $user_id)
         'branch_id.*' => 'required|exists:branches,id',
     ]);
 
-    $areaManager = AreaManager::where('user_id', $user_id)->first();
+    $areaManager = AreaManager::find($id);
 
     if (!$areaManager) {
         return response()->json([
@@ -74,7 +87,6 @@ public function updateAreaManager(Request $request, $user_id)
         'message' => 'Area Manager updated successfully',
     ], 200);
 }
-
 
 
 //VIEW AREA MANAGER    

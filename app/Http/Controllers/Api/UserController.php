@@ -268,47 +268,76 @@ class UserController extends Controller
             ], 500);
         }
     }
-
+    public function updateSignature(Request $request, $id)
+    {
+        // Validate the incoming request
+        $validated = $request->validate([
+            'signature' => 'required|string',
+        ]);
+    
+        $user = User::findOrFail($id);
+    
+        // Get the base64 string from the request
+        $base64Signature = $request->input('signature');
+    
+        // Ensure it starts with "data:image/png;base64,"
+        if (strpos($base64Signature, 'data:image/png;base64,') !== 0) {
+            return response()->json(['error' => 'Invalid signature format.'], 400);
+        }
+    
+        // Save the signature directly to the user's profile
+        $user->signature = $base64Signature;
+        $user->save();
+    
+        return response()->json(['message' => 'Signature updated successfully.'], 200);
+    }
+    
     //UPDATE PROFILE
-    public function updateProfile(Request $request, $id)
+    /* public function updateProfile(Request $request, $id)
     {
         try {
             // Validate the incoming request
             $validated = $request->validate([
-                'firstName' => 'required|string|max:255',
-                'lastName' => 'required|string|max:255',
-                'contact' => 'required|string|max:255',
-                'branch_code' => 'required',
-                'userName' => 'required|string|max:255',
-                'email' => 'required|email',
-                'position' => 'required|string|max:255',
+                'firstName' => 'nullable|string|max:255',
+                'lastName' => 'nullable|string|max:255',
+                'contact' => 'nullable|string|max:255',
+                'branch_code' => 'nullable',
+                'role'  => 'nullable|string|max:255',
+                'userName' => 'nullable|string|max:255',
+                'email' => 'nullable|email',
+                'position' => 'nullable|string|max:255',
                 'profile_picture' => 'nullable|file|mimes:png,jpg,jpeg',
             ]);
-
+    
             $user = User::findOrFail($id);
-
-
+    
             DB::beginTransaction();
-
-
+    
             // Save the profile picture if provided
             if ($request->hasFile('profile_picture')) {
                 $profilePicture = $request->file('profile_picture');
                 $profilePicturePath = $profilePicture->store('profile_pictures', 'public');
                 $user->profile_picture = $profilePicturePath; // Save only the path
             }
-
-            // Update the user details
-            $user->fill($validated);
+    
+            // Update user details with provided values
+            $user->firstName = $validated['firstName'] ?? $user->firstName;
+            $user->lastName = $validated['lastName'] ?? $user->lastName;
+            $user->contact = $validated['contact'] ?? $user->contact;
+            $user->branch_code = $validated['branch_code'] ?? $user->branch_code;
+            $user->userName = $validated['userName'] ?? $user->userName;
+            $user->email = $validated['email'] ?? $user->email;
+            $user->position = $validated['position'] ?? $user->position;
+    
             $user->save();
-
+    
             DB::commit();
-
+    
             return response()->json([
                 'message' => 'User updated successfully',
                 'data' => $user
             ], 200);
-
+    
         } catch (ValidationException $e) {
             return response()->json([
                 'message' => 'Validation Error',
@@ -321,9 +350,90 @@ class UserController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    } */
+    public function updateProfile(Request $request, $id)
+{
+    try {
+        $validated = $request->validate([
+            'firstName' => 'required|string|max:255',
+            'lastName' => 'required|string|max:255',
+            'contact' => 'required|string|max:255',
+            'branch_code' => 'required|string|max:255',
+            'branch' => 'required|string|max:255',
+            'email' => 'required|email',
+            'position' => 'required|string|max:255',
+            'userName' => 'required|string|max:255',
+            'role' => 'nullable|string|max:255',
+            'password' => 'nullable|string|min:5',
+        ]);
+
+        $user = User::findOrFail($id);
+
+        // Update user with validated data
+        $user->fill($validated);
+
+        // Check if a new password is provided and update it
+        if ($request->has('password')) {
+            $user->password = bcrypt($request->input('password'));
+        }
+
+        $user->save();
+
+        return response()->json([
+            'message' => 'User updated successfully',
+            'data' => $user
+        ], 200);
+
+    } catch (\Exception $e) {
+        Log::error('An error occurred while updating the user: ' . $e->getMessage());
+        return response()->json([
+            'message' => 'An error occurred while updating the user',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
+public function updateProfileUser(Request $request, $id)
+{
+    try {
+        $validated = $request->validate([
+            'firstName' => 'required|string|max:255',
+            'lastName' => 'required|string|max:255',
+            'contact' => 'required|string|max:255',
+            'branch_code' => 'required|string|max:255',
+            'branch' => 'required|string|max:255',
+            'email' => 'required|email',
+            'position' => 'required|string|max:255',
+            'userName' => 'required|string|max:255',
+           
+            'password' => 'nullable|string|min:5',
+        ]);
 
+        $user = User::findOrFail($id);
 
+        // Update user with validated data
+        $user->fill($validated);
+
+        // Check if a new password is provided and update it
+        if ($request->has('password')) {
+            $user->password = bcrypt($request->input('password'));
+        }
+
+        $user->save();
+
+        return response()->json([
+            'message' => 'User updated successfully',
+            'data' => $user
+        ], 200);
+
+    } catch (\Exception $e) {
+        Log::error('An error occurred while updating the user: ' . $e->getMessage());
+        return response()->json([
+            'message' => 'An error occurred while updating the user',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
+    
 
     public function updateRole(Request $request, $id = null)
     {

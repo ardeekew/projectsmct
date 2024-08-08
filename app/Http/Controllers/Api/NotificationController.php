@@ -21,6 +21,7 @@ class NotificationController extends Controller
                 'data' => $notification->data,
                 'notification_id' => $notification->id,
                 'read_at' => $notification->read_at,
+                'type' => $notification->type,
             ];
         });
 
@@ -43,6 +44,7 @@ class NotificationController extends Controller
             return [
                 'data' => $notification->data,
                 'read_at' => $notification->read_at,
+                'type' => $notification->type,
             ];
         });
 
@@ -67,6 +69,7 @@ class NotificationController extends Controller
             return [
                 'data' => $notification->data,
                 'read_at' => $notification->read_at,
+                'type' => $notification->type,
             ];
         });
 

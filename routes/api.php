@@ -37,6 +37,7 @@ Route::put("update-role/{id}", [UserController::class,"updateRole"])->name('upda
 Route::delete("delete-user/{id}", [UserController::class,"deleteUser"])->name('delete.user');
 Route::post("password/email", [UserController::class,"sendResetLinkEmail"])->name("password.forgot");
 Route::post("password/reset", [UserController::class,"reset"])->name("password.reset");
+Route::post("update-signature/{id}", [UserController::class,"updateSignature"])->name('update.signature');
 
 //REQUEST FORM
 Route::post("create-request", [RequestFormController::class,"createRequest"])->name('create.request');
@@ -44,20 +45,21 @@ Route::post("update-request/{id}", [RequestFormController::class,"updateRequest"
 Route::middleware('auth:sanctum')->group(function () {
 Route::middleware('auth')->get('/view-request', [RequestFormController::class, 'index']);
 Route::middleware('auth')->get('/view-requests', [RequestFormController::class, 'viewAllRequests']);
+Route::get("total-request-sent/{user_id}", [RequestFormController::class,"totalRequestSent"])->name('total.request.sent.by.user');
 
 //APPROVERS
 Route::post('/approvers', [CustomApproversController::class, 'createApprovers']);
 Route::get('/custom-approvers/{user_id}', [CustomApproversController::class, 'viewCustomApproversByUser']);
 Route::get('/custom-approvers',[CustomApproversController::class, 'show']);
 Route::get('/custom-approversID/{id}', [CustomApproversController::class, 'getCustomApproverById']);
-
-
+Route::delete("delete-custom-approvers/{id}", [CustomApproversController::class,"deleteCustomApprovers"])->name('delete.approvers');
+Route::post("update-approvers/{id}", [CustomApproversController::class,"updateApprovers"])->name('update.approvers');
 
 //Setup Branch
 Route::post("add-branch", [BranchController::class,"createBranch"])->name('create.branch');
 Route::get("view-branch", [BranchController::class,"viewBranch"])->name('view.branch');
 Route::get("view-branch/{id}", [BranchController::class,"viewBranch"])->name('view.branch');
-Route::put("update-branch/{id}", [BranchController::class,"updateBranch"])->name('update.branch');
+Route::post("update-branch/{id}", [BranchController::class,"updateBranch"])->name('update.branch');
 Route::delete("delete-branch/{id}", [BranchController::class,"deleteBranch"])->name('delete.branch');
 
 

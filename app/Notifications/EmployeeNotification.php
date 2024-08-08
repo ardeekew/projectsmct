@@ -55,7 +55,7 @@ class EmployeeNotification extends Notification
                         'firstname' =>$this->firstname,
                         'formtype' =>$this->formtype,
                     ])
-                    ->subject('Request Form Update - '.$this->requestForm->form_type)
+                    ->subject('Request Form Update - '.$this->requestForm->form_type. ' '.now()->format('Y-m-d H:i:s'))
                     ->line('Your request has been ' . $this->status)
                     ->line('Request Type: '.$this->requestForm->form_type)
                     ->line('Status:' . $this->status);

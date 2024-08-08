@@ -65,7 +65,7 @@ class PreviousReturnRequestNotification extends Notification
                         'requesterLastname' =>$this->requesterLastname
 
                         ])
-                    ->subject('Return Request Notification - '.$this->requestForm->form_type)
+                    ->subject('Return Request Notification - '.$this->requestForm->form_type. ' '.now()->format('Y-m-d H:i:s'))
                     ->line('The request' .$this->requestForm->form_type.' is ' .$this->status. '.It has now returned to the requester.')
                     ->line('Request Type: '.$this->requestForm->form_type)
                     ->line('Status:' . $this->status)

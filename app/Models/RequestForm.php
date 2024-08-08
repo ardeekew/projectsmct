@@ -18,7 +18,7 @@ class RequestForm extends Model
     ];
 
     protected $attributes = [
-        'status' => '   Pending',
+        'status' => 'Pending',
     ];
 
     protected $casts = [

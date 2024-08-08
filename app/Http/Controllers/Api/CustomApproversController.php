@@ -88,11 +88,16 @@ public function createApprovers(Request $request)
         }
 
         try {
-
+            $notedBy = $request->input('noted_by');
+            $approvedBy = $request->input('approved_by');
+        
+            // Convert arrays to JSON strings (if needed)
+            $notedByJson = json_encode($notedBy);
+            $approvedByJson = json_encode($approvedBy);
             $custom_approvers->update([
                 'name' => $request->input('name'),
-                'noted_by' => $request->input('noted_by'),
-                'approved_by' => $request->input('approved_by'),
+                'noted_by' => $notedByJson,
+                'approved_by' => $approvedByJson,
             ]);
 
             return response()->json(['message' => 'Custom approvers updated successfully'], 200);
@@ -142,6 +147,7 @@ public function viewCustomApproversByUser($user_id)
         ], 500);
     }
 }
+
 public function getCustomApproverById($id)
 {
     try {

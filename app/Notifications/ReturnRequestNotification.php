@@ -63,7 +63,7 @@ class ReturnRequestNotification extends Notification
 
 
                         ])
-                    ->subject('Request Form Update - '.$this->requestForm->form_type)
+                    ->subject('Request Form Update - '.$this->requestForm->form_type. ' '.now()->format('Y-m-d H:i:s'))
                     ->line('Your request has been returned because it is ' . $this->status)
                     ->line('Request Type: '.$this->requestForm->form_type)
                     ->line('Status:' . $this->status)

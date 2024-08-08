@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use App\Notifications\ApprovalProcessNotification;
 use App\Events\NotificationEvent;
-
+use Illuminate\Support\Facades\File;    
 
 
 class RequestFormController extends Controller
@@ -266,50 +266,69 @@ class RequestFormController extends Controller
         }
     }
     public function updateRequest(Request $request, $id)
-{
-    try {
-        // Find the request form by ID
-        $form_data = RequestForm::findOrFail($id);
-
-        // Decode JSON strings
-        $form_data_content = json_decode($request->input('form_data'), true);
-        $approvers_id = json_decode($request->input('approvers_id'), true);
-
-        // Initialize attachment paths
-        $attachment_paths = [];
-
-        // Process existing attachments
-        foreach ($request->all() as $key => $value) {
-            if (strpos($key, 'attachment_url_') === 0) {
-                $attachment_paths[] = 'attachments/' . $value;
+    {
+        try {
+            // Find the request form by ID
+            $form_data = RequestForm::findOrFail($id);
+    
+            // Decode JSON strings
+            $form_data_content = json_decode($request->input('form_data'), true);
+            $approvers_id = json_decode($request->input('approvers_id'), true);
+    
+            // Initialize attachment paths
+            $attachment_paths = [];
+    
+            // Process existing attachments from the request
+            foreach ($request->all() as $key => $value) {
+                if (strpos($key, 'attachment_url_') === 0) {
+                    $attachment_paths[] = 'attachments/' . $value;
+                }
             }
-        }
-
-        // Process new attachments
-        if ($request->hasFile('new_attachments')) {
-            foreach ($request->file('new_attachments') as $file) {
-                $path = $file->store('attachments', 'public');
-                $attachment_paths[] = $path;
+    
+            // Process new attachments
+            if ($request->hasFile('new_attachments')) {
+                foreach ($request->file('new_attachments') as $file) {
+                    $path = $file->store('attachments', 'public');
+                    $attachment_paths[] = $path;
+                }
             }
+    
+            // Process removed attachments
+            $removed_attachments = $request->input('removed_attachments', []);
+            foreach ($removed_attachments as $path) {
+                // Construct the full path for deletion
+                $fullPath = storage_path("app/public/attachments/" . $path);
+    
+                // Check if file exists and delete
+                if (File::exists($fullPath)) {
+                    File::delete($fullPath);
+                }
+            }
+    
+            // If all attachments are removed, ensure the attachment column is set to an empty array
+            if (empty($attachment_paths) && !empty($removed_attachments)) {
+                $attachment_paths = [];
+            }
+    
+            // Update the request form data including attachment
+            $form_data->update([
+                'form_data' => $form_data_content,
+                'approvers_id' => $approvers_id,
+                'attachment' => !empty($attachment_paths) ? json_encode($attachment_paths) : '[]',
+                'updated_at' => $request->input('updated_at'),
+            ]);
+    
+            return response()->json(['message' => 'Request form updated successfully'], 200);
+    
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to update request form',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        // Update the request form data including attachment
-        $form_data->update([
-            'form_data' => $form_data_content,
-            'approvers_id' => $approvers_id,
-            'attachment' => !empty($attachment_paths) ? json_encode($attachment_paths) : $form_data->attachment,
-            'updated_at' => $request->input('updated_at'),
-        ]);
-
-        return response()->json(['message' => 'Request form updated successfully'], 200);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'message' => 'Failed to update request form',
-            'error' => $e->getMessage(),
-        ], 500);
     }
-}
+    
+
 
     
     
@@ -444,6 +463,76 @@ class RequestFormController extends Controller
             ], 500);
         }
     }
+    public function totalRequestSent($user_id){
+
+        try{
+
+             $requestSent = RequestForm::where('user_id',$user_id)->count();
+             $totalApprovedRequests = RequestForm::where('user_id',$user_id)->where('status','Approved')->count();
+             $totalPendingRequest = RequestForm::where('user_id',$user_id)->where('status','Pending')->count();
+             $totalDisapprovedRequest = RequestForm::where('user_id',$user_id)->where('status','Disapproved')->count();
+             return response()->json([
+                'message'=> "Total number of request sent counted successfully",
+                'totalRequestSent' => $requestSent,
+                'totalApprovedRequest' => $totalApprovedRequests,
+                'totalPendingRequest' => $totalPendingRequest,
+                'totalDisapprovedRequest' => $totalDisapprovedRequest
+            
+             ]);
+
+        }catch(\Exception $e){
+            return response()->json([
+                'message' => "An error occured while counting the total request sent",
+                'error' => $e->getMessage()
+            ]);
+
+        }
+    }
+
+//TOTAL APPROVED REQUESTS BY USER
+
+public function totalApprovedRequests($user_id){
+
+        try{
+
+            $totalApprovedRequests = RequestForm::where('user_id',$user_id)->where('status','Approved')->count();
+
+            return response()->json([
+                'message' => "Total number of approved request counted successfully",
+                'totalApprovedRequest' => $totalApprovedRequests
+            ]);
+
+        }catch(\Exception $e){
+            return response()->json([
+                'message' => "An error occured while counting the total number of approved request",
+                'error' =>$e->getMessage()
+            ]);
+
+        }
+
+    }
+
+//TOTAL PENDING REQUESTS BY USER
+
+public function totalPendingRequests($user_id){
+
+        try{
+
+            $totalPendingRequest = RequestForm::where('user_id',$user_id)->where('status','Pending')->count();
+
+            return response()->json([
+                'message' => "Total number of pending requests counted successfully",
+                'totalPendingRequest' => $totalPendingRequest
+            ]);
+
+        }catch(\Exception $e){
+
+        }
+    }
+
+//VIEW RECENT REQUESTS
+
+
 
 
 

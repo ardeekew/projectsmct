@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('firstname');
             $table->string('lastname');
             $table->string('position');
-            $table->string('email')->unique();
+            $table->string('email', 191)->unique();
             $table->string('role');
             $table->string('branch_code');
             $table->longText('signature')->nullable();

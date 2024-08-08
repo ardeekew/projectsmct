@@ -106,7 +106,7 @@ class ApprovalProcessController extends Controller
                 broadcast(new NotificationEvent($employee, $notificationCount));
             }
         } else {
-            $requestForm->status = 'Return';
+            $requestForm->status = 'Disapproved';
             $requestForm->save();
             $formtype = $requestForm->form_type;
             $employee = $requestForm->user;

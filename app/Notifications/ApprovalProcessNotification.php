@@ -58,7 +58,7 @@ class ApprovalProcessNotification extends Notification
                         'requesterFirstname' => $this->requesterFirstname,
                         'requesterLastname' =>$this->requesterLastname,
                         ])
-                    ->subject('You have a new request form need to approve - '.$this->requestForm->form_type)
+                    ->subject('You have a new request form need to approve - '.$this->requestForm->form_type. ' '.now()->format('Y-m-d H:i:s'))
                     ->line('You have a new request form to approve.')
                     ->line('Request Form Type : '. $this->approvalProcess->RequestForm->form_type);
     }
