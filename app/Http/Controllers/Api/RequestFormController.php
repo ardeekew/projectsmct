@@ -469,7 +469,7 @@ class RequestFormController extends Controller
 
              $requestSent = RequestForm::where('user_id',$user_id)->count();
              $totalApprovedRequests = RequestForm::where('user_id',$user_id)->where('status','Approved')->count();
-             $totalPendingRequest = RequestForm::where('user_id',$user_id)->where('status','Pending')->count();
+             $totalPendingRequest = RequestForm::where('user_id',$user_id)->where('status',['Pending','Ongoing'])->count();
              $totalDisapprovedRequest = RequestForm::where('user_id',$user_id)->where('status','Disapproved')->count();
              return response()->json([
                 'message'=> "Total number of request sent counted successfully",
