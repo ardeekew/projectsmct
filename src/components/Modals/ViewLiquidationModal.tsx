@@ -109,7 +109,9 @@ const ViewLiquidationModal: React.FC<Props> = ({
   const [printWindow, setPrintWindow] = useState<Window | null>(null);
   const [newAttachments, setNewAttachments] = useState<File[]>([]);
   const [originalAttachments, setOriginalAttachments] = useState<string[]>([]);
-  const [removedAttachments, setRemovedAttachments] = useState<number[]>([]);
+  const [removedAttachments, setRemovedAttachments] = useState<
+    (string | number)[]
+  >([]);
 
   useEffect(() => {
     const currentUserId = localStorage.getItem("id");
@@ -237,7 +239,16 @@ const ViewLiquidationModal: React.FC<Props> = ({
   };
 
   const handleRemoveAttachment = (index: number) => {
-    setRemovedAttachments((prevRemoved) => [...prevRemoved, index]);
+    // Get the path of the attachment to be removed
+    const attachmentPath = attachmentUrl[index].split(
+      "storage/attachments/"
+    )[1];
+
+    // Add the path to the removedAttachments state
+    setRemovedAttachments((prevRemoved) => [...prevRemoved, attachmentPath]);
+
+    // Remove the attachment from the current list
+    setAttachmentUrl((prevUrls) => prevUrls.filter((_, i) => i !== index));
   };
   const handleEdit = () => {
     setEditedDate(editableRecord.form_data[0].date);
@@ -321,8 +332,13 @@ const ViewLiquidationModal: React.FC<Props> = ({
       });
 
       // Append new attachments
-      newAttachments.forEach((file) => {
+      newAttachments.forEach((file, index) => {
         formData.append("new_attachments[]", file);
+      });
+
+      // Append removed attachments
+      removedAttachments.forEach((path, index) => {
+        formData.append("removed_attachments[]", String(path));
       });
 
       const response = await axios.post(
@@ -1046,7 +1062,8 @@ const ViewLiquidationModal: React.FC<Props> = ({
               </div>
             ) : (
               !fetchingApprovers &&
-              !isFetchingApprovers && editableRecord.status === 'Pending' && (
+              !isFetchingApprovers &&
+              editableRecord.status === "Pending" && (
                 <button
                   className="bg-blue-500 ml-2 rounded-xl p-2 flex text-white"
                   onClick={handleEdit}
