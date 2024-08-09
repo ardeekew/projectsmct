@@ -291,11 +291,11 @@ const CustomRequest = (props: Props) => {
                   console.error(`Error fetching approver ${approvedById} details:`, error);
                 });
             }
-            console.log("mehehe")
+         
             formattedRequests.push({
               id: item.id,
               name: item.name,
-              firstName: "", // Add the missing properties
+              firstName: "", 
               lastName: "",
               firstname: "",
               lastname: "",

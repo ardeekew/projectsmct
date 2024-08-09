@@ -4,8 +4,8 @@ import { XMarkIcon } from "@heroicons/react/24/outline";
 type Record = {
   id: number;
   name: string;
-  firstname: string;
-  lastname: string;
+  firstName: string;
+  lastName: string;
   branch_code: string;
   branch: string;
   email: string;

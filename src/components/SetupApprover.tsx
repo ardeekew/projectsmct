@@ -25,8 +25,8 @@ type Record = {
   user_id: string;
   id: number;
   name: string;
-  firstname: string;
-  lastname: string;
+  firstName: string;
+  lastName: string;
   branch_code: string;
   branch: string;
   email: string;
@@ -110,7 +110,7 @@ const SetupApprover = (props: Props) => {
         const transformedData = response.data.data.map(
           (item: Record, index: number) => ({
             id: item.id,
-            name: `${item.firstname} ${item.lastname}`, // Combine firstname and lastname
+            name: `${item.firstName} ${item.lastName}`, // Combine firstname and lastname
             branch_code: item.branch_code,
             email: item.email,
             role: item.role,
@@ -152,7 +152,7 @@ const SetupApprover = (props: Props) => {
       const transformedData = response.data.data.map(
         (item: Record, index: number) => ({
           id: item.id,
-          name: `${item.firstname} ${item.lastname}`, // Combine firstname and lastname
+          name: `${item.firstName} ${item.lastName}`, // Combine firstname and lastname
           branch_code: item.branch_code,
           email: item.email,
           role: item.role,
@@ -272,13 +272,10 @@ const SetupApprover = (props: Props) => {
 
   const columns = [
     {
-      name: "Approver ID",
+      name: "User ID",
       selector: (row: Record) => row.id,
     },
-    {
-      name: "User ID",
-      selector: (row: Record) => row.user_id,
-    },
+  
 
     {
       name: "Assigned Branches ",
