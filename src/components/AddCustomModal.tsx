@@ -23,24 +23,29 @@ const AddCustomModal = ({
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [approvers, setApprovers] = useState<any[]>([]); // Adjust as per your approver structure
-
+  
   useEffect(() => {
+    const userId = localStorage.getItem("id");
     const fetchApprovers = async () => {
       try {
         setLoading(true);
-        const response = await axios.get("http://localhost:8000/api/view-approvers", {
+        const response = await axios.get(`http://localhost:8000/api/view-approvers/${userId}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         });
     
-        console.log("API Response:", response);
-    
-        if (response.data && Array.isArray(response.data.data)) {
-          setApprovers(response.data.data); // Set approvers directly from API
-        } else {
-          console.error("Unexpected response format from API:", response.data);
-        }
+       
+        const allApprovers = [
+          ...(response.data.approvers || []),
+          ...(response.data.areaManagerApprover || []),
+          ...(response.data.sameBranchApprovers || [])
+        ];
+
+        // Update state with the combined approvers data
+        setApprovers(allApprovers);
+        console.log("API Response:", approvers);
+      
         
         setLoading(false);
       } catch (error) {
@@ -53,8 +58,7 @@ const AddCustomModal = ({
       fetchApprovers();
     }
   }, [modalIsOpen]);
-console.log("Approvers:", approvedBy);
-console.log("Noted By:", notedBy);
+
   const toggleNotedBy = (personId: number) => {
     const isPresent = notedBy.includes(personId);
     if (isPresent) {
@@ -176,11 +180,11 @@ console.log("Noted By:", notedBy);
                       type="checkbox"
                       className="size-5 mr-2"
                       id={`noted_by_${index}`}
-                      checked={notedBy.includes(person.user_id)}
-                      onChange={() => toggleNotedBy(person.user_id)}
+                      checked={notedBy.includes(person.id)}
+                      onChange={() => toggleNotedBy(person.id)}
                     />
                     <label htmlFor={`noted_by_${index}`}>
-                      {person.firstname} {person.lastname}
+                      {person.firstName} {person.lastName}
                     </label>
                   </div>
                 ))}
@@ -195,11 +199,11 @@ console.log("Noted By:", notedBy);
                       type="checkbox"
                       className="size-5 mr-2"
                       id={`approved_by_${index}`}
-                      checked={approvedBy.includes(person.user_id)}
-                      onChange={() => toggleApprovedBy(person.user_id)}
+                      checked={approvedBy.includes(person.id)}
+                      onChange={() => toggleApprovedBy(person.id)}
                     />
                     <label htmlFor={`approved_by_${index}`}>
-                      {person.firstname} {person.lastname}
+                    {person.firstName} {person.lastName}
                     </label>
                   </div>
                 ))}

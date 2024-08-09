@@ -216,6 +216,7 @@ const SetupAreaManager = (props: Props) => {
   
   const refreshData = async () => {
     try {
+      setisLoading(true);
       if (!userId) {
         console.error("User ID is missing");
         return;
@@ -286,7 +287,7 @@ const SetupAreaManager = (props: Props) => {
       // Further processing or state update with areaManagersWithData
       setAreaManagerList(areaManagersWithData);
       console.log("Area managers ", areaManagersWithData);
-
+setisLoading(false);
     } catch (error) {
       console.error("Error fetching approvers data:", error);
     }
@@ -464,9 +465,7 @@ const columns = [
         <div className="flex justify-center items-center">
           <ClipLoader color="#36d7b7" />
         </div>
-      ) : areaManagerList.length === 0 ? (
-        <p className="text-center text-gray-600">No area managers yet</p>
-      ) : (
+      )  : (
         <DataTable
           columns={columns}
           data={areaManagerList}
@@ -486,12 +485,12 @@ const columns = [
             },
             rows: {
               style: {
-                color: "black", // Adjust as per your design
-                backgroundColor: "#E7F1F9", // Adjust as per your design
+                color: "black", 
+                backgroundColor: "#E7F1F9", 
               },
               stripedStyle: {
-                color: "black", // Adjust as per your design
-                backgroundColor: "#FFFFFF", // Adjust as per your design
+                color: "black",
+                backgroundColor: "#FFFFFF", 
               },
             },
           }}

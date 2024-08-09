@@ -76,171 +76,7 @@ const roleOptions = [
   { label: "Vice - President", value: "Vice - President" },
   { label: "User", value: "User" },
 ];
-const branchOptions = [
-  { value: "", label: "" },
-  { value: "AKLA", label: "AKLA" },
-  { value: "ALEN", label: "ALEN" },
-  { value: "ALAH", label: "ALAH" },
-  { value: "ALIC", label: "ALIC" },
-  { value: "ANTI", label: "ANTI" },
-  { value: "ANTIP", label: "ANTIP" },
-  { value: "AURD", label: "AURD" },
-  { value: "AURH", label: "AURH" },
-  { value: "AURO", label: "AURO" },
-  { value: "BALA", label: "BALA" },
-  { value: "BALAM", label: "BALAM" },
-  { value: "BALD", label: "BALD" },
-  { value: "BANTA", label: "BANTA" },
-  { value: "BAYB", label: "BAYB" },
-  { value: "BINAN", label: "BINAN" },
-  { value: "BOGO", label: "BOGO" },
-  { value: "BOHK", label: "BOHK" },
-  { value: "BOHL", label: "BOHL" },
-  { value: "BONI", label: "BONI" },
-  { value: "BUUD", label: "BUUD" },
-  { value: "BUUH", label: "BUUH" },
-  { value: "BULU", label: "BULU" },
-  { value: "CALA", label: "CALA" },
-  { value: "CALAP", label: "CALAP" },
-  { value: "CALAP2", label: "CALAP2" },
-  { value: "CALD", label: "CALD" },
-  { value: "CALH", label: "CALH" },
-  { value: "CALI", label: "CALI" },
-  { value: "CARC", label: "CARC" },
-  { value: "CARC2", label: "CARC2" },
-  { value: "CARMC", label: "CARMC" },
-  { value: "CARMC2", label: "CARMC2" },
-  { value: "CARMCDO", label: "CARMCDO" },
-  { value: "CARMO", label: "CARMO" },
-  { value: "CATAR", label: "CATAR" },
-  { value: "CATM", label: "CATM" },
-  { value: "COMPO", label: "COMPO" },
-  { value: "CAGL", label: "CAGL" },
-  { value: "CAMD", label: "CAMD" },
-  { value: "CAMH", label: "CAMH" },
-  { value: "DAAN", label: "DAAN" },
-  { value: "DASMA", label: "DASMA" },
-  { value: "DAPI", label: "DAPI" },
-  { value: "DATH", label: "DATH" },
-  { value: "DIGOS", label: "DIGOS" },
-  { value: "DIPD", label: "DIPD" },
-  { value: "DIPD2", label: "DIPD2" },
-  { value: "DIPL", label: "DIPL" },
-  { value: "DSMA", label: "DSMA" },
-  { value: "DSMAO", label: "DSMAO" },
-  { value: "DSMCA", label: "DSMCA" },
-  { value: "DSMB", label: "DSMB" },
-  { value: "DSMBL", label: "DSMBL" },
-  { value: "DSMBN", label: "DSMBN" },
-  { value: "DSMDB", label: "DSMDB" },
-  { value: "DSMD", label: "DSMD" },
-  { value: "DSMD2", label: "DSMD2" },
-  { value: "DSMDN", label: "DSMDN" },
-  { value: "DSMC", label: "DSMC" },
-  { value: "DSMCN", label: "DSMCN" },
-  { value: "DSMM", label: "DSMM" },
-  { value: "DSMP", label: "DSMP" },
-  { value: "DSMSB", label: "DSMSB" },
-  { value: "DSMSO", label: "DSMSO" },
-  { value: "DSMT", label: "DSMT" },
-  { value: "DSMT2", label: "DSMT2" },
-  { value: "DSMTA", label: "DSMTA" },
-  { value: "DSMTG", label: "DSMTG" },
-  { value: "DSMDM", label: "DSMDM" },
-  { value: "ELSA", label: "ELSA" },
-  { value: "FAMY", label: "FAMY" },
-  { value: "GUSA", label: "GUSA" },
-  { value: "GUIN", label: "GUIN" },
-  { value: "GUIN2", label: "GUIN2" },
-  { value: "HO", label: "HO" },
-  { value: "ILOI", label: "ILOI" },
-  { value: "ILID", label: "ILID" },
-  { value: "ILIG", label: "ILIG" },
-  { value: "IMED", label: "IMED" },
-  { value: "INIT", label: "INIT" },
-  { value: "INAB", label: "INAB" },
-  { value: "IPIH", label: "IPIH" },
-  { value: "IPID", label: "IPID" },
-  { value: "JAGN", label: "JAGN" },
-  { value: "JIME", label: "JIME" },
-  { value: "JIMEDSM", label: "JIMEDSM" },
-  { value: "KABA", label: "KABA" },
-  { value: "KABA2", label: "KABA2" },
-  { value: "KATI", label: "KATI" },
-  { value: "LABA", label: "LABA" },
-  { value: "LABD", label: "LABD" },
-  { value: "LAHU", label: "LAHU" },
-  { value: "LAPU", label: "LAPU" },
-  { value: "LILD", label: "LILD" },
-  { value: "LIPA", label: "LIPA" },
-  { value: "MADRI", label: "MADRI" },
-  { value: "MAND", label: "MAND" },
-  { value: "MAND2", label: "MAND2" },
-  { value: "MANL", label: "MANL" },
-  { value: "MANO", label: "MANO" },
-  { value: "MANP", label: "MANP" },
-  { value: "MANG", label: "MANG" },
-  { value: "MARA", label: "MARA" },
-  { value: "MARA2", label: "MARA2" },
-  { value: "MARD", label: "MARD" },
-  { value: "MARH", label: "MARH" },
-  { value: "MATI", label: "MATI" },
-  { value: "MEDE", label: "MEDE" },
-  { value: "MIPU", label: "MIPU" },
-  { value: "MOLD", label: "MOLD" },
-  { value: "MOLD2", label: "MOLD2" },
-  { value: "MOLS", label: "MOLS" },
-  { value: "NAIC", label: "NAIC" },
-  { value: "NUND2", label: "NUND2" },
-  { value: "OROD", label: "OROD" },
-  { value: "OROH", label: "OROH" },
-  { value: "OROH2", label: "OROH2" },
-  { value: "OZAD", label: "OZAD" },
-  { value: "OZAH", label: "OZAH" },
-  { value: "OZAL", label: "OZAL" },
-  { value: "PARD", label: "PARD" },
-  { value: "PARD2", label: "PARD2" },
-  { value: "PARD3", label: "PARD3" },
-  { value: "PAGS", label: "PAGS" },
-  { value: "PUTD", label: "PUTD" },
-  { value: "REMI", label: "REMI" },
-  { value: "REMI2", label: "REMI2" },
-  { value: "RIZA", label: "RIZA" },
-  { value: "RIZD", label: "RIZD" },
-  { value: "SALA", label: "SALA" },
-  { value: "SANM", label: "SANM" },
-  { value: "SANJ", label: "SANJ" },
-  { value: "SANP", label: "SANP" },
-  { value: "SDAV", label: "SDAV" },
-  { value: "SDIP", label: "SDIP" },
-  { value: "SILA", label: "SILA" },
-  { value: "SIND", label: "SIND" },
-  { value: "SINDA", label: "SINDA" },
-  { value: "SLAP", label: "SLAP" },
-  { value: "SLIL", label: "SLIL" },
-  { value: "SMCT", label: "SMCT" },
-  { value: "SROS", label: "SROS" },
-  { value: "SUCD", label: "SUCD" },
-  { value: "TACU", label: "TACU" },
-  { value: "TALI", label: "TALI" },
-  { value: "TANH", label: "TANH" },
-  { value: "TANZ", label: "TANZ" },
-  { value: "TANZ2", label: "TANZ2" },
-  { value: "TORI", label: "TORI" },
-  { value: "TRINI", label: "TRINI" },
-  { value: "TRINI2", label: "TRINI2" },
-  { value: "TUBI", label: "TUBI" },
-  { value: "TUBOD", label: "TUBOD" },
-  { value: "TUBU", label: "TUBU" },
-  { value: "UBAY", label: "UBAY" },
-  { value: "UBAYMB", label: "UBAYMB" },
-  { value: "VETH", label: "VETH" },
-  { value: "VILLA", label: "VILLA" },
-  { value: "VILLA2", label: "VILLA2" },
-  { value: "VALEN", label: "VALEN" },
-  { value: "YATI", label: "YATI" },
-  { value: "ZAML", label: "ZAML" },
-];
+
 
 const pinputStyle =
   "font-medium border-2 border-black rounded-[12px] p-2 w-full";
@@ -279,6 +115,46 @@ const UpdateInformation = () => {
   const navigate = useNavigate();
   const [newProfilePic, setNewProfilePic] = useState<File | null>(null);
   const token = localStorage.getItem("token");
+  const [branchList, setBranchList] = useState<
+  { id: number; branch_code: string }[]
+>([]);
+
+useEffect(() => {
+  const fetchBranchData = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("Token is missing");
+        return;
+      }
+
+      const headers = {
+        Authorization: `Bearer ${token}`,
+      };
+
+      const response = await axios.get(
+        `http://localhost:8000/api/view-branch`,
+        {
+          headers,
+        }
+      );
+      const branches = response.data.data;
+      // Assuming response.data.data is the array of branches
+      const branchOptions = branches.map(
+        (branch: { id: number; branch_code: string }) => ({
+          id: branch.id,
+          branch_code: branch.branch_code,
+        })
+      );
+      setBranchList(branchOptions);
+    } catch (error) {
+      console.error("Error fetching branch data:", error);
+    }
+  };
+
+  fetchBranchData();
+}, []);
+
   useEffect(() => {
     const fetchUserInformation = async () => {
       try {
@@ -656,12 +532,18 @@ const UpdateInformation = () => {
                               handleBranchCodeChange(e.target.value)
                             }
                           >
-                            <option value="">Select branch</option>
-                            {branchOptions.map((option, index) => (
-                              <option key={index} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
+                           <option value="">Select branch</option>
+                        {branchList.length > 0 ? (
+                          branchList.map((branch) => (
+                            <option key={branch.id} value={branch.id}>
+                              {branch.branch_code}
+                            </option>
+                          ))
+                        ) : (
+                          <option value="" disabled>
+                            No branch codes available
+                          </option>
+                        )}
                           </select>
                         )}
                       />

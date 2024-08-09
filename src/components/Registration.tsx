@@ -252,6 +252,44 @@ const Registration: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [signatureEmpty, setSignatureEmpty] = useState(false);
   const sigCanvasRef = useRef<SignatureCanvas | null>(null);
+    const [branchList, setBranchList] = useState<
+      { id: number; branch_code: string }[]
+    >([]);
+  useEffect(() => {
+    const fetchBranchData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          console.error("Token is missing");
+          return;
+        }
+
+        const headers = {
+          Authorization: `Bearer ${token}`,
+        };
+
+        const response = await axios.get(
+          `http://localhost:8000/api/view-branch`,
+          {
+            headers,
+          }
+        );
+        const branches = response.data.data;
+        // Assuming response.data.data is the array of branches
+        const branchOptions = branches.map(
+          (branch: { id: number; branch_code: string }) => ({
+            id: branch.id,
+            branch_code: branch.branch_code,
+          })
+        );
+        setBranchList(branchOptions);
+      } catch (error) {
+        console.error("Error fetching branch data:", error);
+      }
+    };
+
+    fetchBranchData();
+  }, []);
 
   const signatureIsEmpty = () => {
     if (signature && signature.isEmpty && signature.isEmpty()) {
@@ -280,34 +318,180 @@ const Registration: React.FC = () => {
     event.preventDefault();
     signature?.clear();
   };
-
+  console.log("branchList", branchList);
   const handleBranchCodeChange = (selectedBranchCode: string) => {
     setValue("branchCode", selectedBranchCode);
-    if ([
-      "AKLA", "ALEN", "ALIC", "ANTI", "ANTIP", "BANTA", "BAYB", "BINAN",
-      "BOHK", "BOHL", "CAGL", "CALAP", "CALAP2", "CALI", "CARMB", "CARMO",
-      "CARS", "CATAR", "DASMA", "DIPL", "FAMY", "GUIN", "GUIN2", "JAGN",
-      "LIPA", "LOAY", "MADRI", "MALA", "MANG", "MANL", "MANP", "MOLS",
-      "NAIC", "OZAL", "PAGS", "SAGBA", "SALA", "SANJ", "SANP", "SDAV",
-      "SDIP", "SARG", "SILA", "SLAP", "SLAS", "SLIL", "SMCT", "SROS",
-      "TALI", "TANZ", "TANZ2", "TRINI2", "TUBI", "VALEN", "YATI", "ZAML"
-    ].includes(selectedBranchCode)) {
+    if (
+      [
+        "AKLA",
+        "ALEN",
+        "ALIC",
+        "ANTI",
+        "ANTIP",
+        "BANTA",
+        "BAYB",
+        "BINAN",
+        "BOHK",
+        "BOHL",
+        "CAGL",
+        "CALAP",
+        "CALAP2",
+        "CALI",
+        "CARMB",
+        "CARMO",
+        "CARS",
+        "CATAR",
+        "DASMA",
+        "DIPL",
+        "FAMY",
+        "GUIN",
+        "GUIN2",
+        "JAGN",
+        "LIPA",
+        "LOAY",
+        "MADRI",
+        "MALA",
+        "MANG",
+        "MANL",
+        "MANP",
+        "MOLS",
+        "NAIC",
+        "OZAL",
+        "PAGS",
+        "SAGBA",
+        "SALA",
+        "SANJ",
+        "SANP",
+        "SDAV",
+        "SDIP",
+        "SARG",
+        "SILA",
+        "SLAP",
+        "SLAS",
+        "SLIL",
+        "SMCT",
+        "SROS",
+        "TALI",
+        "TANZ",
+        "TANZ2",
+        "TRINI2",
+        "TUBI",
+        "VALEN",
+        "YATI",
+        "ZAML",
+      ].includes(selectedBranchCode)
+    ) {
       setValue("branch", "Strong Motocentrum, Inc.");
-    } else if ([
-      "AURO", "BALA", "BUHA", "BULU", "CARMCDO", "DIGOS", "DONC", "DSMBL",
-      "DSMC", "DSMCA", "DSMD", "DSMD2", "DSMM", "DSMPO", "DSMSO", "DSMTG",
-      "DSMV", "ELSA", "ILIG", "JIMEDSM", "KABA2", "KATI", "LABA", "MARA",
-      "MATI", "RIZA", "TACU", "TORI", "CERI", "VILLA", "VISA", "CARC",
-      "CARC2", "CARMC2", "CATM", "COMPO", "DAAN", "DSMA", "DSMAO", "DSMB",
-      "DSMBN", "DSMCN", "DSMDB", "DSMDM", "DSMDN", "DSMK", "DSMLN", "DSMP",
-      "DSMSB", "DSMT", "DSMT2", "DSMTA", "ILOI", "LAHU", "LAPU 2", "MAND",
-      "MAND2", "MEDE", "PARD", "PARD2", "REMI", "REMI2", "SANT", "TUBU",
-      "UBAY", "BOGO", "DSML", "CALIN"
-    ].includes(selectedBranchCode)) {
+    } else if (
+      [
+        "AURO",
+        "BALA",
+        "BUHA",
+        "BULU",
+        "CARMCDO",
+        "DIGOS",
+        "DONC",
+        "DSMBL",
+        "DSMC",
+        "DSMCA",
+        "DSMD",
+        "DSMD2",
+        "DSMM",
+        "DSMPO",
+        "DSMSO",
+        "DSMTG",
+        "DSMV",
+        "ELSA",
+        "ILIG",
+        "JIMEDSM",
+        "KABA2",
+        "KATI",
+        "LABA",
+        "MARA",
+        "MATI",
+        "RIZA",
+        "TACU",
+        "TORI",
+        "CERI",
+        "VILLA",
+        "VISA",
+        "CARC",
+        "CARC2",
+        "CARMC2",
+        "CATM",
+        "COMPO",
+        "DAAN",
+        "DSMA",
+        "DSMAO",
+        "DSMB",
+        "DSMBN",
+        "DSMCN",
+        "DSMDB",
+        "DSMDM",
+        "DSMDN",
+        "DSMK",
+        "DSMLN",
+        "DSMP",
+        "DSMSB",
+        "DSMT",
+        "DSMT2",
+        "DSMTA",
+        "ILOI",
+        "LAHU",
+        "LAPU 2",
+        "MAND",
+        "MAND2",
+        "MEDE",
+        "PARD",
+        "PARD2",
+        "REMI",
+        "REMI2",
+        "SANT",
+        "TUBU",
+        "UBAY",
+        "BOGO",
+        "DSML",
+        "CALIN",
+      ].includes(selectedBranchCode)
+    ) {
       setValue("branch", "Des Strong Motors, Inc.");
-    } else if ([
-      "ALAD", "AURD", "BALD", "BONI", "BUUD", "CALD", "CAMD", "DAPI", "DIPD", "DIPD2", "ILID", "IMED", "INIT2", "IPID", "JIME", "KABD", "LABD", "LILD", "MANO", "MARA2", "MARD", "MOLD", "MOLD2", "NUND2", "OROD", "OZAD", "PUTD", "RIZD", "SANM", "SIND", "SUCD", "TUBOD", "VITA"
-    ].includes(selectedBranchCode)) {
+    } else if (
+      [
+        "ALAD",
+        "AURD",
+        "BALD",
+        "BONI",
+        "BUUD",
+        "CALD",
+        "CAMD",
+        "DAPI",
+        "DIPD",
+        "DIPD2",
+        "ILID",
+        "IMED",
+        "INIT2",
+        "IPID",
+        "JIME",
+        "KABD",
+        "LABD",
+        "LILD",
+        "MANO",
+        "MARA2",
+        "MARD",
+        "MOLD",
+        "MOLD2",
+        "NUND2",
+        "OROD",
+        "OZAD",
+        "PUTD",
+        "RIZD",
+        "SANM",
+        "SIND",
+        "SUCD",
+        "TUBOD",
+        "VITA",
+      ].includes(selectedBranchCode)
+    ) {
       setValue("branch", "Des Appliance Plaza, Inc.");
     } else if (["HO"].includes(selectedBranchCode)) {
       setValue("branch", "Head Office");
@@ -316,9 +500,12 @@ const Registration: React.FC = () => {
     }
   };
   const capitalizeWords = (str: string) => {
-    return str.replace(/\b\w+/g, (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
+    return str.replace(
+      /\b\w+/g,
+      (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    );
   };
-  
+
   const submitData = async (data: UserCredentials) => {
     try {
       setLoading(true);
@@ -572,7 +759,7 @@ const Registration: React.FC = () => {
               </div>
             </div>
             <div className={`${fieldStyle}`}>
-            <div className="w-1/2 mb-4">
+              <div className="w-1/2 mb-4">
                 <h1 className={`${headerStyle}`}>Branch Code</h1>
                 <div className="relative">
                   <Controller
@@ -582,14 +769,23 @@ const Registration: React.FC = () => {
                       <select
                         {...field}
                         className="w-full p-2 lg:h-[56px] md:h-10 bg-gray-300 rounded-lg"
-                        onChange={(e) =>{ field.onChange(e); handleBranchCodeChange(e.target.value)}}
+                        onChange={(e) => {
+                          field.onChange(e);
+                          handleBranchCodeChange(e.target.value);
+                        }}
                       >
                         <option value="">Select branch</option>
-                        {branchOptions.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
+                        {branchList.length > 0 ? (
+                          branchList.map((branch) => (
+                            <option key={branch.id} value={branch.id}>
+                              {branch.branch_code}
+                            </option>
+                          ))
+                        ) : (
+                          <option value="" disabled>
+                            No branch codes available
                           </option>
-                        ))}
+                        )}
                       </select>
                     )}
                   />
@@ -608,9 +804,8 @@ const Registration: React.FC = () => {
                   render={({ field }) => (
                     <input
                       {...field}
-                    readOnly
+                      readOnly
                       className="w-full lg:h-[56px] md:h-10 p-2 bg-gray-300 rounded-lg"
-            
                     />
                   )}
                 />
@@ -620,7 +815,6 @@ const Registration: React.FC = () => {
                   </span>
                 )}
               </div>
-              
             </div>
 
             <div className={`${fieldStyle}`}>

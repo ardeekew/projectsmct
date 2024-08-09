@@ -196,7 +196,7 @@ const EditAreaManager = ({
   const handleConfirmSelection = async () => {
     if (selectedBranches.length > 0) {
       setIsLoading(true);
-
+      setError("");
       try {
         const token = localStorage.getItem("token");
         if (!token) {
@@ -212,8 +212,9 @@ const EditAreaManager = ({
           user_id: selectedUser.user_id,
           branch_id: selectedBranches, // Ensure this is an array of branch IDs
         };
+        
         console.log('ID SELECT', selectedUser.user_id);
-        const response = await axios.put(
+        const response = await axios.post(
           `http://localhost:8000/api/update-area-manager/${selectedUser.user_id}`,
           putData,
           {
@@ -236,6 +237,7 @@ const EditAreaManager = ({
     } else {
       setError("Please select at least one branch."); // Show error message
     }
+    setError("");
   };
 
   const handleCancel = () => {
@@ -249,7 +251,7 @@ const EditAreaManager = ({
   return (
     <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 flex-col">
       <div className="p-4 w-10/12 sm:w-1/3 relative bg-primary flex justify-center mx-20 border-b rounded-t-[12px]">
-        <h2 className="text-center text-xl md:text-[32px] font-bold text-white">
+        <h2 className="text-center text-xl md:text-[32px] font-bold h-full text-white">
           Edit Area Manager
         </h2>
         <XMarkIcon
@@ -257,13 +259,13 @@ const EditAreaManager = ({
           onClick={handleCancel}
         />
       </div>
-      <div className="bg-white w-10/12 sm:w-1/3 x-20 overflow-y-auto h-2/3 relative">
+      <div className="bg-white w-10/12 sm:w-1/3 x-20 overflow-y-auto h-1/2 relative">
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <ClipLoader size={35} color={"#123abc"} loading={loading} />
           </div>
         ) : (
-          <div className="bg-white flex-col w-10/12 sm:w-full h-1/2 rounded-b-[12px] shadow-lg p-2 bottom-4 right-4 flex space-x-2">
+          <div className="bg-white flex-col w-10/12 sm:w-full  rounded-b-[12px] shadow-lg p-2 bottom-4 right-4 flex space-x-2">
             <h3 className="text-lg font-bold p-4">
               Branches for{" "}
               {`${selectedUser?.user.data.firstName} ${selectedUser?.user.data.lastName}`}
@@ -276,7 +278,7 @@ const EditAreaManager = ({
               onChange={(e) => setSearchQuery(e.target.value)}
               className="p-2 mb-2  border border-gray-300 rounded-md "
             />
-            <div className="px-4">
+            <div className="px-4 h-auto">
               {branches.length === 0 ? (
                 <ClipLoader size={35} color={"#123abc"} loading={loading} />
               ) : (
@@ -292,9 +294,9 @@ const EditAreaManager = ({
                   .map((branch) => (
                     <div
                       key={branch.id}
-                      className="flex items-center justify-between mb-2 bg-blue-100"
+                      className="flex items-center justify-between mb-2  bg-blue-100"
                     >
-                      <div className="flex w-full items-center justify-between p-4">
+                      <div className="flex w-full items-center justify-between  p-4">
                         <div>
                           <p>{branch.branch}</p>
                           <p>{branch.branch_code}</p>
@@ -315,7 +317,7 @@ const EditAreaManager = ({
           </div>
         )}
       </div>
-      <div className="bg-white w-10/12 sm:w-1/3 shadow-lg p-2 bottom-4 right-4 flex flex-wrap gap-2 ">
+      <div className="bg-white w-10/12 sm:w-1/3 shadow-lg p-2 bottom-4 right-4 flex flex-wrap gap-2 max-h-48 overflow-y-auto">
         {selectedBranches.map((branchId) => {
           const branch = branches.find((b) => b.id === branchId);
           return (

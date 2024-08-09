@@ -33,7 +33,8 @@ import PrintCashDisbursement from '../components/PrintCashDisbursement';
 import PrintLiquidation from '../components/PrintLiquidation';
 import ViewRequestApprover from '../components/ViewRequestApprover';
 import ResetPassword from '../components/ResetPassword';
-
+import HelpUser from '../components/HelpUser';
+import HelpSetup from '../components/HelpSetup';
 interface RouterProps {
   isdarkMode: boolean;
 }
@@ -107,6 +108,12 @@ const Router: React.FC<RouterProps> = ({isdarkMode}) => {
           </Route>
           <Route path='/help/guide' element={<App isdarkMode={isdarkMode} />}>
             <Route index element={<HelpGuide />} />
+          </Route>
+          <Route path='/help/setup' element={<App isdarkMode={isdarkMode} />}>
+            <Route index element={<HelpSetup />} />
+          </Route>
+          <Route path='/help/user' element={<App isdarkMode={isdarkMode} />}>
+            <Route index element={<HelpUser />} />
           </Route>
           <Route path='/request/custom' element={<App isdarkMode={isdarkMode} />}>
             <Route index element={<CustomRequest />} />

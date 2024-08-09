@@ -40,7 +40,7 @@ const Help: React.FC<Props> = ({}) => {
       </div>
 
       <div className="grid grid-cols-3 mt-14 gap-4 mx-20">
-      <Link to="/help/guide" className="cursor-pointer block bg-white border-2 rounded-lg px-6 py-6">
+      <Link to="/help/user" className="cursor-pointer block bg-white border-2 rounded-lg px-6 py-6">
         <QuestionMarkCircleIcon className="size-14 text-primary    "/>
         <p className="font-bold text-lg mt-4">FAQs</p>
         <p>FAQ, short for frequently asked questions, is a list of commonly asked questions and answers about a specific topic.</p>
@@ -52,10 +52,10 @@ const Help: React.FC<Props> = ({}) => {
         <p>Step-by-Step Guide: Filling Out Request Slips</p>
       
         </Link>
-        <Link to="/help/guide" className="cursor-pointer block bg-white border-2 rounded-lg px-6 py-6">
+        <Link to="/help/setup" className="cursor-pointer block bg-white border-2 rounded-lg px-6 py-6">
         <LifebuoyIcon className="size-14 text-primary    "/>
         <p className="font-bold text-lg mt-4">Setup</p>
-        <p>Setting Up: A Quick Guide</p>
+        <p>Setting Up: A Quick Guide for Admin</p>
       
         </Link>
       </div>

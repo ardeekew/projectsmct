@@ -39,13 +39,50 @@ const Profile = ({ isdarkMode }: { isdarkMode: boolean }) => {
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [newProfilePic, setNewProfilePic] = useState<File | null>(null);
+  const [branchList, setBranchList] = useState<{ id: number; branch_code: string }[]>([]);
+  const [selectedBranchCode, setSelectedBranchCode] = useState<string>("");
 
   useEffect(() => {
-    const fetchUserInformation = async () => {
+    const fetchBranchData = async () => {
       try {
         if (!token) {
-          setError("User not authenticated");
+          console.error("Token is missing");
           return;
+        }
+
+        const headers = {
+          Authorization: `Bearer ${token}`,
+        };
+
+        const response = await axios.get(
+          `http://localhost:8000/api/view-branch`,
+          {
+            headers,
+          }
+        );
+        const branches = response.data.data;
+        const branchOptions = branches.map(
+          (branch: { id: number; branch_code: string }) => ({
+            id: branch.id,
+            branch_code: branch.branch_code,
+            
+          })
+        );
+        setBranchList(branchOptions);
+        console.log(branchList);
+      } catch (error) {
+        console.error("Error fetching branch data:", error);
+      }
+    };
+
+    fetchBranchData();
+  }, [token]);
+
+   useEffect(() => {
+    const fetchUserInformation = async () => {
+      try {
+        if (!token || !branchList.length) {
+          return; // Ensure branch list is available before fetching user data
         }
 
         const headers = {
@@ -59,7 +96,18 @@ const Profile = ({ isdarkMode }: { isdarkMode: boolean }) => {
         );
 
         if (response.data.status) {
-          setUser(response.data.data);
+          const userData = response.data.data;
+          setUser(userData);
+
+          // Find the branch code for the user's branch ID
+          console.log('Branch List:', branchList);
+          const branch = branchList.find(b => b.id === Number(userData.branch_code));
+
+          console.log('Branch:', branch);
+      
+          if (branch) {
+            setSelectedBranchCode(branch.branch_code);
+          }
         } else {
           throw new Error(
             response.data.message || "Failed to fetch user information"
@@ -74,8 +122,9 @@ const Profile = ({ isdarkMode }: { isdarkMode: boolean }) => {
     };
 
     fetchUserInformation();
-  }, [token]);
-
+  }, [token, id, branchList]);
+  
+  console.log('selected',selectedBranchCode);
   const handleChangePassword = async () => {
     if (!token || !id) {
       console.error("User not authenticated. Please log in.");
@@ -221,7 +270,7 @@ const Profile = ({ isdarkMode }: { isdarkMode: boolean }) => {
               </div>
               <div className="flex flex-col">
                 <p className="text-gray-400">Branch</p>
-                <p className="font-medium border p-2 rounded-md">{user.branch_code}</p>
+                <p className="font-medium border p-2 rounded-md">{selectedBranchCode}</p>
               </div>
               <div className="flex flex-col">
                 <p className="text-gray-400">Contact</p>

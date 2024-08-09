@@ -7,6 +7,7 @@ import axios from "axios";
 import DataTable from "react-data-table-component";
 import ClipLoader from "react-spinners/ClipLoader";
 import { set } from "react-hook-form";
+import { CheckIcon, ChartBarIcon } from "@heroicons/react/24/solid";
 
 interface FormData {
   purpose: string;
@@ -68,7 +69,7 @@ const Dashboard: React.FC = () => {
   const [totalPendingRequests, setTotalPendingRequests] = useState<number | null>(null);
   const [totalDisapprovedRequests, setTotalDisapprovedRequests] = useState<number | null>(null);
   const userId = localStorage.getItem("id");
-
+  const name = localStorage.getItem("firstName");
   useEffect(() => {
     if (userId) {
       setLoading(true);
@@ -202,49 +203,82 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="w-full sm:w-full grid grid-cols-1 md:grid-cols-3 space-y-2 md:space-y-0 gap-8 mt-4">
+      <div className="w-full sm:w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 space-y-2 md:space-y-0 gap-8 mt-4">
         <div className={`${boxWhite} hover:-translate-y-1 hover:scale-110`}>
-          <div className={`${boxPink} bg-pink`}>
-            <FontAwesomeIcon icon={faPaperPlane} className={`${outerLogo} text-[#C22158]`} />
+          <div className={`${boxPink} bg-primary`}>
+            <ChartBarIcon className={`${outerLogo} text-[#298DDE]`} />
             <div className={`${innerBox}`}>
-              <FontAwesomeIcon icon={faPaperPlane} className={`${innerLogo} text-pink`} />
+              <ChartBarIcon className={`${innerLogo} text-primary`} />
             </div>
-
             <p className="text-[16px] font-semibold mt-[30px] ml-[17px] absolute">
-              Request Sent
+              Total Requests
             </p>
-            <p className="text-[40px] font-bold bottom-6 mx-5 absolute">{totalRequestsSent}</p>
+            <p className="text-[40px] font-bold bottom-6 mx-5 absolute">
+              {totalRequestsSent}
+            </p>
           </div>
         </div>
         <div className={`${boxWhite} hover:-translate-y-1 hover:scale-110`}>
           <div className={`${boxPink} bg-green`}>
-            <FontAwesomeIcon icon={faCheck} className={`${outerLogo} text-[#4D9651]`} />
+            <FontAwesomeIcon
+              icon={faCheck}
+              className={`${outerLogo} text-[#4D9651]`}
+            />
             <div className={`${innerBox}`}>
-              <FontAwesomeIcon icon={faCheck} className={`${innerLogo} text-green`} />
+              <FontAwesomeIcon
+                icon={faCheck}
+                className={`${innerLogo} text-green`}
+              />
             </div>
-
             <p className="text-[16px] font-semibold mt-[30px] ml-[17px] absolute">
               Approved Requests
             </p>
-            <p className="text-[40px] font-bold bottom-6 mx-5 absolute">{totalApprovedRequests}</p>
+            <p className="text-[40px] font-bold bottom-6 mx-5 absolute">
+              {totalApprovedRequests}
+            </p>
           </div>
         </div>
-
         <div className={`${boxWhite} hover:-translate-y-1 hover:scale-110`}>
           <div className={`${boxPink} bg-yellow`}>
-            <FontAwesomeIcon icon={faEnvelope} className={`${outerLogo} text-[#D88A1B]`} />
+            <FontAwesomeIcon
+              icon={faEnvelope}
+              className={`${outerLogo} text-[#D88A1B]`}
+            />
             <div className={`${innerBox}`}>
-              <FontAwesomeIcon icon={faEnvelope} className={`${innerLogo} text-yellow`} />
+              <FontAwesomeIcon
+                icon={faEnvelope}
+                className={`${innerLogo} text-yellow`}
+              />
             </div>
-
-            <p className="text-[16px] font-semibold mt-[30px] mx-[17px] absolute">
+            <p className="text-[16px] font-semibold mt-[30px] ml-[17px] absolute">
               Pending Requests
             </p>
-            <p className="text-[40px] font-bold bottom-6 mx-5 absolute">{totalPendingRequests}</p>
+            <p className="text-[40px] font-bold bottom-6 mx-5 absolute">
+              {totalPendingRequests}
+            </p>
+          </div>
+        </div>
+        <div className={`${boxWhite} hover:-translate-y-1 hover:scale-110`}>
+          <div className={`${boxPink} bg-pink`}>
+            <FontAwesomeIcon
+              icon={faPaperPlane}
+              className={`${outerLogo} text-[#C22158]`}
+            />
+            <div className={`${innerBox}`}>
+              <FontAwesomeIcon
+                icon={faPaperPlane}
+                className={`${innerLogo} text-pink`}
+              />
+            </div>
+            <p className="text-[16px] font-semibold mt-[30px] ml-[17px] absolute">
+              Unsuccessful Requests
+            </p>
+            <p className="text-[40px] font-bold bottom-6 mx-5 absolute">
+              {totalDisapprovedRequests}
+            </p>
           </div>
         </div>
       </div>
-
       <div className="mt-[20px] mb-10 bg-white w-full h-72 drop-shadow-lg rounded-[12px] relative sm:w-full overflow-x-auto">
         <h1 className="py-[16px] px-[25px] font-bold text-[20px]">Recent requests</h1>
         {loading ? (

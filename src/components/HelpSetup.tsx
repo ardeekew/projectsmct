@@ -4,31 +4,33 @@ import ReactPlayer from 'react-player'
 
 
 type Props = {}
+const role = localStorage.getItem('role');
 const videoOptions = [
     {
-        url: 'https://drive.google.com/file/d/1M86DCE2_HU4DkShxDj3gxUOxLvbVMEJl/preview',
-        title: 'Setting Up Your Request and Create Request'
+        url: 'https://drive.google.com/file/d/1GvhQeg3AWdRtRFEA4_WulgJF719iqkXv/preview',
+        title: 'Add, Edit, Delete User' 
     },
     {
-        url: 'https://drive.google.com/file/d/1FwDW0OcWFn97iGZh5KzSY3J0K62oNMKz/preview',
-        title: 'How to edit request '
+        url: 'https://drive.google.com/file/d/1K17kfu1nIfLJlH__FiTWfLZYcOq4Q2oC/preview',
+        title: 'Add, Edit, Delete Branch'
+
     },
     {
-        url: 'https://drive.google.com/file/d/1WO1vplGmRbfd3Xbjw5Fs_hk8xQ1lZ7ma/preview',
-        title: 'How to print request with Approved status'
-    },
-    {
-        url: '  https://drive.google.com/file/d/1grgaiZHLpRS-vs4PyfqHQNX-mkdaYUJV/preview',
-        title: 'How to approve a request',
-        role: 'approver'
+        url: 'https://drive.google.com/file/d/1olgmbFCnVBPn8SPbrfqEaiY-8vs6VuDS/preview',
+        title: 'Add, Edit, Delete Approver'
     }
-  
 ];
-const HelpGuide = (props: Props) => {
+const videoAdmin = [
+   
+    {
+        url: ' https://drive.google.com/file/d/1grgaiZHLpRS-vs4PyfqHQNX-mkdaYUJV/preview',
+        title: 'How to approve status of request'
+    }
+];
+const HelpSetup = (props: Props) => {
     const [currentVideo, setCurrentVideo] = useState(videoOptions[0].url);
     const [currentTitle, setCurrentTitle] = useState(videoOptions[0].title);
-    const role = localStorage.getItem('role');
-    
+  
     const handleVideoChange = (url: string, title: string) => {
         setCurrentVideo(url);
         setCurrentTitle(title);
@@ -64,4 +66,4 @@ const HelpGuide = (props: Props) => {
     )
 }
 
-export default HelpGuide;
+export default HelpSetup;

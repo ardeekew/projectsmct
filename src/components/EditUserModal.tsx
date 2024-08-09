@@ -42,7 +42,46 @@ const EditUserModal = ({
   const [approvedBy, setApprovedBy] = useState<number[]>([]);
   const [approvers, setApprovers] = useState<any[]>([]);
   const [name, setName] = useState<string>("");
-  
+  const [branchList, setBranchList] = useState<
+  { id: number; branch_code: string }[]
+>([]);
+console.log('selected',selectedUser);
+  useEffect(() => {
+    const fetchBranchData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          console.error("Token is missing");
+          return;
+        }
+
+        const headers = {
+          Authorization: `Bearer ${token}`,
+        };
+
+        const response = await axios.get(
+          `http://localhost:8000/api/view-branch`,
+          {
+            headers,
+          }
+        );
+        const branches = response.data.data;
+        // Assuming response.data.data is the array of branches
+        const branchOptions = branches.map(
+          (branch: { id: number; branch_code: string }) => ({
+            id: branch.id,
+            branch_code: branch.branch_code,
+          })
+        );
+        setBranchList(branchOptions);
+      } catch (error) {
+        console.error("Error fetching branch data:", error);
+      }
+    };
+
+    fetchBranchData();
+  }, []);
+
   useEffect(() => {
     if (entityType === "Custom") {
       const fetchApprovers = async () => {
@@ -109,12 +148,12 @@ const EditUserModal = ({
       setUsername(selectedUser.username || "");
       setContact(selectedUser.contact || "");
       setEditedBranch(selectedUser.branch || "");
-      setEditedBranchCode(selectedUser.branch_code || "");
+      setEditedBranchCode(selectedUser.branch_code );
       setEditedRole(selectedUser.role || "");
       setEditedPosition(selectedUser.position || "");
     }
   }, [selectedUser]);
-
+  
   const handleCancel = () => {
     // Reset state to selectedUser data
     if (selectedUser) {
@@ -312,171 +351,7 @@ const EditUserModal = ({
     }
   };
 
-  const branchOptions = [
-    "",
-    "AKLA",
-    "ALEN",
-    "ALAH",
-    "ALIC",
-    "ANTI",
-    "ANTIP",
-    "AURD",
-    "AURH",
-    "AURO",
-    "BALA",
-    "BALAM",
-    "BALD",
-    "BANTA",
-    "BAYB",
-    "BINAN",
-    "BOGO",
-    "BOHK",
-    "BOHL",
-    "BONI",
-    "BUUD",
-    "BUUH",
-    "BULU",
-    "CALA",
-    "CALAP",
-    "CALAP2",
-    "CALD",
-    "CALH",
-    "CALI",
-    "CARC",
-    "CARC2",
-    "CARMC",
-    "CARMC2",
-    "CARMCDO",
-    "CARMO",
-    "CATAR",
-    "CATM",
-    "COMPO",
-    "CAGL",
-    "CAMD",
-    "CAMH",
-    "DAAN",
-    "DASMA",
-    "DAPI",
-    "DATH",
-    "DIGOS",
-    "DIPD",
-    "DIPD2",
-    "DIPL",
-    "DSMA",
-    "DSMAO",
-    "DSMCA",
-    "DSMB",
-    "DSMBL",
-    "DSMBN",
-    "DSMDB",
-    "DSMD",
-    "DSMD2",
-    "DSMDN",
-    "DSMC",
-    "DSMCN",
-    "DSMM",
-    "DSMP",
-    "DSMSB",
-    "DSMSO",
-    "DSMT",
-    "DSMT2",
-    "DSMTA",
-    "DSMTG",
-    "DSMDM",
-    "ELSA",
-    "FAMY",
-    "GUSA",
-    "GUIN",
-    "GUIN2",
-    "HO",
-    "ILOI",
-    "ILID",
-    "ILIG",
-    "IMED",
-    "INIT",
-    "INAB",
-    "IPIH",
-    "IPID",
-    "JAGN",
-    "JIME",
-    "JIMEDSM",
-    "KABA",
-    "KABA2",
-    "KATI",
-    "LABA",
-    "LABD",
-    "LAHU",
-    "LAPU",
-    "LILD",
-    "LIPA",
-    "MADRI",
-    "MAND",
-    "MAND2",
-    "MANL",
-    "MANO",
-    "MANP",
-    "MANG",
-    "MARA",
-    "MARA2",
-    "MARD",
-    "MARH",
-    "MATI",
-    "MEDE",
-    "MIPU",
-    "MOLD",
-    "MOLD2",
-    "MOLS",
-    "NAIC",
-    "NUND2",
-    "OROD",
-    "OROH",
-    "OROH2",
-    "OZAD",
-    "OZAH",
-    "OZAL",
-    "PARD",
-    "PARD2",
-    "PARD3",
-    "PAGS",
-    "PUTD",
-    "REMI",
-    "REMI2",
-    "RIZA",
-    "RIZD",
-    "SALA",
-    "SANM",
-    "SANJ",
-    "SANP",
-    "SDAV",
-    "SDIP",
-    "SILA",
-    "SIND",
-    "SINDA",
-    "SLAP",
-    "SLIL",
-    "SMCT",
-    "SROS",
-    "SUCD",
-    "TACU",
-    "TALI",
-    "TANH",
-    "TANZ",
-    "TANZ2",
-    "TORI",
-    "TRINI",
-    "TRINI2",
-    "TUBI",
-    "TUBOD",
-    "TUBU",
-    "UBAY",
-    "UBAYMB",
-    "VETH",
-    "VILLA",
-    "VILLA2",
-    "VALEN",
-    "YATI",
-    "ZAML",
-  ];
+
 
   const handleUpdate = async () => {
     // Validation based on entityType
@@ -738,11 +613,17 @@ const EditUserModal = ({
                   onChange={(e) => handleBranchCodeChange(e.target.value)}
                 >
                   <option value="">Select branch</option>
-                  {branchOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
+                        {branchList.length > 0 ? (
+                          branchList.map((branch) => (
+                            <option key={branch.id} value={branch.id}>
+                              {branch.branch_code}
+                            </option>
+                          ))
+                        ) : (
+                          <option value="" disabled>
+                            No branch codes available
+                          </option>
+                        )}
                 </select>
               ) : (
                 <>
@@ -768,11 +649,17 @@ const EditUserModal = ({
                     <select className={`${inputStyle}`} value={editedBranch}>
                       {" "}
                       <option value="">Select branch</option>
-                      {branch.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
+                      {branchList.length > 0 ? (
+                          branchList.map((branch) => (
+                            <option key={branch.id} value={branch.id}>
+                              {branch.branch_code}
+                            </option>
+                          ))
+                        ) : (
+                          <option value="" disabled>
+                            No branch codes available
+                          </option>
+                        )}
                     </select>
                   ) : field === "BranchCode" ? (
                     <input
