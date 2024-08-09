@@ -10,6 +10,7 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircleCheck } from "@fortawesome/free-solid-svg-icons";
 import PropogateLoader from "react-spinners/PropagateLoader";
+import { set } from "react-hook-form";
 
 interface User {
   firstName: string;
@@ -41,7 +42,7 @@ const Profile = ({ isdarkMode }: { isdarkMode: boolean }) => {
   const [newProfilePic, setNewProfilePic] = useState<File | null>(null);
   const [branchList, setBranchList] = useState<{ id: number; branch_code: string }[]>([]);
   const [selectedBranchCode, setSelectedBranchCode] = useState<string>("");
-
+  const [errorMessage, setErrorMessage] = useState("");
   useEffect(() => {
     const fetchBranchData = async () => {
       try {
@@ -126,6 +127,7 @@ const Profile = ({ isdarkMode }: { isdarkMode: boolean }) => {
   
   console.log('selected',selectedBranchCode);
   const handleChangePassword = async () => {
+    setErrorMessage("");
     if (!token || !id) {
       console.error("User not authenticated. Please log in.");
       return;
@@ -159,6 +161,7 @@ const Profile = ({ isdarkMode }: { isdarkMode: boolean }) => {
         "Failed to change password:",
         error.response?.data?.message || error.message
       );
+      setErrorMessage(error.response?.data?.message || error.message);
     }
   };
 
@@ -353,6 +356,7 @@ const Profile = ({ isdarkMode }: { isdarkMode: boolean }) => {
                 />
               )}
             </div>
+            {errorMessage && <p className="text-red-500">{errorMessage}</p>}
             <button
               className="text-white bg-primary flex justify-center items-center rounded-[12px] w-full h-[50px] mt-4"
               onClick={handleChangePassword}

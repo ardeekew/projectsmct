@@ -88,8 +88,15 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
   const [approvedRequests, setApprovedRequests] = useState(0);
   const [pendingRequests, setPendingRequests] = useState(0);
   const [unsuccessfulRequests, setUnsuccessfulRequests] = useState(0);
-  const [areaChartData, setAreaChartData] = useState<{ name: string; Total: number; Approved: number; Pending: number; Unapproved: number }[]>([]);
-
+  const [areaChartData, setAreaChartData] = useState<
+    {
+      name: string;
+      Total: number;
+      Approved: number;
+      Pending: number;
+      Unapproved: number;
+    }[]
+  >([]);
 
   const [barChartData, setBarChartData] = useState<
     { name: string; Request: number }[]
@@ -98,10 +105,18 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
   const [selectedFilter, setSelectedFilter] = useState("thisMonth");
   const [loading, setLoading] = useState(false);
   const [requests, setRequests] = useState<Request[]>([]);
-  const [totalRequestsSent, setTotalRequestsSent] = useState<number | null>(null);
-  const [totalApprovedRequests, setTotalApprovedRequests] = useState<number | null>(null);
-  const [totalPendingRequests, setTotalPendingRequests] = useState<number | null>(null);
-  const [totalDisapprovedRequests, setTotalDisapprovedRequests] = useState<number | null>(null);
+  const [totalRequestsSent, setTotalRequestsSent] = useState<number | null>(
+    null
+  );
+  const [totalApprovedRequests, setTotalApprovedRequests] = useState<
+    number | null
+  >(null);
+  const [totalPendingRequests, setTotalPendingRequests] = useState<
+    number | null
+  >(null);
+  const [totalDisapprovedRequests, setTotalDisapprovedRequests] = useState<
+    number | null
+  >(null);
   const userId = localStorage.getItem("id");
   useEffect(() => {
     if (userId) {
@@ -117,17 +132,16 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
         Authorization: `Bearer ${token}`,
       };
 
-
-     
-
       // Fetch total requests sent
       axios
-        .get(`http://localhost:8000/api/total-request-sent/${userId}`, { headers })
+        .get(`http://localhost:8000/api/total-request-sent/${userId}`, {
+          headers,
+        })
         .then((response) => {
           console.log("Total requests sent:", response.data);
           setTotalRequestsSent(response.data.totalRequestSent);
           setTotalPendingRequests(response.data.totalPendingRequest);
-          setTotalApprovedRequests(response.data.totalApprovedRequest)
+          setTotalApprovedRequests(response.data.totalApprovedRequest);
           setTotalDisapprovedRequests(response.data.totalDisapprovedRequest);
           setLoading(false);
         })
@@ -193,12 +207,12 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
       console.error("Error fetching requests data:", error);
     }
   };
-console.log("records", records);
+  console.log("records", records);
   const processAreaChartData = (requests: Request[]) => {
     const today = new Date();
     let startDate: Date;
     let endDate: Date;
-  
+
     switch (selectedFilter) {
       case "thisMonth":
         startDate = startOfMonth(today);
@@ -211,33 +225,54 @@ console.log("records", records);
       default:
         return; // No action for other filters
     }
-  
+
     const aggregatedData: {
-      [key: string]: { total: number; approved: number; pending: number; unapproved: number };
+      [key: string]: {
+        total: number;
+        approved: number;
+        pending: number;
+        unapproved: number;
+      };
     } = {};
-  
+
     requests.forEach((record) => {
       const recordDate = new Date(record.created_at);
       if (recordDate >= startDate && recordDate <= endDate) {
         const monthName = format(recordDate, "MMM");
         if (!aggregatedData[monthName]) {
-          aggregatedData[monthName] = { total: 0, approved: 0, pending: 0, unapproved: 0};
+          aggregatedData[monthName] = {
+            total: 0,
+            approved: 0,
+            pending: 0,
+            unapproved: 0,
+          };
         }
         aggregatedData[monthName].total += 1;
-        if (record.status === 'Approved') {
+        if (record.status === "Approved") {
           aggregatedData[monthName].approved += 1;
-        } else if (record.status === 'Pending') {
+        } else if (record.status === "Pending") {
           aggregatedData[monthName].pending += 1;
-        } else if (record.status === 'Disapproved') {
+        } else if (record.status === "Disapproved") {
           aggregatedData[monthName].unapproved += 1;
         }
       }
     });
-  
+
     const allMonths = [
-      "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
     ];
-  
+
     const areaChartData = allMonths.map((month) => ({
       name: month,
       Total: Math.floor(aggregatedData[month]?.total || 0),
@@ -245,10 +280,10 @@ console.log("records", records);
       Pending: Math.floor(aggregatedData[month]?.pending || 0),
       Unapproved: Math.floor(aggregatedData[month]?.unapproved || 0),
     }));
-  
+
     setAreaChartData(areaChartData);
   };
-  
+
   const processBarChartData = (requests: Request[]) => {
     const today = new Date();
     const currentWeekStartDate = startOfWeek(today);
@@ -382,53 +417,54 @@ console.log("records", records);
         </div>
       </div>
       <div className="flex gap-4">
-      <div className="flex-7 pt-2 bg-white drop-shadow-lg w-full rounded-[12px] h-[327px] mt-4">
-      <h1 className="text-center font-bold text-lg ">REQUESTS THIS MONTH</h1>
-  <ResponsiveContainer width="100%" height="100%" >
-    <AreaChart
-      data={areaChartData}
-      margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-    >
-      <CartesianGrid strokeDasharray="3 3" />
-      <XAxis dataKey="name" />
-      <YAxis
-        domain={[0, "auto"]}
-        ticks={[1, 2, 3, 4, 5, 6]}
-        tickFormatter={(value) => Math.floor(value).toString()}
-      />
-      <Tooltip />
-      <Area
-        type="monotone"
-        dataKey="Total"
-        stroke="#1E9AFF" // Blue for total requests
-        fillOpacity={0.3}
-        fill="#1E9AFF"
-      />
-      <Area
-        type="monotone"
-        dataKey="Approved"
-        stroke="#5EB562" // Green for approved requests
-        fillOpacity={0.3}
-        fill="#5EB562"
-      />
-      <Area
-        type="monotone"
-        dataKey="Pending"
-        stroke="#FEA01C" // Yellow for pending requests
-        fillOpacity={0.3}
-        fill="#FEA01C"
-      />
-       <Area
-        type="monotone"
-        dataKey="Unapproved"
-        stroke="#E73774" // Red for unapproved requests
-        fillOpacity={0.3}
-        fill="#E73774"
-      />
-    </AreaChart>
-  </ResponsiveContainer>
-</div>
-
+        <div className="flex-7 pt-2 bg-white drop-shadow-lg w-full rounded-[12px] h-[327px] mt-4">
+          <h1 className="text-center font-bold text-lg ">
+            REQUESTS THIS MONTH
+          </h1>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart
+              data={areaChartData}
+              margin={{ right: 30, left: 0, bottom: 30 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis
+                domain={[0, "auto"]} 
+                ticks={[20, 50, 70, 90]} 
+                tickFormatter={(value) => Math.floor(value).toString()} 
+              />
+              <Tooltip />
+              <Area
+                type="monotone"
+                dataKey="Total"
+                stroke="#1E9AFF" // Blue for total requests
+                fillOpacity={0.3}
+                fill="#1E9AFF"
+              />
+              <Area
+                type="monotone"
+                dataKey="Approved"
+                stroke="#5EB562" // Green for approved requests
+                fillOpacity={0.3}
+                fill="#5EB562"
+              />
+              <Area
+                type="monotone"
+                dataKey="Pending"
+                stroke="#FEA01C" // Yellow for pending requests
+                fillOpacity={0.3}
+                fill="#FEA01C"
+              />
+              <Area
+                type="monotone"
+                dataKey="Unapproved"
+                stroke="#E73774" // Red for unapproved requests
+                fillOpacity={0.3}
+                fill="#E73774"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
 
         <div className="flex-3 pb-10 pt-2 bg-white w-full drop-shadow-lg lg:w-2/4 rounded-[12px] h-[327px] mt-4">
           <h1 className="text-center font-bold text-lg">REQUEST THIS WEEK</h1>
