@@ -415,10 +415,10 @@ useEffect(() => {
             <div className="mb-4 flex flex-col md:flex-row items-start ">
               <img
                 alt="logo"
-                height={100}
-                width={100}
+                height={180}
+                width={180}
                 src={profilePictureUrl}
-                className="rounded-full"
+              
               />
               <div className="flex flex-col ml-4 mt-4 ">
                 <h1 className="font-bold text-lg md:text-[20px] text-left">

@@ -35,9 +35,9 @@ const AddCustomModal = ({
           },
         });
     
-       
+      
         const allApprovers = [
-          ...(response.data.approvers || []),
+          ...(response.data.HOApprovers || []),
           ...(response.data.areaManagerApprover || []),
           ...(response.data.sameBranchApprovers || [])
         ];
@@ -154,7 +154,7 @@ const AddCustomModal = ({
               onClick={closeModal}
             />
           </div>
-          <div className="bg-white w-10/12 sm:w-1/3 x-20 rounded-b-[12px] shadow-lg overflow-y-auto h-2/3">
+          <div className="bg-white w-10/12 sm:w-1/3 mx-20 rounded-b-[12px] shadow-lg  h-2/3">
             <div className="grid lg:grid-cols-2 justify-items-center place-content-center mt-4 mx-10 gap-2">
               <div>
                 <p className={`${pStyle}`}>Name</p>

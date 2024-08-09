@@ -84,27 +84,27 @@ console.log('selected',selectedUser);
 
   useEffect(() => {
     if (entityType === "Custom") {
+      const userId = localStorage.getItem("id");
       const fetchApprovers = async () => {
         try {
           setLoading(true);
           const response = await axios.get(
-            "http://localhost:8000/api/view-approvers",
+           `http://localhost:8000/api/view-approvers/${userId}`,
             {
               headers: {
                 Authorization: `Bearer ${localStorage.getItem("token")}`,
               },
             }
           );
-          console.log("Approvers:", response.data);
-
-          if (response.data && Array.isArray(response.data.data)) {
-            setApprovers(response.data.data);
-          } else {
-            console.error(
-              "Unexpected response format from API:",
-              response.data
-            );
-          }
+          const allApprovers = [
+            ...(response.data.HOApprovers || []),
+            ...(response.data.areaManagerApprover || []),
+            ...(response.data.sameBranchApprovers || [])
+          ];
+  
+          // Update state with the combined approvers data
+          setApprovers(allApprovers);
+        
 
           setLoading(false);
         } catch (error) {
@@ -736,19 +736,19 @@ console.log('selected',selectedUser);
                   Noted By
                 </label>
                 {approvers.map((person) => (
-                  <div key={person.user_id} className="flex items-center py-1">
+                  <div key={person.id} className="flex items-center py-1">
                     <input
                       type="checkbox"
-                      id={`noted_by_${person.user_id}`}
-                      checked={notedBy.includes(person.user_id)}
-                      onChange={() => toggleNotedBy(person.user_id)}
+                      id={`noted_by_${person.id}`}
+                      checked={notedBy.includes(person.id)}
+                      onChange={() => toggleNotedBy(person.id)}
                       className="mr-2 size-6"
                     />
                     <label
-                      htmlFor={`noted_by_${person.user_id}`}
+                      htmlFor={`noted_by_${person.id}`}
                       className="text-lg"
                     >
-                      {person.firstname} {person.lastname}
+                      {person.firstName} {person.lastName}
                     </label>
                   </div>
                 ))}
@@ -758,19 +758,19 @@ console.log('selected',selectedUser);
                   Approved By
                 </label>
                 {approvers.map((person) => (
-                  <div key={person.user_id} className="flex items-center py-1">
+                  <div key={person.id} className="flex items-center py-1">
                     <input
                       type="checkbox"
-                      id={`approved_by_${person.user_id}`}
-                      checked={approvedBy.includes(person.user_id)}
-                      onChange={() => toggleApprovedBy(person.user_id)}
+                      id={`approved_by_${person.id}`}
+                      checked={approvedBy.includes(person.id)}
+                      onChange={() => toggleApprovedBy(person.id)}
                       className="mr-2 size-6"
                     />
                     <label
-                      htmlFor={`approved_by_${person.user_id}`}
+                      htmlFor={`approved_by_${person.id}`}
                       className="text-lg"
                     >
-                      {person.firstname} {person.lastname}
+                      {person.firstName} {person.lastName}
                     </label>
                   </div>
                 ))}

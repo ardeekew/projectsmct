@@ -251,10 +251,10 @@ const Profile = ({ isdarkMode }: { isdarkMode: boolean }) => {
             <div className="flex flex-col lg:flex-row items-center md:items-start">
               <img
                 alt="profile"
-                height={140}
-                width={140}
+                height={180}
+                width={180}
                 src={profilePictureUrl}
-                className="rounded-full"
+          
               />
               <div className="flex flex-col ml-2 mt-4">
                 <h1 className="font-bold text-lg md:text-xl lg:text-2xl">
