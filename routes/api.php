@@ -64,13 +64,13 @@ Route::delete("delete-branch/{id}", [BranchController::class,"deleteBranch"])->n
 
 
 Route::post("create-approvers", [CustomApproversController::class,"createApprovers"])->name('create.approvers');
-Route::get('/view-approvers', [ApproverController::class, 'index']);
+Route::get('/view-approvers/{userID}', [ApproverController::class, 'getApprovers'])->name('get.approvers.with.same.branch.and.all.HO');
 Route::get('/approvers/{id}', [ApproverController::class, 'show']);
 });
 
 //AREA MANAGER
 Route::post("create-area-manager", [AreaManagerController::class,"createAreaManager"])->name('create.area.manager');
-Route::put("update-area-manager/{id}", [AreaManagerController::class,"updateAreaManager"])->name('update.area.manager');
+Route::post("update-area-manager/{id}", [AreaManagerController::class,"updateAreaManager"])->name('update.area.manager');
 Route::get("view-area-manager/{id}", [AreaManagerController::class,"viewAreaManager"])->name('view.area.manager');
 Route::get("view-area-managers", [AreaManagerController::class,"viewAllAreaManagers"])->name('view.area.managers');
 Route::delete("delete-area-manager/{id}", [AreaManagerController::class,"deleteAreaManager"])->name('delete.area.manager');

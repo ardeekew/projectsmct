@@ -54,7 +54,7 @@ public function createAreaManager(Request $request)
 
 
 //EDIT/UPDATE AREA MANAGER
-public function updateAreaManager(Request $request, $id)
+public function updateAreaManager(Request $request, $userId)
 {
     $request->validate([
         'user_id' => 'required|exists:users,id',
@@ -62,7 +62,8 @@ public function updateAreaManager(Request $request, $id)
         'branch_id.*' => 'required|exists:branches,id',
     ]);
 
-    $areaManager = AreaManager::find($id);
+    // Find AreaManager by user_id
+    $areaManager = AreaManager::where('user_id', $userId)->first();
 
     if (!$areaManager) {
         return response()->json([
@@ -79,7 +80,6 @@ public function updateAreaManager(Request $request, $id)
     }
 
     $areaManager->update([
-        'user_id' => $request->input('user_id'),
         'branch_id' => $request->input('branch_id'),
     ]);
 

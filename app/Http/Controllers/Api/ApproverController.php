@@ -4,9 +4,10 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Approver;
+use App\Models\Branch; // Add this line to import the 'Branch' class
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
+use App\Models\User;
 class ApproverController extends Controller
 {
     /**
@@ -14,21 +15,93 @@ class ApproverController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function index()
+    public function getApprovers($userId)
+
     {
-        try {
-            $approvers = Approver::all();
     
-            return response()->json([
-                'message' => 'Approvers retrieved successfully',
-                'data' => $approvers,
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred while retrieving approvers',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
+    try {
+    
+    
+    // Fetch the ID for the 'HO' branch
+    
+    $HObranchID = Branch::where('branch_code', 'HO')->value('id');
+    
+    
+    // Fetch approvers based on the branch ID
+    
+    $HOapprovers = User::where('branch_code', $HObranchID)
+    
+    ->where('role', 'approver')
+    
+    ->select('id','firstName','lastName','role','position','branch_code')
+    
+    ->get();
+    
+    // Find the requester by userId
+    
+    $requester = User::findOrFail($userId);
+    
+    $requesterBranch = (int) $requester->branch_code;
+    
+    
+    $sameBranchApprovers = User::where('branch_code',$requesterBranch)
+    
+    ->where('role', 'approver')
+    
+    ->where('position','!=', 'Area Manager')
+    
+    ->select('id','firstName','lastName','role','position','branch_code')
+    
+    ->get();
+    
+    
+    $areaManagerApprover = User::whereIn('id', function($query) use ($requesterBranch) {
+    
+    $query->select('user_id')
+    
+    ->from('area_managers')
+    
+    ->whereJsonContains('branch_id', $requesterBranch);
+    
+    })->get(['id','firstName','lastName','role','position','branch_code']);
+    
+    
+    
+    return response()->json([
+    
+    'message' => 'Approvers retrieved successfully',
+    
+    'HOApprovers' => $HOapprovers,
+    
+    'sameBranchApprovers' => $sameBranchApprovers,
+    
+    'areaManagerApprover' => $areaManagerApprover
+    
+    ], 200);
+    
+    
+    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+    
+    return response()->json([
+    
+    'message' => 'User not found',
+    
+    'error' => $e->getMessage(),
+    
+    ], 404);
+    
+    } catch (\Exception $e) {
+    
+    return response()->json([
+    
+    'message' => 'An error occurred while retrieving approvers',
+    
+    'error' => $e->getMessage(),
+    
+    ], 500);
+    
+    }
+    
     }
 
     /**
