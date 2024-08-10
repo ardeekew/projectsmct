@@ -65,7 +65,7 @@ const Nav: React.FC<NavProps> = ({
   const toggleProfileDropdown = () => {
     setIsOpen((prev) => !prev);
   };
-console.log(notifications)
+
   const handleClickOutside = (event: MouseEvent) => {
     if (
       dropdownRef.current &&

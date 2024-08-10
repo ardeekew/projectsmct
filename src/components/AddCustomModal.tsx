@@ -60,22 +60,35 @@ const AddCustomModal = ({
   }, [modalIsOpen]);
 
   const toggleNotedBy = (personId: number) => {
-    const isPresent = notedBy.includes(personId);
-    if (isPresent) {
-      setNotedBy((prevNotedBy) => prevNotedBy.filter((id) => id !== personId));
-    } else {
-      setNotedBy((prevNotedBy) => [...prevNotedBy, personId]);
+    // Check if the person is already in the approvedBy list
+    const isApproved = approvedBy.includes(personId);
+    
+    // Proceed only if the person is not in the approvedBy list
+    if (!isApproved) {
+      const isPresent = notedBy.includes(personId);
+      if (isPresent) {
+        setNotedBy((prevNotedBy) => prevNotedBy.filter((id) => id !== personId));
+      } else {
+        setNotedBy((prevNotedBy) => [...prevNotedBy, personId]);
+      }
     }
   };
-
+  
   const toggleApprovedBy = (personId: number) => {
-    const isPresent = approvedBy.includes(personId);
-    if (isPresent) {
-      setApprovedBy((prevApprovedBy) => prevApprovedBy.filter((id) => id !== personId));
-    } else {
-      setApprovedBy((prevApprovedBy) => [...prevApprovedBy, personId]);
+    // Check if the person is already in the notedBy list
+    const isNoted = notedBy.includes(personId);
+    
+    // Proceed only if the person is not in the notedBy list
+    if (!isNoted) {
+      const isPresent = approvedBy.includes(personId);
+      if (isPresent) {
+        setApprovedBy((prevApprovedBy) => prevApprovedBy.filter((id) => id !== personId));
+      } else {
+        setApprovedBy((prevApprovedBy) => [...prevApprovedBy, personId]);
+      }
     }
   };
+  
 
   const handleCancel = () => {
     setNotedBy([]);
@@ -166,6 +179,9 @@ const AddCustomModal = ({
                 />
                 {errorMessage && <p className="text-red-500">{errorMessage}</p>}
               </div>
+              <div>
+              
+              </div>
             </div>
 
             <div className="border-b mt-2"></div>
@@ -174,39 +190,70 @@ const AddCustomModal = ({
                 <h1 className="ml-2 text-[20px] font-medium  text-sm md:text-md">
                   Noted By
                 </h1>
-                {approvers.map((person, index) => (
-                  <div key={index} className="mx-2 my-2 flex items-center">
-                    <input
-                      type="checkbox"
-                      className="size-5 mr-2"
-                      id={`noted_by_${index}`}
-                      checked={notedBy.includes(person.id)}
-                      onChange={() => toggleNotedBy(person.id)}
-                    />
-                    <label htmlFor={`noted_by_${index}`}>
-                      {person.firstName} {person.lastName}
-                    </label>
-                  </div>
-                ))}
+                {approvers.map((person, index) => {
+  const isNoted = notedBy.includes(person.id);
+  const isApproved = approvedBy.includes(person.id);
+  const isDisabled = isNoted || isApproved; // Disable if in either list
+  const highlightClass = isNoted && isApproved ? 'highlight' : '';
+
+  return (
+    <div key={index} className="mx-2 my-2 flex items-center">
+      <input
+        type="checkbox"
+        className={`size-5 mr-2 ${isDisabled ? "cursor-not-allowed" : ""}`}
+        id={`noted_by_${index}`}
+        checked={isNoted}
+        onChange={() => {
+          if (!isApproved) {
+            toggleNotedBy(person.id);
+          }
+        }}
+        disabled={isApproved} // Disable checkbox if already approved
+      />
+      <label
+        htmlFor={`noted_by_${index}`}
+        className={highlightClass} // Apply highlight class
+      >
+        {person.firstName} {person.lastName}
+      </label>
+    </div>
+  );
+})}
+
               </div>
               <div>
                 <h1 className="ml-2  text-[20px] font-medium text-sm md:text-md">
                   Approved By
                 </h1>
-                {approvers.map((person, index) => (
-                  <div key={index} className=" ml-2 flex my-2 items-center">
-                    <input
-                      type="checkbox"
-                      className="size-5 mr-2"
-                      id={`approved_by_${index}`}
-                      checked={approvedBy.includes(person.id)}
-                      onChange={() => toggleApprovedBy(person.id)}
-                    />
-                    <label htmlFor={`approved_by_${index}`}>
-                    {person.firstName} {person.lastName}
-                    </label>
-                  </div>
-                ))}
+                {approvers.map((person, index) => {
+    const isNoted = notedBy.includes(person.id);
+    const isApproved = approvedBy.includes(person.id);
+    const isDisabled = isNoted || isApproved; // Disable if in either list
+    const highlightClass = isNoted && isApproved ? 'highlight' : '';
+
+    return (
+      <div key={index} className="ml-2 flex my-2 items-center">
+        <input
+          type="checkbox"
+          className={`size-5 mr-2 ${isDisabled ? "cursor-not-allowed" : ""}`}
+          id={`approved_by_${index}`}
+          checked={isApproved}
+          onChange={() => {
+            if (!isNoted) {
+              toggleApprovedBy(person.id);
+            }
+          }}
+          disabled={isNoted} // Disable checkbox if already noted
+        />
+        <label
+          htmlFor={`approved_by_${index}`}
+          className={highlightClass} // Apply highlight class
+        >
+          {person.firstName} {person.lastName}
+        </label>
+      </div>
+    );
+  })}
               </div>
             </div>
             <div className="flex flex-col md:flex-row w-full  mt-2 justify-items-center lg:justify-end items-center space-x-0 md:space-x-2 md:mt-20 md:mr-10 mb-10 pr-2">

@@ -430,7 +430,7 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
               <XAxis dataKey="name" />
               <YAxis
                 domain={[0, "auto"]} 
-                ticks={[20, 50, 70, 90]} 
+                ticks={[20, 60, 90, 150]} 
                 tickFormatter={(value) => Math.floor(value).toString()} 
               />
               <Tooltip />
@@ -480,6 +480,8 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
               <YAxis
                 tickFormatter={(value) => Math.floor(value).toString()}
                 allowDecimals={false}
+                domain={[0, "auto"]} 
+                ticks={[20, 60, 90, 150]} 
               />
               <Tooltip />
               <Bar dataKey="Request" fill="#8884d8" />

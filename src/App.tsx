@@ -24,7 +24,7 @@ function capitalizeFirstLetter(string: string) {
 }
 
 const App: React.FC<AppProps> = ({ isdarkMode }) => {
-  const [darkMode, setDarkMode] = useState(isdarkMode);
+  const [darkMode, setDarkMode] = useState(false);
   const location = useLocation();
   const currentPage = capitalizeFirstLetter(location.pathname.substring(1));
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);

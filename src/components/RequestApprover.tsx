@@ -130,7 +130,37 @@ const RequestApprover = (props: Props) => {
   const [selectedRecord, setSelectedRecord] = useState<Record | null>(null);
   const [sortOrder, setSortOrder] = useState("desc");
   const userId = localStorage.getItem("id");
-
+  const [branchList, setBranchList] = useState<any[]>([]);
+  const [branchMap, setBranchMap] = useState<Map<number, string>>(new Map());
+  
+  useEffect(() => {
+    const fetchBranchData = async () => {
+      try {
+        const response = await axios.get(
+          `http://122.53.61.91:6002/api/view-branch`
+        );
+        const branches = response.data.data;
+  
+        // Create a mapping of id to branch_code
+        const branchMapping = new Map<number, string>(
+          branches.map((branch: { id: number; branch_code: string }) => [
+            branch.id,
+            branch.branch_code
+          ])
+        );
+  
+        setBranchList(branches);
+        setBranchMap(branchMapping);
+  
+        console.log("Branch Mapping:", branchMapping);
+      } catch (error) {
+        console.error("Error fetching branch data:", error);
+      }
+    };
+  
+    fetchBranchData();
+  }, []);
+  
   useEffect(() => {
     if (userId) {
       console.log("Fetching data...");
@@ -146,7 +176,7 @@ const RequestApprover = (props: Props) => {
       };
 
       axios
-        .get(`http://localhost:8000/api/request-forms/for-approval/${userId}`, {
+        .get(`http://122.53.61.91:6002/api/request-forms/for-approval/${userId}`, {
           headers,
         })
         .then((response) => {
@@ -224,8 +254,11 @@ const RequestApprover = (props: Props) => {
     },
     {
       name: "Branch",
-      selector: (row: Record) =>
-        row.form_data && row.form_data[0] ? row.form_data[0].branch : "N/A",
+      selector: (row: Record) => {
+      
+        const branchId = parseInt(row.form_data[0].branch, 10);
+        return branchMap.get(branchId) || "Unknown";
+      },
     },
     {
       name: "Status",
@@ -281,7 +314,7 @@ const RequestApprover = (props: Props) => {
       };
 
       axios
-        .get(`http://localhost:8000/api/request-forms/for-approval/${userId}`, {
+        .get(`http://122.53.61.91:6002/api/request-forms/for-approval/${userId}`, {
           headers,
         })
         .then((response) => {
