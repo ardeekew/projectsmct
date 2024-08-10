@@ -59,7 +59,7 @@ const AddAreaManagerModal = ({
         };
 
         const response = await axios.get(
-          `http://localhost:8000/api/view-users`,
+          `http://122.53.61.91:6002/api/view-users`,
           {
             headers,
           }
@@ -103,7 +103,7 @@ const AddAreaManagerModal = ({
         };
 
         const response = await axios.get(
-          `http://localhost:8000/api/view-branch`,
+          `http://122.53.61.91:6002/api/view-branch`,
           {
             headers,
           }
@@ -161,7 +161,7 @@ const AddAreaManagerModal = ({
         };
 
         const response = await axios.post(
-          `http://localhost:8000/api/create-area-manager`,
+          `http://122.53.61.91:6002/api/create-area-manager`,
           postData,
           {
             headers,

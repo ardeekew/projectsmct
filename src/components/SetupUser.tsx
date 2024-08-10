@@ -60,7 +60,7 @@ const SetupUser = (props: Props) => {
         };
 
         const response = await axios.get(
-          `http://localhost:8000/api/view-users`,
+          `http://122.53.61.91:6002/api/view-users`,
           {
             headers,
           }
@@ -110,7 +110,7 @@ const SetupUser = (props: Props) => {
       };
 
       const response = await axios.delete(
-        `http://localhost:8000/api/delete-user/${selectedUser.id}`,
+        `http://122.53.61.91:6002/api/delete-user/${selectedUser.id}`,
         {
           headers,
         }
@@ -214,7 +214,7 @@ const SetupUser = (props: Props) => {
         Authorization: `Bearer ${token}`,
       };
 
-      const response = await axios.get(`http://localhost:8000/api/view-users`, {
+      const response = await axios.get(`http://122.53.61.91:6002/api/view-users`, {
         headers,
       });
       console.log("Response:", response.data);

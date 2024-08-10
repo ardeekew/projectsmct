@@ -29,7 +29,7 @@ const AddCustomModal = ({
     const fetchApprovers = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`http://localhost:8000/api/view-approvers/${userId}`, {
+        const response = await axios.get(`http://122.53.61.91:6002/api/view-approvers/${userId}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
@@ -108,7 +108,7 @@ const AddCustomModal = ({
         setLoading(true);
 
         const response = await axios.post(
-            "http://localhost:8000/api/approvers",
+            "http://122.53.61.91:6002/api/approvers",
             requestData,
             {
                 headers: {

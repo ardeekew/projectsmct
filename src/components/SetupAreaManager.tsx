@@ -152,7 +152,7 @@ const SetupAreaManager = (props: Props) => {
 
         // Fetch area managers
         const response = await axios.get<{ data: AreaManager[] }>(
-          `http://localhost:8000/api/view-area-managers`,
+          `http://122.53.61.91:6002/api/view-area-managers`,
           {
             headers,
           }
@@ -166,7 +166,7 @@ const SetupAreaManager = (props: Props) => {
         for (const areaManager of areaManagerList) {
           // Fetch user info based on user_id (which is id in users table)
           const userResponse = await axios.get<Record>(
-            `http://localhost:8000/api/view-user/${areaManager.user_id}`,
+            `http://122.53.61.91:6002/api/view-user/${areaManager.user_id}`,
             {
               headers,
             }
@@ -177,7 +177,7 @@ const SetupAreaManager = (props: Props) => {
           // Fetch branches for each branch_id
           const branchPromises = areaManager.branch_id.map(async (branchId) => {
             const branchResponse = await axios.get(
-              `http://localhost:8000/api/view-branch/${branchId}`,
+              `http://122.53.61.91:6002/api/view-branch/${branchId}`,
               {
                 headers,
               }
@@ -237,7 +237,7 @@ const SetupAreaManager = (props: Props) => {
 
       // Fetch area managers
       const response = await axios.get<{ data: AreaManager[] }>(
-        `http://localhost:8000/api/view-area-managers`,
+        `http://122.53.61.91:6002/api/view-area-managers`,
         {
           headers,
         }
@@ -251,7 +251,7 @@ const SetupAreaManager = (props: Props) => {
       for (const areaManager of areaManagerList) {
         // Fetch user info based on user_id (which is id in users table)
         const userResponse = await axios.get<Record>(
-          `http://localhost:8000/api/view-user/${areaManager.user_id}`,
+          `http://122.53.61.91:6002/api/view-user/${areaManager.user_id}`,
           {
             headers,
           }
@@ -262,7 +262,7 @@ const SetupAreaManager = (props: Props) => {
         // Fetch branches for each branch_id
         const branchPromises = areaManager.branch_id.map(async (branchId) => {
           const branchResponse = await axios.get(
-            `http://localhost:8000/api/view-branch/${branchId}`,
+            `http://122.53.61.91:6002/api/view-branch/${branchId}`,
             {
               headers,
             }
@@ -361,7 +361,7 @@ setisLoading(false);
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2  space-y-2  sm:gap-2 sm:space-y-0 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 ">
         {row.branches.map((branchInfo, index) => (
-          <div className="bg-primary p-2 rounded-[12px] w-14 text-center " key={index}>
+          <div className="bg-primary p-2 rounded-[12px] w-20 text-center " key={index}>
             <ul className=" text-white">{branchInfo.data[0].branch_code}</ul>
           </div>
         ))}
@@ -385,7 +385,7 @@ setisLoading(false);
 console.log('selectedUser', selectedUser?.id);
     // Send PUT request to update user's role
     const response = await axios.delete(
-        `http://localhost:8000/api/delete-area-manager/${selectedUser?.id}`,
+        `http://122.53.61.91:6002/api/delete-area-manager/${selectedUser?.id}`,
       
         { headers }
     );

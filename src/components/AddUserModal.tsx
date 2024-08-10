@@ -256,6 +256,9 @@ const AddUserModal = ({
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [branchList, setBranchList] = useState<
+  { id: number; branch_code: string; branch: string }[]
+>([]);
   const {
     control,
     register,
@@ -267,188 +270,53 @@ const AddUserModal = ({
     resolver: zodResolver(schema),
   });
 
+
+  useEffect(() => {
+    const fetchBranchData = async () => {
+      try {
+      
+             const response = await axios.get(
+          `http://122.53.61.91:6002/api/view-branch`,
+          
+        );
+        const branches = response.data.data;
+        // Assuming response.data.data is the array of branches
+        const branchOptions = branches.map(
+          (branch: { id: number; branch_code: string; branch: string }) => ({
+            id: branch.id,
+            branch_code: branch.branch_code,
+            branch: branch.branch,
+          })
+        );
+        setBranchList(branchOptions);
+      } catch (error) {
+        console.error("Error fetching branch data:", error);
+      }
+    };
+
+    fetchBranchData();
+  }, []);
+
   if (!modalIsOpen) {
     return null;
   }
 
-  const handleBranchCodeChange = (selectedBranchCode: string) => {
-    setValue("branchCode", selectedBranchCode);
-    if (
-      [
-        "AKLA",
-        "ALEN",
-        "ALIC",
-        "ANTI",
-        "ANTIP",
-        "BANTA",
-        "BAYB",
-        "BINAN",
-        "BOHK",
-        "BOHL",
-        "CAGL",
-        "CALAP",
-        "CALAP2",
-        "CALI",
-        "CARMB",
-        "CARMO",
-        "CARS",
-        "CATAR",
-        "DASMA",
-        "DIPL",
-        "FAMY",
-        "GUIN",
-        "GUIN2",
-        "JAGN",
-        "LIPA",
-        "LOAY",
-        "MADRI",
-        "MALA",
-        "MANG",
-        "MANL",
-        "MANP",
-        "MOLS",
-        "NAIC",
-        "OZAL",
-        "PAGS",
-        "SAGBA",
-        "SALA",
-        "SANJ",
-        "SANP",
-        "SDAV",
-        "SDIP",
-        "SARG",
-        "SILA",
-        "SLAP",
-        "SLAS",
-        "SLIL",
-        "SMCT",
-        "SROS",
-        "TALI",
-        "TANZ",
-        "TANZ2",
-        "TRINI2",
-        "TUBI",
-        "VALEN",
-        "YATI",
-        "ZAML",
-      ].includes(selectedBranchCode)
-    ) {
-      setValue("branch", "Strong Motocentrum, Inc.");
-    } else if (
-      [
-        "AURO",
-        "BALA",
-        "BUHA",
-        "BULU",
-        "CARMCDO",
-        "DIGOS",
-        "DONC",
-        "DSMBL",
-        "DSMC",
-        "DSMCA",
-        "DSMD",
-        "DSMD2",
-        "DSMM",
-        "DSMPO",
-        "DSMSO",
-        "DSMTG",
-        "DSMV",
-        "ELSA",
-        "ILIG",
-        "JIMEDSM",
-        "KABA2",
-        "KATI",
-        "LABA",
-        "MARA",
-        "MATI",
-        "RIZA",
-        "TACU",
-        "TORI",
-        "CERI",
-        "VILLA",
-        "VISA",
-        "CARC",
-        "CARC2",
-        "CARMC2",
-        "CATM",
-        "COMPO",
-        "DAAN",
-        "DSMA",
-        "DSMAO",
-        "DSMB",
-        "DSMBN",
-        "DSMCN",
-        "DSMDB",
-        "DSMDM",
-        "DSMDN",
-        "DSMK",
-        "DSMLN",
-        "DSMP",
-        "DSMSB",
-        "DSMT",
-        "DSMT2",
-        "DSMTA",
-        "ILOI",
-        "LAHU",
-        "LAPU 2",
-        "MAND",
-        "MAND2",
-        "MEDE",
-        "PARD",
-        "PARD2",
-        "REMI",
-        "REMI2",
-        "SANT",
-        "TUBU",
-        "UBAY",
-        "BOGO",
-        "DSML",
-        "CALIN",
-      ].includes(selectedBranchCode)
-    ) {
-      setValue("branch", "Des Strong Motors, Inc.");
-    } else if (
-      [
-        "ALAD",
-        "AURD",
-        "BALD",
-        "BONI",
-        "BUUD",
-        "CALD",
-        "CAMD",
-        "DAPI",
-        "DIPD",
-        "DIPD2",
-        "ILID",
-        "IMED",
-        "INIT2",
-        "IPID",
-        "JIME",
-        "KABD",
-        "LABD",
-        "LILD",
-        "MANO",
-        "MARA2",
-        "MARD",
-        "MOLD",
-        "MOLD2",
-        "NUND2",
-        "OROD",
-        "OZAD",
-        "PUTD",
-        "RIZD",
-        "SANM",
-        "SIND",
-        "SUCD",
-        "TUBOD",
-        "VITA",
-      ].includes(selectedBranchCode)
-    ) {
-      setValue("branch", "Des Appliance Plaza, Inc.");
-    } else if (["HO"].includes(selectedBranchCode)) {
-      setValue("branch", "Head Office");
+ 
+
+  const handleBranchCodeChange = (selectedBranchId: number) => {
+ 
+    const selectedBranch = branchList.find(
+      (branch) => branch.id === selectedBranchId
+    );
+    console.log("Selected Branch ID:", selectedBranchId); 
+    console.log("Selected Branch:", selectedBranch); 
+  
+    if (selectedBranch) {
+  
+      setValue("branch", selectedBranch.branch);
     } else {
-      setValue("branch", "Honda Des, Inc.");
+    
+      setValue("branch", "Honda Des, Inc."); 
     }
   };
   const capitalizeWords = (str: string) => {
@@ -465,7 +333,7 @@ console.log('Errors:', errors);
     try {
       console.log("Starting submission");
       setLoading(true);
-      const response = await axios.post("http://localhost:8000/api/register", {
+      const response = await axios.post("http://122.53.61.91:6002/api/register", {
         email: data.email,
         password: data.password,
         userName: data.userName,
@@ -608,21 +476,27 @@ console.log('Errors:', errors);
                   name="branchCode"
                   control={control}
                   render={({ field }) => (
-                    <select
-                      {...field}
-                      className={`${inputStyle}`}
-                      onChange={(e) => {
-                        field.onChange(e);
-                        handleBranchCodeChange(e.target.value);
-                      }}
-                    >
-                      <option value="">Select branch</option>
-                      {branchOptions.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
+                     <select
+                        {...field}
+                        className={`${inputStyle}`}
+                        onChange={(e) => {
+                          field.onChange(e);
+                          handleBranchCodeChange(Number(e.target.value));
+                        }}
+                      >
+                        <option value="">Select branch</option>
+                        {branchList.length > 0 ? (
+                          branchList.map((branch) => (
+                            <option key={branch.id} value={branch.id}>
+                              {branch.branch_code}
+                            </option>
+                          ))
+                        ) : (
+                          <option value="" disabled>
+                            No branch codes available
+                          </option>
+                        )}
+                      </select>
                   )}
                 />{" "}
                 <div>

@@ -56,7 +56,7 @@ const Profile = ({ isdarkMode }: { isdarkMode: boolean }) => {
         };
 
         const response = await axios.get(
-          `http://localhost:8000/api/view-branch`,
+          `http://122.53.61.91:6002/api/view-branch`,
           {
             headers,
           }
@@ -90,7 +90,7 @@ const Profile = ({ isdarkMode }: { isdarkMode: boolean }) => {
           Authorization: `Bearer ${token}`,
         };
         const response = await axios.get(
-          `http://localhost:8000/api/view-user/${id}`,
+          `http://122.53.61.91:6002/api/view-user/${id}`,
           {
             headers,
           }
@@ -140,7 +140,7 @@ const Profile = ({ isdarkMode }: { isdarkMode: boolean }) => {
       }
 
       const response = await axios.put(
-        `http://localhost:8000/api/change-password/${id}`,
+        `http://122.53.61.91:6002/api/change-password/${id}`,
         {
           current_password: currentPassword,
           new_password: newPassword,
@@ -200,7 +200,7 @@ const Profile = ({ isdarkMode }: { isdarkMode: boolean }) => {
     try {
       setLoading(true);
       const response = await axios.post(
-        `http://localhost:8000/api/upload-profile-pic/${id}`,
+        `http://122.53.61.91:6002/api/upload-profile-pic/${id}`,
         formData,
         {
           headers: {
@@ -235,9 +235,9 @@ const Profile = ({ isdarkMode }: { isdarkMode: boolean }) => {
     inputRef.current?.click();
   };
 
-  const baseUrl = "http://localhost:8000/storage/profile_pictures/";
+  const baseUrl = "http://122.53.61.91:6002/storage/profile_pictures/";
   const profilePictureUrl = user.profile_picture
-    ? `http://localhost:8000/storage/${user.profile_picture.replace(
+    ? `http://122.53.61.91:6002/storage/${user.profile_picture.replace(
         /\\/g,
         "/"
       )}`

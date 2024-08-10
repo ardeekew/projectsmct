@@ -70,6 +70,37 @@ const Dashboard: React.FC = () => {
   const [totalDisapprovedRequests, setTotalDisapprovedRequests] = useState<number | null>(null);
   const userId = localStorage.getItem("id");
   const name = localStorage.getItem("firstName");
+  const [branchList, setBranchList] = useState<any[]>([]);
+  const [branchMap, setBranchMap] = useState<Map<number, string>>(new Map());
+  
+  useEffect(() => {
+    const fetchBranchData = async () => {
+      try {
+        const response = await axios.get(
+          `http://122.53.61.91:6002/api/view-branch`
+        );
+        const branches = response.data.data;
+  
+        // Create a mapping of id to branch_code
+        const branchMapping = new Map<number, string>(
+          branches.map((branch: { id: number; branch_code: string }) => [
+            branch.id,
+            branch.branch_code
+          ])
+        );
+  
+        setBranchList(branches);
+        setBranchMap(branchMapping);
+  
+        console.log("Branch Mapping:", branchMapping);
+      } catch (error) {
+        console.error("Error fetching branch data:", error);
+      }
+    };
+  
+    fetchBranchData();
+  }, []);
+  
   useEffect(() => {
     if (userId) {
       setLoading(true);
@@ -86,7 +117,7 @@ const Dashboard: React.FC = () => {
 
       // Fetch requests data
       axios
-        .get(`http://localhost:8000/api/view-request`, { headers })
+        .get(`http://122.53.61.91:6002/api/view-request`, { headers })
         .then((response) => {
           if (Array.isArray(response.data.data)) {
             setRequests(response.data.data);
@@ -100,7 +131,7 @@ const Dashboard: React.FC = () => {
 
       // Fetch total requests sent
       axios
-        .get(`http://localhost:8000/api/total-request-sent/${userId}`, { headers })
+        .get(`http://122.53.61.91:6002/api/total-request-sent/${userId}`, { headers })
         .then((response) => {
           console.log("Total requests sent:", response.data);
           setTotalRequestsSent(response.data.totalRequestSent);
@@ -150,7 +181,11 @@ const Dashboard: React.FC = () => {
     },
     {
       name: "Branch",
-      selector: (row: Request) => row.form_data[0].branch,
+      selector: (row: Request) => {
+      
+        const branchId = parseInt(row.form_data[0].branch, 10);
+        return branchMap.get(branchId) || "Unknown";
+      },
     },
     {
       name: "Status",

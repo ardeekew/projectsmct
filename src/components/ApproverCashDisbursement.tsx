@@ -142,7 +142,7 @@ const ApproverCashDisbursement: React.FC<Props> = ({
         // Handle the parsed attachment
         const fileUrls = parsedAttachment.map(
           (filePath: string) =>
-            `http://localhost:8000/storage/${filePath.replace(/\\/g, "/")}`
+            `http://122.53.61.91:6002/storage/${filePath.replace(/\\/g, "/")}`
         );
         setAttachmentUrl(fileUrls);
       } else {
@@ -164,7 +164,7 @@ const ApproverCashDisbursement: React.FC<Props> = ({
       }
 
       const response = await axios.get(
-        `http://localhost:8000/api/view-user/${id}`,
+        `http://122.53.61.91:6002/api/view-user/${id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -189,7 +189,7 @@ const ApproverCashDisbursement: React.FC<Props> = ({
       }
 
       const response = await axios.get(
-        `http://localhost:8000/api/request-forms/${id}`,
+        `http://122.53.61.91:6002/api/request-forms/${id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -227,7 +227,7 @@ const ApproverCashDisbursement: React.FC<Props> = ({
       };
 
       const response = await axios.put(
-        `http://localhost:8000/api/request-forms/${record.id}/process`,
+        `http://122.53.61.91:6002/api/request-forms/${record.id}/process`,
         requestData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -262,10 +262,10 @@ const ApproverCashDisbursement: React.FC<Props> = ({
     try {
       setApprovedLoading(true);
       console.log("Request Data:", requestData);
-      console.log("API Endpoint:", `http://localhost:8000/api/request-forms/${record.id}/process`);
+      console.log("API Endpoint:", `http://122.53.61.91:6002/api/request-forms/${record.id}/process`);
 
       const response = await axios.put(
-        `http://localhost:8000/api/request-forms/${record.id}/process`,
+        `http://122.53.61.91:6002/api/request-forms/${record.id}/process`,
         requestData,
         { headers: { Authorization: `Bearer ${token}` } }
       );

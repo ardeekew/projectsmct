@@ -34,7 +34,7 @@ console.log(email);
     }
     try {
       // Send a POST request to the password reset endpoint using axios
-      const response = await axios.post("http://localhost:8000/api/password/reset", {
+      const response = await axios.post("http://122.53.61.91:6002/api/password/reset", {
         email, password,
       });
       console.log(response.data);

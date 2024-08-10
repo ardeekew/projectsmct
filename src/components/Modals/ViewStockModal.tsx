@@ -95,8 +95,40 @@ const ViewStockModal: React.FC<Props> = ({
   const [attachmentUrl, setAttachmentUrl] = useState<string[]>([]);
   const [newAttachments, setNewAttachments] = useState<File[]>([]);
   const [originalAttachments, setOriginalAttachments] = useState<string[]>([]);
-  const [removedAttachments, setRemovedAttachments] = useState<(string | number)[]>([]);
-  console.log("record", record);
+  const [removedAttachments, setRemovedAttachments] = useState<
+    (string | number)[]
+  >([]);
+  const [branchList, setBranchList] = useState<any[]>([]);
+  const [branchMap, setBranchMap] = useState<Map<number, string>>(new Map());
+
+  useEffect(() => {
+    const fetchBranchData = async () => {
+      try {
+        const response = await axios.get(
+          `http://122.53.61.91:6002/api/view-branch`
+        );
+        const branches = response.data.data;
+
+        // Create a mapping of id to branch_name
+        const branchMapping = new Map<number, string>(
+          branches.map((branch: { id: number; branch_code: string }) => [
+            branch.id,
+            branch.branch_code,
+          ])
+        );
+
+        setBranchList(branches);
+        setBranchMap(branchMapping);
+
+        console.log("Branch Mapping:", branchMapping);
+      } catch (error) {
+        console.error("Error fetching branch data:", error);
+      }
+    };
+
+    fetchBranchData();
+  }, []);
+
   useEffect(() => {
     const attachments = JSON.parse(record.attachment);
     const currentUserId = localStorage.getItem("id");
@@ -118,7 +150,7 @@ const ViewStockModal: React.FC<Props> = ({
         // Handle the parsed attachment
         const fileUrls = parsedAttachment.map(
           (filePath: string) =>
-            `http://localhost:8000/storage/${filePath.replace(/\\/g, "/")}`
+            `http://122.53.61.91:6002/storage/${filePath.replace(/\\/g, "/")}`
         );
         setAttachmentUrl(fileUrls);
       } else {
@@ -139,7 +171,7 @@ const ViewStockModal: React.FC<Props> = ({
       }
 
       const response = await axios.get(
-        `http://localhost:8000/api/view-user/${id}`,
+        `http://122.53.61.91:6002/api/view-user/${id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -188,7 +220,7 @@ const ViewStockModal: React.FC<Props> = ({
       }
 
       const response = await axios.get(
-        `http://localhost:8000/api/request-forms/${id}`,
+        `http://122.53.61.91:6002/api/request-forms/${id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -216,108 +248,103 @@ const ViewStockModal: React.FC<Props> = ({
 
   const handleRemoveAttachment = (index: number) => {
     // Get the path of the attachment to be removed
-    const attachmentPath = attachmentUrl[index].split("storage/attachments/")[1];
-    
+    const attachmentPath = attachmentUrl[index].split(
+      "storage/attachments/"
+    )[1];
+
     // Add the path to the removedAttachments state
     setRemovedAttachments((prevRemoved) => [...prevRemoved, attachmentPath]);
 
     // Remove the attachment from the current list
     setAttachmentUrl((prevUrls) => prevUrls.filter((_, i) => i !== index));
-};
+  };
 
-  
-  
-  
-
-const handleSaveChanges = async () => {
-  if (
-    !newData.every(
-      (item) =>
-        parseFloat(item.quantity) > 0 &&
-        parseFloat(item.unitCost) > 0 &&
-        item.description &&
-        item.description.trim() !== ""
-    )
-  ) {
-    setErrorMessage(
-      "Quantity and unit cost must be greater than 0, and description cannot be empty."
-    );
-    return;
-  }
-
-  try {
-    setLoading(true);
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setErrorMessage("Token is missing");
+  const handleSaveChanges = async () => {
+    if (
+      !newData.every(
+        (item) =>
+          parseFloat(item.quantity) > 0 &&
+          parseFloat(item.unitCost) > 0 &&
+          item.description &&
+          item.description.trim() !== ""
+      )
+    ) {
+      setErrorMessage(
+        "Quantity and unit cost must be greater than 0, and description cannot be empty."
+      );
       return;
     }
 
-    const formData = new FormData();
-    formData.append("updated_at", new Date().toISOString());
-    formData.append("approvers_id", JSON.stringify(editedApprovers));
-
-    formData.append(
-      "form_data",
-      JSON.stringify([
-        {
-          branch: editableRecord.form_data[0].branch,
-          date:
-            editedDate !== "" ? editedDate : editableRecord.form_data[0].date,
-          status: editableRecord.status,
-          grand_total: editableRecord.form_data[0].grand_total,
-          purpose: checkedPurpose || editableRecord.form_data[0].purpose,
-          items: newData,
-        },
-      ])
-    );
-
-    // Append existing attachments
-    attachmentUrl.forEach((url, index) => {
-      const path = url.split("storage/attachments/")[1];
-      formData.append(`attachment_url_${index}`, path);
-    });
-
-    // Append new attachments
-    newAttachments.forEach((file, index) => {
-      formData.append("new_attachments[]", file);
-    });
-
-    // Append removed attachments
-    removedAttachments.forEach((path, index) => {
-      formData.append("removed_attachments[]", String(path));
-    });
-
-    const response = await axios.post(
-      `http://localhost:8000/api/update-request/${record.id}`,
-      formData,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
-        },
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setErrorMessage("Token is missing");
+        return;
       }
-    );
 
-    console.log("Stock requisition updated successfully:", response.data);
-    setLoading(false);
-    setIsEditing(false);
-    setSavedSuccessfully(true);
-    setRemovedAttachments([]); // Clear removed attachments state
-    refreshData();
-  } catch (error: any) {
-    setLoading(false);
-    setErrorMessage(
-      error.response?.data?.message ||
-        error.message ||
-        "Failed to update stock requisition."
-    );
-  }
-};
+      const formData = new FormData();
+      formData.append("updated_at", new Date().toISOString());
+      formData.append("approvers_id", JSON.stringify(editedApprovers));
 
+      formData.append(
+        "form_data",
+        JSON.stringify([
+          {
+            branch: editableRecord.form_data[0].branch,
+            date:
+              editedDate !== "" ? editedDate : editableRecord.form_data[0].date,
+            status: editableRecord.status,
+            grand_total: editableRecord.form_data[0].grand_total,
+            purpose: checkedPurpose || editableRecord.form_data[0].purpose,
+            items: newData,
+          },
+        ])
+      );
 
-  
-  
+      // Append existing attachments
+      attachmentUrl.forEach((url, index) => {
+        const path = url.split("storage/attachments/")[1];
+        formData.append(`attachment_url_${index}`, path);
+      });
+
+      // Append new attachments
+      newAttachments.forEach((file, index) => {
+        formData.append("new_attachments[]", file);
+      });
+
+      // Append removed attachments
+      removedAttachments.forEach((path, index) => {
+        formData.append("removed_attachments[]", String(path));
+      });
+
+      const response = await axios.post(
+        `http://122.53.61.91:6002/api/update-request/${record.id}`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      console.log("Stock requisition updated successfully:", response.data);
+      setLoading(false);
+      setIsEditing(false);
+      setSavedSuccessfully(true);
+      setRemovedAttachments([]); // Clear removed attachments state
+      refreshData();
+    } catch (error: any) {
+      setLoading(false);
+      setErrorMessage(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to update stock requisition."
+      );
+    }
+  };
+
   console.log("attachmentUrl", attachmentUrl);
   console.log("record.attachment", record.attachment);
   const formatDate = (dateString: string) => {
@@ -382,7 +409,7 @@ const handleSaveChanges = async () => {
       }
 
       const response = await axios.get(
-        `http://localhost:8000/api/custom-approvers/${userId}`,
+        `http://122.53.61.91:6002/api/custom-approvers/${userId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -428,7 +455,7 @@ const handleSaveChanges = async () => {
           <XMarkIcon className="h-6 w-6 text-black" onClick={closeModal} />
         </div>
         <div className="justify-start items-start flex flex-col space-y-4 w-full">
-          {!fetchingApprovers && !isFetchingApprovers  && (
+          {!fetchingApprovers && !isFetchingApprovers && (
             <>
               <button
                 className="bg-blue-600 p-1 px-2 rounded-md text-white"
@@ -512,8 +539,11 @@ const handleSaveChanges = async () => {
               <h1>Branch</h1>
               <input
                 type="text"
-                className="border border-black rounded-md p-1 mt-2 w-full "
-                value={record.form_data[0].branch}
+                className="border border-black rounded-md p-1 mt-2 w-full"
+                value={
+                  branchMap.get(parseInt(record.form_data[0].branch, 10)) ||
+                  "Unknown"
+                }
                 readOnly
               />
             </div>

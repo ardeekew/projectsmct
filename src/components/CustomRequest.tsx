@@ -106,7 +106,7 @@ const CustomRequest = (props: Props) => {
         };
   
         axios
-          .get(`http://localhost:8000/api/custom-approvers/${userId}`, {
+          .get(`http://122.53.61.91:6002/api/custom-approvers/${userId}`, {
             headers,
           })
           .then(async (response) => {
@@ -133,7 +133,7 @@ const CustomRequest = (props: Props) => {
               for (let notedById of notedByArray) {
            
                 await axios
-                  .get(`http://localhost:8000/api/approvers/${notedById}`, {
+                  .get(`http://122.53.61.91:6002/api/approvers/${notedById}`, {
                     headers,
                   })
                   .then((response) => {
@@ -147,7 +147,7 @@ const CustomRequest = (props: Props) => {
               // Fetch details for approved_by
               for (let approvedById of approvedByArray) {
                 await axios
-                  .get(`http://localhost:8000/api/approvers/${approvedById}`, {
+                  .get(`http://122.53.61.91:6002/api/approvers/${approvedById}`, {
                     headers,
                   })
                   .then((response) => {
@@ -205,7 +205,7 @@ const CustomRequest = (props: Props) => {
   
       // Properly interpolate selectedUser.id into the URL
       const response = await axios.delete(
-        `http://localhost:8000/api/delete-custom-approvers/${selectedUser.id}`,
+        `http://122.53.61.91:6002/api/delete-custom-approvers/${selectedUser.id}`,
         { headers }
       );
   
@@ -240,7 +240,7 @@ const CustomRequest = (props: Props) => {
       };
 
       axios
-        .get(`http://localhost:8000/api/custom-approvers/${userId}`, {
+        .get(`http://122.53.61.91:6002/api/custom-approvers/${userId}`, {
           headers,
         })
         .then(async (response) => {
@@ -267,7 +267,7 @@ const CustomRequest = (props: Props) => {
             for (let notedById of notedByArray) {
          
               await axios
-                .get(`http://localhost:8000/api/approvers/${notedById}`, {
+                .get(`http://122.53.61.91:6002/api/approvers/${notedById}`, {
                   headers,
                 })
                 .then((response) => {
@@ -281,7 +281,7 @@ const CustomRequest = (props: Props) => {
             // Fetch details for approved_by
             for (let approvedById of approvedByArray) {
               await axios
-                .get(`http://localhost:8000/api/approvers/${approvedById}`, {
+                .get(`http://122.53.61.91:6002/api/approvers/${approvedById}`, {
                   headers,
                 })
                 .then((response) => {
@@ -437,10 +437,6 @@ const CustomRequest = (props: Props) => {
       name: "Modify",
       cell: (row: Record) => (
         <div className="flex space-x-2 ">
-          <PencilSquareIcon
-            className="text-primary size-8 cursor-pointer "
-            onClick={() => editModalShow(row)}
-          />
          
           <TrashIcon
             className="text-[#A30D11] size-8 cursor-pointer"

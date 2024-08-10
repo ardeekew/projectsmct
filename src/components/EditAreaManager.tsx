@@ -81,7 +81,7 @@ const EditAreaManager = ({
         };
 
         const response = await axios.get(
-          `http://localhost:8000/api/view-area-manager/${selectedUser.id}`,
+          `http://122.53.61.91:6002/api/view-area-manager/${selectedUser.id}`,
           {
             headers,
           }
@@ -119,7 +119,7 @@ const EditAreaManager = ({
         };
 
         const response = await axios.get(
-          `http://localhost:8000/api/area-manager/${areaManagerId}`, // Replace with your API endpoint to fetch area manager data
+          `http://122.53.61.91:6002/api/area-manager/${areaManagerId}`, // Replace with your API endpoint to fetch area manager data
           {
             headers,
           }
@@ -157,7 +157,7 @@ const EditAreaManager = ({
         };
 
         const response = await axios.get(
-          `http://localhost:8000/api/view-branch`,
+          `http://122.53.61.91:6002/api/view-branch`,
           {
             headers,
           }
@@ -215,7 +215,7 @@ const EditAreaManager = ({
         
         console.log('ID SELECT', selectedUser.user_id);
         const response = await axios.post(
-          `http://localhost:8000/api/update-area-manager/${selectedUser.user_id}`,
+          `http://122.53.61.91:6002/api/update-area-manager/${selectedUser.user_id}`,
           putData,
           {
             headers,

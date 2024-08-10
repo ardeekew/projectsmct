@@ -39,12 +39,12 @@ const schema = z.object({
   userName: z.string().nonempty("Username is required"),
   position: z.string().nonempty("Position is required"),
 });
-const adminOptions=[
-  {label:"", value:""},
-  {label:"Admin", value:"Admin"},
-  {label:"User", value:"User"},
-  {label:"Approver", value:"approver"},
-]
+const adminOptions = [
+  { label: "", value: "" },
+  { label: "Admin", value: "Admin" },
+  { label: "User", value: "User" },
+  { label: "Approver", value: "approver" },
+];
 const roleOptions = [
   { label: "", value: "" },
   { label: "Accounting Clerk", value: "Accounting Clerk" },
@@ -77,10 +77,9 @@ const roleOptions = [
   { label: "User", value: "User" },
 ];
 
-
 const pinputStyle =
   "font-medium border-2 border-black rounded-[12px] p-2 w-full";
-const baseUrl = "http://localhost:8000/storage/profile_pictures/";
+const baseUrl = "http://122.53.61.91:6002/storage/profile_pictures/";
 const UpdateInformation = () => {
   const signatureRef = useRef<SignatureCanvas>(null);
   const {
@@ -116,44 +115,45 @@ const UpdateInformation = () => {
   const [newProfilePic, setNewProfilePic] = useState<File | null>(null);
   const token = localStorage.getItem("token");
   const [branchList, setBranchList] = useState<
-  { id: number; branch_code: string }[]
->([]);
+    { id: number; branch_code: string; branch: string }[]
+  >([]);
 
-useEffect(() => {
-  const fetchBranchData = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        console.error("Token is missing");
-        return;
-      }
-
-      const headers = {
-        Authorization: `Bearer ${token}`,
-      };
-
-      const response = await axios.get(
-        `http://localhost:8000/api/view-branch`,
-        {
-          headers,
+  useEffect(() => {
+    const fetchBranchData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          console.error("Token is missing");
+          return;
         }
-      );
-      const branches = response.data.data;
-      // Assuming response.data.data is the array of branches
-      const branchOptions = branches.map(
-        (branch: { id: number; branch_code: string }) => ({
-          id: branch.id,
-          branch_code: branch.branch_code,
-        })
-      );
-      setBranchList(branchOptions);
-    } catch (error) {
-      console.error("Error fetching branch data:", error);
-    }
-  };
 
-  fetchBranchData();
-}, []);
+        const headers = {
+          Authorization: `Bearer ${token}`,
+        };
+
+        const response = await axios.get(
+          `http://122.53.61.91:6002/api/view-branch`,
+          {
+            headers,
+          }
+        );
+        const branches = response.data.data;
+        // Assuming response.data.data is the array of branches
+        const branchOptions = branches.map(
+          (branch: { id: number; branch_code: string; branch: string }) => ({
+            id: branch.id,
+            branch_code: branch.branch_code,
+            branch: branch.branch,
+          })
+        );
+        setBranchList(branchOptions);
+      } catch (error) {
+        console.error("Error fetching branch data:", error);
+      }
+    };
+
+    fetchBranchData();
+  }, []);
 
   useEffect(() => {
     const fetchUserInformation = async () => {
@@ -165,7 +165,7 @@ useEffect(() => {
         }
 
         const response = await axios.get(
-          `http://localhost:8000/api/view-user/${id}`,
+          `http://122.53.61.91:6002/api/view-user/${id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -206,7 +206,7 @@ useEffect(() => {
   const profilePictureUrl = newProfilePic
     ? URL.createObjectURL(newProfilePic) // Create a temporary URL for the new profile picture
     : user?.profile_picture
-    ? `http://localhost:8000/storage/${user.profile_picture.replace(
+    ? `http://122.53.61.91:6002/storage/${user.profile_picture.replace(
         /\\/g,
         "/"
       )}`
@@ -223,30 +223,38 @@ useEffect(() => {
   console.log(errors);
   const onSubmit: SubmitHandler<User> = async (data) => {
     console.log("Form Data Submitted:", data); // Log form data
-  
+
     try {
       setSubmitting(true);
-  
+
       // Get current values (original values should be stored somewhere)
       const originalBranchCode = user?.branch_code; // Replace with actual way to get original value
       const originalBranch = user?.branch; // Replace with actual way to get original value
-  
+
       // Ensure required fields are provided
-      if (!data.firstName || !data.lastName || !data.email || !data.contact || !data.userName || !data.position || !data.role) {
+      if (
+        !data.firstName ||
+        !data.lastName ||
+        !data.email ||
+        !data.contact ||
+        !data.userName ||
+        !data.position ||
+        !data.role
+      ) {
         setErrorMessage("Please fill out all required fields.");
         setSubmitting(false);
         return;
       }
-  
+
       const token = localStorage.getItem("token");
       const id = localStorage.getItem("id");
-  
+
       if (!token || !id) {
         console.error("Token or ID is missing");
         setSubmitting(false);
         return;
       }
-  
+
       const formData = new FormData();
       formData.append("firstName", data.firstName);
       formData.append("lastName", data.lastName);
@@ -255,23 +263,26 @@ useEffect(() => {
       formData.append("userName", data.userName);
       formData.append("position", data.position);
       formData.append("role", data.role);
-  
+
       // Include branch_code and branch only if they are updated
-      formData.append("branch_code", data.branch_code || originalBranchCode || "");
+      formData.append(
+        "branch_code",
+        data.branch_code || originalBranchCode || ""
+      );
       formData.append("branch", data.branch || originalBranch || "");
-  
+
       // Ensure profile picture is a File object before appending
       if (newProfilePic) {
         formData.append("profile_picture", newProfilePic);
       }
-  
+
       console.log("FormData entries:");
       for (let [key, value] of formData.entries()) {
         console.log(`${key}: ${value}`);
       }
-  
+
       const response = await axios.post(
-        `http://localhost:8000/api/update-profile/${id}`,
+        `http://122.53.61.91:6002/api/update-profile/${id}`,
         formData,
         {
           headers: {
@@ -280,7 +291,7 @@ useEffect(() => {
           },
         }
       );
-  
+
       console.log("User information updated successfully:", response.data);
       setSubmitting(false);
       setShowSuccessModal(true);
@@ -293,52 +304,21 @@ useEffect(() => {
       setShowSuccessModal(true);
     }
   };
-  
 
-  const handleBranchCodeChange = (selectedBranchCode: string) => {
-    // Define branch code categories and their corresponding names
-    const strongMotocentrumCodes = [
-      "AKLA", "ALEN", "ALIC", "ANTI", "ANTIP", "BANTA", "BAYB", "BINAN", "BOHK", "BOHL", "CAGL", "CALAP", 
-      "CALAP2", "CALI", "CARMB", "CARMO", "CARS", "CATAR", "DASMA", "DIPL", "FAMY", "GUIN", "GUIN2", "JAGN", 
-      "LIPA", "LOAY", "MADRI", "MALA", "MANG", "MANL", "MANP", "MOLS", "NAIC", "OZAL", "PAGS", "SAGBA", "SALA", 
-      "SANJ", "SANP", "SDAV", "SDIP", "SARG", "SILA", "SLAP", "SLAS", "SLIL", "SMCT", "SROS", "TALI", "TANZ", 
-      "TANZ2", "TRINI2", "TUBI", "VALEN", "YATI", "ZAML"
-    ];
-  
-    const desStrongMotorsCodes = [
-      "AURO", "BALA", "BUHA", "BULU", "CARMCDO", "DIGOS", "DONC", "DSMBL", "DSMC", "DSMCA", "DSMD", "DSMD2", 
-      "DSMM", "DSMPO", "DSMSO", "DSMTG", "DSMV", "ELSA", "ILIG", "JIMEDSM", "KABA2", "KATI", "LABA", "MARA", 
-      "MATI", "RIZA", "TACU", "TORI", "CERI", "VILLA", "VISA", "CARC", "CARC2", "CARMC2", "CATM", "COMPO", 
-      "DAAN", "DSMA", "DSMAO", "DSMB", "DSMBN", "DSMCN", "DSMDB", "DSMDM", "DSMDN", "DSMK", "DSMLN", "DSMP", 
-      "DSMSB", "DSMT", "DSMT2", "DSMTA", "ILOI", "LAHU", "LAPU 2", "MAND", "MAND2", "MEDE", "PARD", "PARD2", 
-      "REMI", "REMI2", "SANT", "TUBU", "UBAY", "BOGO", "DSML", "CALIN"
-    ];
-  
-    const desAppliancePlazaCodes = [
-      "ALAD", "AURD", "BALD", "BONI", "BUUD", "CALD", "CAMD", "DAPI", "DIPD", "DIPD2", "ILID", "IMED", 
-      "INIT2", "IPID", "JIME", "KABD", "LABD", "LILD", "MANO", "MARA2", "MARD", "MOLD", "MOLD2", "NUND2", 
-      "OROD", "OZAD", "PUTD", "RIZD", "SANM", "SIND", "SUCD", "TUBOD", "VITA"
-    ];
-  
-    // Determine the branch name based on selected branch code
-    let branchName = "Honda Des, Inc."; // Default branch name
-  
-    if (strongMotocentrumCodes.includes(selectedBranchCode)) {
-      branchName = "Strong Motocentrum, Inc.";
-    } else if (desStrongMotorsCodes.includes(selectedBranchCode)) {
-      branchName = "Des Strong Motors, Inc.";
-    } else if (desAppliancePlazaCodes.includes(selectedBranchCode)) {
-      branchName = "Des Appliance Plaza, Inc.";
-    } else if (selectedBranchCode === "HO") {
-      branchName = "Head Office";
+  const handleBranchCodeChange = (selectedBranchId: number) => {
+    const selectedBranch = branchList.find(
+      (branch) => branch.id === selectedBranchId
+    );
+    console.log("Selected Branch ID:", selectedBranchId);
+    console.log("Selected Branch:", selectedBranch);
+
+    if (selectedBranch) {
+      setValue("branch", selectedBranch.branch);
+    } else {
+      setValue("branch", "Honda Des, Inc.");
     }
-  
-    // Update the branch name and branch code in state
-    setNewBranchName(branchName);
-    setValue("branch_code", selectedBranchCode);
-    setValue("branch", branchName);
   };
-  
+
   console.log(newBranchName);
   console.log(newBranch);
   const handleClear = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -381,7 +361,7 @@ useEffect(() => {
       try {
         // Send the data URL to the backend API
         const response = await axios.post(
-          `http://localhost:8000/api/update-signature/${id}`, // Ensure the URL is correct
+          `http://122.53.61.91:6002/api/update-signature/${id}`, // Ensure the URL is correct
           { signature: signatureDataURL },
           {
             headers: {
@@ -418,7 +398,6 @@ useEffect(() => {
                 height={180}
                 width={180}
                 src={profilePictureUrl}
-              
               />
               <div className="flex flex-col ml-4 mt-4 ">
                 <h1 className="font-bold text-lg md:text-[20px] text-left">
@@ -528,22 +507,23 @@ useEffect(() => {
                             {...field}
                             className={`${pinputStyle}`}
                             value={field.value}
-                            onChange={(e) =>
-                              handleBranchCodeChange(e.target.value)
-                            }
+                            onChange={(e) => {
+                              field.onChange(e);
+                              handleBranchCodeChange(Number(e.target.value));
+                            }}
                           >
-                           <option value="">Select branch</option>
-                        {branchList.length > 0 ? (
-                          branchList.map((branch) => (
-                            <option key={branch.id} value={branch.id}>
-                              {branch.branch_code}
-                            </option>
-                          ))
-                        ) : (
-                          <option value="" disabled>
-                            No branch codes available
-                          </option>
-                        )}
+                            <option value="">Select branch</option>
+                            {branchList.length > 0 ? (
+                              branchList.map((branch) => (
+                                <option key={branch.id} value={branch.id}>
+                                  {branch.branch_code}
+                                </option>
+                              ))
+                            ) : (
+                              <option value="" disabled>
+                                No branch codes available
+                              </option>
+                            )}
                           </select>
                         )}
                       />
@@ -556,11 +536,17 @@ useEffect(() => {
                     </div>
                     <div>
                       <p className="text-gray-400">Branch</p>
-                      <input
-                        className={`${pinputStyle}`}
-                        value={newBranchName}
-                        onChange={(e) => setNewBranchName(e.target.value)}
-                        readOnly
+                      <Controller
+                        name="branch"
+                        control={control}
+                        defaultValue={newBranchName}
+                        render={({ field }) => (
+                          <input
+                            {...field}
+                            readOnly
+                            className={`${pinputStyle}`}
+                          />
+                        )}
                       />
                       {errorMessage && (
                         <p className="text-red-500">{errorMessage}</p>
@@ -605,7 +591,6 @@ useEffect(() => {
                               field.onChange(e);
                               setNewUserName(e.target.value);
                             }}
-                          
                           />
                         )}
                       />
@@ -659,7 +644,6 @@ useEffect(() => {
                               field.onChange(e);
                               setNewUserName(e.target.value);
                             }}
-                          
                           />
                         )}
                       />

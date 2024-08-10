@@ -43,44 +43,45 @@ const EditUserModal = ({
   const [approvers, setApprovers] = useState<any[]>([]);
   const [name, setName] = useState<string>("");
   const [branchList, setBranchList] = useState<
-  { id: number; branch_code: string }[]
+  { id: number; branch_code: string; branch: string }[]
 >([]);
-console.log('selected',selectedUser);
-  useEffect(() => {
-    const fetchBranchData = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          console.error("Token is missing");
-          return;
-        }
 
-        const headers = {
-          Authorization: `Bearer ${token}`,
-        };
-
-        const response = await axios.get(
-          `http://localhost:8000/api/view-branch`,
-          {
-            headers,
-          }
-        );
-        const branches = response.data.data;
-        // Assuming response.data.data is the array of branches
-        const branchOptions = branches.map(
-          (branch: { id: number; branch_code: string }) => ({
-            id: branch.id,
-            branch_code: branch.branch_code,
-          })
-        );
-        setBranchList(branchOptions);
-      } catch (error) {
-        console.error("Error fetching branch data:", error);
+useEffect(() => {
+  const fetchBranchData = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("Token is missing");
+        return;
       }
-    };
 
-    fetchBranchData();
-  }, []);
+      const headers = {
+        Authorization: `Bearer ${token}`,
+      };
+
+      const response = await axios.get(
+        `http://122.53.61.91:6002/api/view-branch`,
+        {
+          headers,
+        }
+      );
+      const branches = response.data.data;
+      // Assuming response.data.data is the array of branches
+      const branchOptions = branches.map(
+        (branch: { id: number; branch_code: string; branch: string }) => ({
+          id: branch.id,
+          branch_code: branch.branch_code,
+          branch: branch.branch,
+        })
+      );
+      setBranchList(branchOptions);
+    } catch (error) {
+      console.error("Error fetching branch data:", error);
+    }
+  };
+
+  fetchBranchData();
+}, []);
 
   useEffect(() => {
     if (entityType === "Custom") {
@@ -89,7 +90,7 @@ console.log('selected',selectedUser);
         try {
           setLoading(true);
           const response = await axios.get(
-           `http://localhost:8000/api/view-approvers/${userId}`,
+           `http://122.53.61.91:6002/api/view-approvers/${userId}`,
             {
               headers: {
                 Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -169,187 +170,22 @@ console.log('selected',selectedUser);
     }
     editModalClose();
   };
-  const handleBranchCodeChange = (selectedBranchCode: string) => {
-    setEditedBranchCode(selectedBranchCode);
+  
+  const handleBranchCodeChange = (selectedBranchId: number) => {
+    const selectedBranch = branchList.find(
+      (branch) => branch.id === selectedBranchId
+    );
+    setEditedBranchCode(selectedBranch?.id.toString() || "");
+    console.log("Selected Branch ID:", selectedBranchId);
+    console.log("Selected Branch:", selectedBranch);
 
-    if (
-      [
-        "AKLA",
-        "ALEN",
-        "ALIC",
-        "ANTI",
-        "ANTIP",
-        "BANTA",
-        "BAYB",
-        "BINAN",
-        "BOHK",
-        "BOHL",
-        "CAGL",
-        "CALAP",
-        "CALAP2",
-        "CALI",
-        "CARMB",
-        "CARMO",
-        "CARS",
-        "CATAR",
-        "DASMA",
-        "DIPL",
-        "FAMY",
-        "GUIN",
-        "GUIN2",
-        "JAGN",
-        "LIPA",
-        "LOAY",
-        "MADRI",
-        "MALA",
-        "MANG",
-        "MANL",
-        "MANP",
-        "MOLS",
-        "NAIC",
-        "OZAL",
-        "PAGS",
-        "SAGBA",
-        "SALA",
-        "SANJ",
-        "SANP",
-        "SDAV",
-        "SDIP",
-        "SARG",
-        "SILA",
-        "SLAP",
-        "SLAS",
-        "SLIL",
-        "SMCT",
-        "SROS",
-        "TALI",
-        "TANZ",
-        "TANZ2",
-        "TRINI2",
-        "TUBI",
-        "VALEN",
-        "YATI",
-        "ZAML",
-      ].includes(selectedBranchCode)
-    ) {
-      setEditedBranch("Strong Motocentrum, Inc.");
-    } else if (
-      [
-        "AURO",
-        "BALA",
-        "BUHA",
-        "BULU",
-        "CARMCDO",
-        "DIGOS",
-        "DONC",
-        "DSMBL",
-        "DSMC",
-        "DSMCA",
-        "DSMD",
-        "DSMD2",
-        "DSMM",
-        "DSMPO",
-        "DSMSO",
-        "DSMTG",
-        "DSMV",
-        "ELSA",
-        "ILIG",
-        "JIMEDSM",
-        "KABA2",
-        "KATI",
-        "LABA",
-        "MARA",
-        "MATI",
-        "RIZA",
-        "TACU",
-        "TORI",
-        "CERI",
-        "VILLA",
-        "VISA",
-        "CARC",
-        "CARC2",
-        "CARMC2",
-        "CATM",
-        "COMPO",
-        "DAAN",
-        "DSMA",
-        "DSMAO",
-        "DSMB",
-        "DSMBN",
-        "DSMCN",
-        "DSMDB",
-        "DSMDM",
-        "DSMDN",
-        "DSMK",
-        "DSMLN",
-        "DSMP",
-        "DSMSB",
-        "DSMT",
-        "DSMT2",
-        "DSMTA",
-        "ILOI",
-        "LAHU",
-        "LAPU 2",
-        "MAND",
-        "MAND2",
-        "MEDE",
-        "PARD",
-        "PARD2",
-        "REMI",
-        "REMI2",
-        "SANT",
-        "TUBU",
-        "UBAY",
-        "BOGO",
-        "DSML",
-        "CALIN",
-      ].includes(selectedBranchCode)
-    ) {
-      setEditedBranch("Des Strong Motors, Inc.");
-    } else if (
-      [
-        "ALAD",
-        "AURD",
-        "BALD",
-        "BONI",
-        "BUUD",
-        "CALD",
-        "CAMD",
-        "DAPI",
-        "DIPD",
-        "DIPD2",
-        "ILID",
-        "IMED",
-        "INIT2",
-        "IPID",
-        "JIME",
-        "KABD",
-        "LABD",
-        "LILD",
-        "MANO",
-        "MARA2",
-        "MARD",
-        "MOLD",
-        "MOLD2",
-        "NUND2",
-        "OROD",
-        "OZAD",
-        "PUTD",
-        "RIZD",
-        "SANM",
-        "SIND",
-        "SUCD",
-        "TUBOD",
-        "VITA",
-      ].includes(selectedBranchCode)
-    ) {
-      setEditedBranch("Des Appliance Plaza, Inc.");
-    } else if (["HO"].includes(selectedBranchCode)) {
-      setEditedBranch("Head Office");
+    if (selectedBranch) {
+      setEditedBranch(selectedBranch.id.toString());
     } else {
       setEditedBranch("Honda Des, Inc.");
     }
-  };
+};
+
 
 
 
@@ -445,7 +281,7 @@ console.log('selected',selectedUser);
       let response;
       if (entityType === "Branch") {
         response = await axios.post(
-          `http://localhost:8000/api/update-branch/${selectedUser.id}`,
+          `http://122.53.61.91:6002/api/update-branch/${selectedUser.id}`,
           updatedData,
           {
             headers: {
@@ -457,7 +293,7 @@ console.log('selected',selectedUser);
         console.log("Response from server (Branch):", response.data);
       } else if (entityType === "User") {
         response = await axios.post(
-          `http://localhost:8000/api/update-profile/${selectedUser.id}`,
+          `http://122.53.61.91:6002/api/update-profile/${selectedUser.id}`,
           updatedData,
           {
             headers: {
@@ -472,7 +308,7 @@ console.log('selected',selectedUser);
 
        
           const response = await axios.post(
-            `http://localhost:8000/api/update-approvers/${selectedUser.id}`,
+            `http://122.53.61.91:6002/api/update-approvers/${selectedUser.id}`,
             {
               approved_by: approvedBy,
               noted_by: notedBy,
@@ -575,7 +411,7 @@ console.log('selected',selectedUser);
     { label: "Admin", value: "Admin" },
   ];
 
-  console.log("selectedUser", selectedUser);
+
 
   return (
     <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 flex-col">
@@ -610,20 +446,16 @@ console.log('selected',selectedUser);
                 <select
                   className={`${inputStyle}`}
                   value={editedBranchCode}
-                  onChange={(e) => handleBranchCodeChange(e.target.value)}
+                  onChange={(e) => handleBranchCodeChange(Number(e.target.value))}
                 >
                   <option value="">Select branch</option>
-                        {branchList.length > 0 ? (
-                          branchList.map((branch) => (
+                      
+                          {branchList.map((branch) => (
                             <option key={branch.id} value={branch.id}>
                               {branch.branch_code}
                             </option>
-                          ))
-                        ) : (
-                          <option value="" disabled>
-                            No branch codes available
-                          </option>
-                        )}
+                          ))}
+                     
                 </select>
               ) : (
                 <>
@@ -646,7 +478,8 @@ console.log('selected',selectedUser);
                       readOnly
                     />
                   ) : field === "Branch" ? (
-                    <select className={`${inputStyle}`} value={editedBranch}>
+                    <select className={`${inputStyle}`} 
+                    value={editedBranch}>
                       {" "}
                       <option value="">Select branch</option>
                       {branchList.length > 0 ? (

@@ -93,6 +93,37 @@ const ViewPurchaseModal: React.FC<Props> = ({
   const [newAttachments, setNewAttachments] = useState<File[]>([]);
   const [originalAttachments, setOriginalAttachments] = useState<string[]>([]);
   const [removedAttachments, setRemovedAttachments] = useState<(string | number)[]>([]);
+  const [branchList, setBranchList] = useState<any[]>([]);
+  const [branchMap, setBranchMap] = useState<Map<number, string>>(new Map());
+
+  useEffect(() => {
+    const fetchBranchData = async () => {
+      try {
+        const response = await axios.get(
+          `http://122.53.61.91:6002/api/view-branch`
+        );
+        const branches = response.data.data;
+
+        // Create a mapping of id to branch_name
+        const branchMapping = new Map<number, string>(
+          branches.map((branch: { id: number; branch_code: string }) => [
+            branch.id,
+            branch.branch_code,
+          ])
+        );
+
+        setBranchList(branches);
+        setBranchMap(branchMapping);
+
+        console.log("Branch Mapping:", branchMapping);
+      } catch (error) {
+        console.error("Error fetching branch data:", error);
+      }
+    };
+
+    fetchBranchData();
+  }, []);
+  
   useEffect(() => {
     const currentUserId = localStorage.getItem("id");
     const attachments = JSON.parse(record.attachment);
@@ -117,7 +148,7 @@ const ViewPurchaseModal: React.FC<Props> = ({
           // Construct file URLs
           const fileUrls = parsedAttachment.map(
             (filePath) =>
-              `http://localhost:8000/storage/${filePath.replace(/\\/g, "/")}`
+              `http://122.53.61.91:6002/storage/${filePath.replace(/\\/g, "/")}`
           );
           setAttachmentUrl(fileUrls);
         }
@@ -135,7 +166,7 @@ const ViewPurchaseModal: React.FC<Props> = ({
       }
 
       const response = await axios.get(
-        `http://localhost:8000/api/view-user/${id}`,
+        `http://122.53.61.91:6002/api/view-user/${id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -237,7 +268,7 @@ const ViewPurchaseModal: React.FC<Props> = ({
       }
 
       const response = await axios.get(
-        `http://localhost:8000/api/request-forms/${id}`,
+        `http://122.53.61.91:6002/api/request-forms/${id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -266,7 +297,7 @@ const ViewPurchaseModal: React.FC<Props> = ({
       }
 
       const response = await axios.get(
-        `http://localhost:8000/api/custom-approvers/${userId}`,
+        `http://122.53.61.91:6002/api/custom-approvers/${userId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -363,7 +394,7 @@ const ViewPurchaseModal: React.FC<Props> = ({
       });
     
       const response = await axios.post(
-        `http://localhost:8000/api/update-request/${record.id}`,
+        `http://122.53.61.91:6002/api/update-request/${record.id}`,
         formData,
         {
           headers: {
@@ -456,12 +487,15 @@ const ViewPurchaseModal: React.FC<Props> = ({
           </div>
 
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2 w-full">
-            <div className="w-full">
-              <h1>Branches</h1>
+          <div className="w-full">
+              <h1>Branch</h1>
               <input
                 type="text"
-                className="border border-black rounded-md p-1 mt-2 w-full "
-                value={record.form_data[0].branch}
+                className="border border-black rounded-md p-1 mt-2 w-full"
+                value={
+                  branchMap.get(parseInt(record.form_data[0].branch, 10)) ||
+                  "Unknown"
+                }
                 readOnly
               />
             </div>

@@ -74,171 +74,6 @@ const schema = z
     path: ["confirmPassword"],
   });
 
-const branchOptions = [
-  "",
-  "AKLA",
-  "ALEN",
-  "ALAH",
-  "ALIC",
-  "ANTI",
-  "ANTIP",
-  "AURD",
-  "AURH",
-  "AURO",
-  "BALA",
-  "BALAM",
-  "BALD",
-  "BANTA",
-  "BAYB",
-  "BINAN",
-  "BOGO",
-  "BOHK",
-  "BOHL",
-  "BONI",
-  "BUUD",
-  "BUUH",
-  "BULU",
-  "CALA",
-  "CALAP",
-  "CALAP2",
-  "CALD",
-  "CALH",
-  "CALI",
-  "CARC",
-  "CARC2",
-  "CARMC",
-  "CARMC2",
-  "CARMCDO",
-  "CARMO",
-  "CATAR",
-  "CATM",
-  "COMPO",
-  "CAGL",
-  "CAMD",
-  "CAMH",
-  "DAAN",
-  "DASMA",
-  "DAPI",
-  "DATH",
-  "DIGOS",
-  "DIPD",
-  "DIPD2",
-  "DIPL",
-  "DSMA",
-  "DSMAO",
-  "DSMCA",
-  "DSMB",
-  "DSMBL",
-  "DSMBN",
-  "DSMDB",
-  "DSMD",
-  "DSMD2",
-  "DSMDN",
-  "DSMC",
-  "DSMCN",
-  "DSMM",
-  "DSMP",
-  "DSMSB",
-  "DSMSO",
-  "DSMT",
-  "DSMT2",
-  "DSMTA",
-  "DSMTG",
-  "DSMDM",
-  "ELSA",
-  "FAMY",
-  "GUSA",
-  "GUIN",
-  "GUIN2",
-  "HO",
-  "ILOI",
-  "ILID",
-  "ILIG",
-  "IMED",
-  "INIT",
-  "INAB",
-  "IPIH",
-  "IPID",
-  "JAGN",
-  "JIME",
-  "JIMEDSM",
-  "KABA",
-  "KABA2",
-  "KATI",
-  "LABA",
-  "LABD",
-  "LAHU",
-  "LAPU",
-  "LILD",
-  "LIPA",
-  "MADRI",
-  "MAND",
-  "MAND2",
-  "MANL",
-  "MANO",
-  "MANP",
-  "MANG",
-  "MARA",
-  "MARA2",
-  "MARD",
-  "MARH",
-  "MATI",
-  "MEDE",
-  "MIPU",
-  "MOLD",
-  "MOLD2",
-  "MOLS",
-  "NAIC",
-  "NUND2",
-  "OROD",
-  "OROH",
-  "OROH2",
-  "OZAD",
-  "OZAH",
-  "OZAL",
-  "PARD",
-  "PARD2",
-  "PARD3",
-  "PAGS",
-  "PUTD",
-  "REMI",
-  "REMI2",
-  "RIZA",
-  "RIZD",
-  "SALA",
-  "SANM",
-  "SANJ",
-  "SANP",
-  "SDAV",
-  "SDIP",
-  "SILA",
-  "SIND",
-  "SINDA",
-  "SLAP",
-  "SLIL",
-  "SMCT",
-  "SROS",
-  "SUCD",
-  "TACU",
-  "TALI",
-  "TANH",
-  "TANZ",
-  "TANZ2",
-  "TORI",
-  "TRINI",
-  "TRINI2",
-  "TUBI",
-  "TUBOD",
-  "TUBU",
-  "UBAY",
-  "UBAYMB",
-  "VETH",
-  "VILLA",
-  "VILLA2",
-  "VALEN",
-  "YATI",
-  "ZAML",
-];
 
 const fieldStyle = "flex flex-row gap-4";
 const headerStyle = "lg:text-lg text-base mb-2";
@@ -253,33 +88,23 @@ const Registration: React.FC = () => {
   const [signatureEmpty, setSignatureEmpty] = useState(false);
   const sigCanvasRef = useRef<SignatureCanvas | null>(null);
     const [branchList, setBranchList] = useState<
-      { id: number; branch_code: string }[]
+      { id: number; branch_code: string; branch: string }[]
     >([]);
   useEffect(() => {
     const fetchBranchData = async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          console.error("Token is missing");
-          return;
-        }
-
-        const headers = {
-          Authorization: `Bearer ${token}`,
-        };
-
-        const response = await axios.get(
-          `http://localhost:8000/api/view-branch`,
-          {
-            headers,
-          }
+      
+             const response = await axios.get(
+          `http://122.53.61.91:6002/api/view-branch`,
+          
         );
         const branches = response.data.data;
         // Assuming response.data.data is the array of branches
         const branchOptions = branches.map(
-          (branch: { id: number; branch_code: string }) => ({
+          (branch: { id: number; branch_code: string; branch: string }) => ({
             id: branch.id,
             branch_code: branch.branch_code,
+            branch: branch.branch,
           })
         );
         setBranchList(branchOptions);
@@ -319,186 +144,7 @@ const Registration: React.FC = () => {
     signature?.clear();
   };
   console.log("branchList", branchList);
-  const handleBranchCodeChange = (selectedBranchCode: string) => {
-    setValue("branchCode", selectedBranchCode);
-    if (
-      [
-        "AKLA",
-        "ALEN",
-        "ALIC",
-        "ANTI",
-        "ANTIP",
-        "BANTA",
-        "BAYB",
-        "BINAN",
-        "BOHK",
-        "BOHL",
-        "CAGL",
-        "CALAP",
-        "CALAP2",
-        "CALI",
-        "CARMB",
-        "CARMO",
-        "CARS",
-        "CATAR",
-        "DASMA",
-        "DIPL",
-        "FAMY",
-        "GUIN",
-        "GUIN2",
-        "JAGN",
-        "LIPA",
-        "LOAY",
-        "MADRI",
-        "MALA",
-        "MANG",
-        "MANL",
-        "MANP",
-        "MOLS",
-        "NAIC",
-        "OZAL",
-        "PAGS",
-        "SAGBA",
-        "SALA",
-        "SANJ",
-        "SANP",
-        "SDAV",
-        "SDIP",
-        "SARG",
-        "SILA",
-        "SLAP",
-        "SLAS",
-        "SLIL",
-        "SMCT",
-        "SROS",
-        "TALI",
-        "TANZ",
-        "TANZ2",
-        "TRINI2",
-        "TUBI",
-        "VALEN",
-        "YATI",
-        "ZAML",
-      ].includes(selectedBranchCode)
-    ) {
-      setValue("branch", "Strong Motocentrum, Inc.");
-    } else if (
-      [
-        "AURO",
-        "BALA",
-        "BUHA",
-        "BULU",
-        "CARMCDO",
-        "DIGOS",
-        "DONC",
-        "DSMBL",
-        "DSMC",
-        "DSMCA",
-        "DSMD",
-        "DSMD2",
-        "DSMM",
-        "DSMPO",
-        "DSMSO",
-        "DSMTG",
-        "DSMV",
-        "ELSA",
-        "ILIG",
-        "JIMEDSM",
-        "KABA2",
-        "KATI",
-        "LABA",
-        "MARA",
-        "MATI",
-        "RIZA",
-        "TACU",
-        "TORI",
-        "CERI",
-        "VILLA",
-        "VISA",
-        "CARC",
-        "CARC2",
-        "CARMC2",
-        "CATM",
-        "COMPO",
-        "DAAN",
-        "DSMA",
-        "DSMAO",
-        "DSMB",
-        "DSMBN",
-        "DSMCN",
-        "DSMDB",
-        "DSMDM",
-        "DSMDN",
-        "DSMK",
-        "DSMLN",
-        "DSMP",
-        "DSMSB",
-        "DSMT",
-        "DSMT2",
-        "DSMTA",
-        "ILOI",
-        "LAHU",
-        "LAPU 2",
-        "MAND",
-        "MAND2",
-        "MEDE",
-        "PARD",
-        "PARD2",
-        "REMI",
-        "REMI2",
-        "SANT",
-        "TUBU",
-        "UBAY",
-        "BOGO",
-        "DSML",
-        "CALIN",
-      ].includes(selectedBranchCode)
-    ) {
-      setValue("branch", "Des Strong Motors, Inc.");
-    } else if (
-      [
-        "ALAD",
-        "AURD",
-        "BALD",
-        "BONI",
-        "BUUD",
-        "CALD",
-        "CAMD",
-        "DAPI",
-        "DIPD",
-        "DIPD2",
-        "ILID",
-        "IMED",
-        "INIT2",
-        "IPID",
-        "JIME",
-        "KABD",
-        "LABD",
-        "LILD",
-        "MANO",
-        "MARA2",
-        "MARD",
-        "MOLD",
-        "MOLD2",
-        "NUND2",
-        "OROD",
-        "OZAD",
-        "PUTD",
-        "RIZD",
-        "SANM",
-        "SIND",
-        "SUCD",
-        "TUBOD",
-        "VITA",
-      ].includes(selectedBranchCode)
-    ) {
-      setValue("branch", "Des Appliance Plaza, Inc.");
-    } else if (["HO"].includes(selectedBranchCode)) {
-      setValue("branch", "Head Office");
-    } else {
-      setValue("branch", "Honda Des, Inc.");
-    }
-  };
+  
   const capitalizeWords = (str: string) => {
     return str.replace(
       /\b\w+/g,
@@ -520,7 +166,7 @@ const Registration: React.FC = () => {
 
       const signatureDataURL = signature?.toDataURL("image/png");
       console.log("signatureDataURL", signatureDataURL);
-      const response = await axios.post("http://localhost:8000/api/register", {
+      const response = await axios.post("http://122.53.61.91:6002/api/register", {
         email: data.email,
         password: data.password,
         userName: data.userName,
@@ -560,6 +206,22 @@ const Registration: React.FC = () => {
     submitData(data);
   };
 
+ const handleBranchCodeChange = (selectedBranchId: number) => {
+ 
+  const selectedBranch = branchList.find(
+    (branch) => branch.id === selectedBranchId
+  );
+  console.log("Selected Branch ID:", selectedBranchId); 
+  console.log("Selected Branch:", selectedBranch); 
+
+  if (selectedBranch) {
+
+    setValue("branch", selectedBranch.branch);
+  } else {
+  
+    setValue("branch", "Honda Des, Inc."); 
+  }
+};
   return (
     <div className="flex flex-col lg:flex-row items-center justify-center">
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
@@ -771,7 +433,7 @@ const Registration: React.FC = () => {
                         className="w-full p-2 lg:h-[56px] md:h-10 bg-gray-300 rounded-lg"
                         onChange={(e) => {
                           field.onChange(e);
-                          handleBranchCodeChange(e.target.value);
+                          handleBranchCodeChange(Number(e.target.value));
                         }}
                       >
                         <option value="">Select branch</option>

@@ -114,7 +114,7 @@ const CreateRefund = (props: Props) => {
       }
 
       const response = await axios.get(
-        `http://localhost:8000/api/custom-approvers/${id}`,
+        `http://122.53.61.91:6002/api/custom-approvers/${id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -243,7 +243,7 @@ const CreateRefund = (props: Props) => {
       logFormData(formData);
       // Perform the actual form submission
       const response = await axios.post(
-        "http://localhost:8000/api/create-request",
+        "http://122.53.61.91:6002/api/create-request",
         formData, // Use the formData stored in state
         {
           headers: {

@@ -126,7 +126,7 @@ const ViewRequestApprover = (props: Props) => {
       };
 
       axios
-        .get(`http://localhost:8000/api/view-request`, {
+        .get(`http://122.53.61.91:6002/api/view-request`, {
           headers,
         })
         .then((response) => {
@@ -183,7 +183,7 @@ const ViewRequestApprover = (props: Props) => {
       };
 
       axios
-        .get(`http://localhost:8000/api/view-request`, {
+        .get(`http://122.53.61.91:6002/api/view-request`, {
           headers,
         })
         .then((response) => {

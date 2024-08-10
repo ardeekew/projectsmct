@@ -100,7 +100,7 @@ const SetupApprover = (props: Props) => {
         };
 
         const response = await axios.get(
-          `http://localhost:8000/api/view-approvers`,
+          `http://122.53.61.91:6002/api/view-approvers`,
           {
             headers,
           }
@@ -142,7 +142,7 @@ const SetupApprover = (props: Props) => {
       };
 
       const response = await axios.get(
-        `http://localhost:8000/api/view-approvers`,
+        `http://122.53.61.91:6002/api/view-approvers`,
         {
           headers,
         }
@@ -253,7 +253,7 @@ const SetupApprover = (props: Props) => {
 
       // Send PUT request to update roles
       const response = await axios.put(
-        `http://localhost:8000/api/update-role`, // Endpoint does not need user_id in URL
+        `http://122.53.61.91:6002/api/update-role`, // Endpoint does not need user_id in URL
         data,
         { headers }
       );

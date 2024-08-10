@@ -54,6 +54,7 @@ type MyFormData = {
   name: string;
   signature: string;
   attachment: string;
+  branch_id: number;
 };
 
 type MyItem = {
@@ -110,7 +111,37 @@ const Request = (props: Props) => {
   const [selectedRecord, setSelectedRecord] = useState<Record | null>(null);
   const [sortOrder, setSortOrder] = useState("desc");
   const userId = localStorage.getItem("id");
-
+  const [branchList, setBranchList] = useState<any[]>([]);
+  const [branchMap, setBranchMap] = useState<Map<number, string>>(new Map());
+  
+  useEffect(() => {
+    const fetchBranchData = async () => {
+      try {
+        const response = await axios.get(
+          `http://122.53.61.91:6002/api/view-branch`
+        );
+        const branches = response.data.data;
+  
+        // Create a mapping of id to branch_code
+        const branchMapping = new Map<number, string>(
+          branches.map((branch: { id: number; branch_code: string }) => [
+            branch.id,
+            branch.branch_code
+          ])
+        );
+  
+        setBranchList(branches);
+        setBranchMap(branchMapping);
+  
+        console.log("Branch Mapping:", branchMapping);
+      } catch (error) {
+        console.error("Error fetching branch data:", error);
+      }
+    };
+  
+    fetchBranchData();
+  }, []);
+  
 
   useEffect(() => {
     if (userId) {
@@ -127,7 +158,7 @@ const Request = (props: Props) => {
       };
 
       axios
-        .get(`http://localhost:8000/api/view-request`, {
+        .get(`http://122.53.61.91:6002/api/view-request`, {
           headers,
         })
         .then((response) => {
@@ -184,7 +215,7 @@ const Request = (props: Props) => {
       };
 
       axios
-        .get(`http://localhost:8000/api/view-request`, {
+        .get(`http://122.53.61.91:6002/api/view-request`, {
           headers,
         })
         .then((response) => {
@@ -224,7 +255,11 @@ const Request = (props: Props) => {
     },
     {
       name: "Branch",
-      selector: (row: Record) => row.form_data[0].branch,
+      selector: (row: Record) => {
+      
+        const branchId = parseInt(row.form_data[0].branch, 10);
+        return branchMap.get(branchId) || "Unknown";
+      },
     },
     {
       name: "Status",
@@ -240,8 +275,7 @@ const Request = (props: Props) => {
               : row.status.trim() === "Disapproved"
               ? "bg-pink"
               : row.status.trim() === "Ongoing"
-               ? "bg-primary"
-              
+              ? "bg-primary"
               : ""
           } rounded-lg py-1 w-full md:w-full xl:w-3/4 2xl:w-2/4  text-center text-white`}
         >

@@ -74,7 +74,7 @@ const AddApproverModal = ({
         };
   
         const response = await axios.get(
-          `http://localhost:8000/api/view-users`,
+          `http://122.53.61.91:6002/api/view-users`,
           {
             headers,
           }
@@ -141,7 +141,7 @@ const AddApproverModal = ({
 
         // Send PUT request to update roles
         const response = await axios.put(
-            `http://localhost:8000/api/update-role`, // Assuming your API endpoint structure (no IDs in the URL)
+            `http://122.53.61.91:6002/api/update-role`, // Assuming your API endpoint structure (no IDs in the URL)
             data,
             { headers }
         );

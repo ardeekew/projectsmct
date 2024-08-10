@@ -129,7 +129,7 @@ const ApproversStock: React.FC<Props> = ({
         // Handle the parsed attachment
         const fileUrls = parsedAttachment.map(
           (filePath: string) =>
-            `http://localhost:8000/storage/${filePath.replace(/\\/g, "/")}`
+            `http://122.53.61.91:6002/storage/${filePath.replace(/\\/g, "/")}`
         );
         setAttachmentUrl(fileUrls);
       } else {
@@ -151,7 +151,7 @@ const ApproversStock: React.FC<Props> = ({
       }
 
       const response = await axios.get(
-        `http://localhost:8000/api/view-user/${id}`,
+        `http://122.53.61.91:6002/api/view-user/${id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -176,14 +176,14 @@ const ApproversStock: React.FC<Props> = ({
       }
 
       const response = await axios.get(
-        `http://localhost:8000/api/request-forms/${id}`,
+        `http://122.53.61.91:6002/api/request-forms/${id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
-
+      console.log('approvers', response.data);
       const { notedby, approvedby } = response.data;
       setNotedBy(notedby);
       setApprovedBy(approvedby);
@@ -226,11 +226,11 @@ const ApproversStock: React.FC<Props> = ({
       console.log("Request Data:", requestData);
       console.log(
         "API Endpoint:",
-        `http://localhost:8000/api/request-forms/${record.id}/process`
+        `http://122.53.61.91:6002/api/request-forms/${record.id}/process`
       );
 
       const response = await axios.put(
-        `http://localhost:8000/api/request-forms/${record.id}/process`,
+        `http://122.53.61.91:6002/api/request-forms/${record.id}/process`,
         requestData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -268,7 +268,7 @@ const ApproversStock: React.FC<Props> = ({
       };
 
       const response = await axios.put(
-        `http://localhost:8000/api/request-forms/${record.id}/process`,
+        `http://122.53.61.91:6002/api/request-forms/${record.id}/process`,
         requestData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -494,7 +494,7 @@ const ApproversStock: React.FC<Props> = ({
                       >
                         <div className="flex flex-col items-center justify-center text-center">
                           <p className="relative inline-block uppercase font-medium text-center pt-6">
-                            {user.status.toLowerCase() === "approved" && (
+                            {user.status === "Approved" && (
                               <img
                                 className="absolute top-2"
                                 src={user.signature}
@@ -525,7 +525,7 @@ const ApproversStock: React.FC<Props> = ({
                       >
                         <div className="flex flex-col items-center justify-center text-center">
                           <p className="relative inline-block uppercase font-medium text-center pt-6">
-                            {user.status.toLowerCase() === "approved" && (
+                            {user.status === "Approved" && (
                               <img
                                 className="absolute top-2"
                                 src={user.signature}

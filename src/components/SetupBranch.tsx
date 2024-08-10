@@ -77,7 +77,7 @@ const SetupBranch = (props: Props) => {
           Authorization: `Bearer ${token}`,
         };
 
-        const response = await axios.get(`http://localhost:8000/api/view-branch`, {
+        const response = await axios.get(`http://122.53.61.91:6002/api/view-branch`, {
           headers,
         });
 
@@ -122,7 +122,7 @@ const SetupBranch = (props: Props) => {
 console.log('selectedUser', selectedUser?.id);
         // Send PUT request to update user's role
         const response = await axios.delete(
-            `http://localhost:8000/api/delete-branch/${selectedUser?.id}`,
+            `http://122.53.61.91:6002/api/delete-branch/${selectedUser?.id}`,
           
             { headers }
         );
@@ -239,7 +239,7 @@ console.log('selectedUser', selectedUser?.id);
         Authorization: `Bearer ${token}`,
       };
 
-      const response = await axios.get(`http://localhost:8000/api/view-branch`, {
+      const response = await axios.get(`http://122.53.61.91:6002/api/view-branch`, {
         headers,
       });
 

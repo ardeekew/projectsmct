@@ -85,7 +85,7 @@ console.log(notifications)
 
     try {
       const response = await axios.put(
-        `http://localhost:8000/api/notifications/${notifId}/mark-as-read`
+        `http://122.53.61.91:6002/api/notifications/${notifId}/mark-as-read`
       );
 
       if (response.data.success) {
@@ -117,7 +117,7 @@ console.log(notifications)
       }
       try {
         const response = await axios.get(
-          `http://localhost:8000/api/view-user/${id}`
+          `http://122.53.61.91:6002/api/view-user/${id}`
         );
 
         if (response.data && response.data.data) {
@@ -147,7 +147,7 @@ console.log(notifications)
 
       try {
         const response = await axios.get(
-          `http://localhost:8000/api/notifications/${id}/all`
+          `http://122.53.61.91:6002/api/notifications/${id}/all`
         );
         const notificationsData = response.data.notifications;
         setNotifications(notificationsData);
@@ -206,7 +206,7 @@ console.log(notifications)
   });
 
   const profilePictureUrl = profilePicture
-    ? `http://localhost:8000/storage/${profilePicture.replace(/\\/g, "/")}`
+    ? `http://122.53.61.91:6002/storage/${profilePicture.replace(/\\/g, "/")}`
     : Avatar;
 
   return (

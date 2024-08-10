@@ -58,7 +58,7 @@ const AddBranchModal = ({
         branch_code: data.branchCode,
       };
       const response = await axios.post(
-        "http://localhost:8000/api/add-branch",
+        "http://122.53.61.91:6002/api/add-branch",
         requestData,
         { headers }
       );
@@ -163,7 +163,7 @@ const AddBranchModal = ({
   
         try {
           const response = await axios.post(
-            "http://localhost:8000/api/add-branch",
+            "http://122.53.61.91:6002/api/add-branch",
             requestData,
             { headers }
           );
