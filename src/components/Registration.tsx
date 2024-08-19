@@ -74,7 +74,6 @@ const schema = z
     path: ["confirmPassword"],
   });
 
-
 const fieldStyle = "flex flex-row gap-4";
 const headerStyle = "lg:text-lg text-base mb-2";
 const inputStyle = "w-full  lg:h-[56px] md:h-10  p-2 bg-gray-300 rounded-lg";
@@ -87,16 +86,15 @@ const Registration: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [signatureEmpty, setSignatureEmpty] = useState(false);
   const sigCanvasRef = useRef<SignatureCanvas | null>(null);
-    const [branchList, setBranchList] = useState<
-      { id: number; branch_code: string; branch: string }[]
-    >([]);
+  const [errorMessage, setErrorMessage] = useState<string[]>([]);
+  const [branchList, setBranchList] = useState<
+    { id: number; branch_code: string; branch: string }[]
+  >([]);
   useEffect(() => {
     const fetchBranchData = async () => {
       try {
-      
-             const response = await axios.get(
-          `http://122.53.61.91:6002/api/view-branch`,
-          
+        const response = await axios.get(
+          `http://122.53.61.91:6002/api/view-branch`
         );
         const branches = response.data.data;
         // Assuming response.data.data is the array of branches
@@ -143,8 +141,7 @@ const Registration: React.FC = () => {
     event.preventDefault();
     signature?.clear();
   };
-  console.log("branchList", branchList);
-  
+
   const capitalizeWords = (str: string) => {
     return str.replace(
       /\b\w+/g,
@@ -165,25 +162,28 @@ const Registration: React.FC = () => {
       }
 
       const signatureDataURL = signature?.toDataURL("image/png");
-      console.log("signatureDataURL", signatureDataURL);
-      const response = await axios.post("http://122.53.61.91:6002/api/register", {
-        email: data.email,
-        password: data.password,
-        userName: data.userName,
-        firstName: capitalizeWords(data.firstName),
-        lastName: capitalizeWords(data.lastName),
-        contact: data.contact,
-        branch_code: data.branchCode,
-        position: data.position,
-        confirmPassword: data.password,
-        signature: signatureDataURL,
-        role: "User",
-        branch: data.branch,
-        employee_id: data.employee_id,
-      });
+
+      const response = await axios.post(
+        "http://122.53.61.91:6002/api/register",
+        {
+          email: data.email,
+          password: data.password,
+          userName: data.userName,
+          firstName: capitalizeWords(data.firstName),
+          lastName: capitalizeWords(data.lastName),
+          contact: data.contact,
+          branch_code: data.branchCode,
+          position: data.position,
+          confirmPassword: data.password,
+          signature: signatureDataURL,
+          role: "User",
+          branch: data.branch,
+          employee_id: data.employee_id,
+        }
+      );
 
       console.log("response", response.data);
-
+      setErrorMessage(response.data.errors);
       if (response.data.status) {
         setLoading(false);
         localStorage.setItem("token", response.data.token);
@@ -192,8 +192,18 @@ const Registration: React.FC = () => {
           navigate("/login"); // Navigate to login after successful registration
         }, 2000);
       } else {
+        const errors = response.data.errors;
+        const message = [];
+
+        if (errors.email) {
+          message.push(...errors.email);
+        }
+        if (errors.employee_id) {
+          message.push(...errors.employee_id);
+        }
+        setErrorMessage(message);
+
         setLoading(false);
-        alert("Registration failed. Please check your details and try again.");
       }
     } catch (error) {
       console.error("Registration Error:", error);
@@ -206,22 +216,17 @@ const Registration: React.FC = () => {
     submitData(data);
   };
 
- const handleBranchCodeChange = (selectedBranchId: number) => {
- 
-  const selectedBranch = branchList.find(
-    (branch) => branch.id === selectedBranchId
-  );
-  console.log("Selected Branch ID:", selectedBranchId); 
-  console.log("Selected Branch:", selectedBranch); 
+  const handleBranchCodeChange = (selectedBranchId: number) => {
+    const selectedBranch = branchList.find(
+      (branch) => branch.id === selectedBranchId
+    );
 
-  if (selectedBranch) {
-
-    setValue("branch", selectedBranch.branch);
-  } else {
-  
-    setValue("branch", "Honda Des, Inc."); 
-  }
-};
+    if (selectedBranch) {
+      setValue("branch", selectedBranch.branch);
+    } else {
+      setValue("branch", "Honda Des, Inc.");
+    }
+  };
   return (
     <div className="flex flex-col lg:flex-row items-center justify-center">
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
@@ -518,6 +523,15 @@ const Registration: React.FC = () => {
                   )}
                 </div>
               </div>
+            </div>
+            <div className="flex items-center justify-center">
+              {errorMessage.length > 0 && (
+                <div className="text-red-500 text-xs">
+                  {errorMessage.map((message, index) => (
+                    <p key={index}>{message}</p>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="relative flex items-center justify-center">
               <button

@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
 import DataTable from "react-data-table-component";
-import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
+import {
+  PencilSquareIcon,
+  TrashIcon,
+  MagnifyingGlassIcon,
+} from "@heroicons/react/24/outline";
 import AddUserModal from "./AddUserModal";
 import EditUserModal from "./EditUserModal";
 import SuccessModal from "./SuccessModal";
@@ -37,7 +41,8 @@ const SetupUser = (props: Props) => {
   const [selectedUser, setSelectedUser] = useState<Record | null>(null);
   const [userList, setUserList] = useState<Record[]>([]);
   const userId = localStorage.getItem("id");
-
+ 
+  const [filterTerm , setFilterTerm] = useState("")
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -81,7 +86,7 @@ const SetupUser = (props: Props) => {
             position: item.position,
           })
         );
-
+    
         setUserList(transformedData);
         console.log("Users:", transformedData);
       } catch (error) {
@@ -92,6 +97,11 @@ const SetupUser = (props: Props) => {
     fetchUserData();
   }, [userId]);
 
+  const filteredUserList = userList.filter(user =>
+    Object.values(user).some(value =>
+      String(value).toLowerCase().includes(filterTerm.toLowerCase())
+    )
+  );
   const deleteUser = async () => {
     try {
       if (!userId || !selectedUser) {
@@ -142,7 +152,7 @@ const SetupUser = (props: Props) => {
 
   const editModalShow = (row: Record) => {
     setSelectedUser(row);
-    console.log("Selected User1231:", selectedUser);
+
     setEditModal(true);
   };
 
@@ -214,9 +224,12 @@ const SetupUser = (props: Props) => {
         Authorization: `Bearer ${token}`,
       };
 
-      const response = await axios.get(`http://122.53.61.91:6002/api/view-users`, {
-        headers,
-      });
+      const response = await axios.get(
+        `http://122.53.61.91:6002/api/view-users`,
+        {
+          headers,
+        }
+      );
       console.log("Response:", response.data);
       // Transform data to match columns selector
       const transformedData = response.data.data.map(
@@ -303,13 +316,23 @@ const SetupUser = (props: Props) => {
               </button>
             </div>
           </div>
-
+          <div className="sm:mx-0 md:mx-4 my-2 relative w-2/12">
+            <div className="relative flex-grow">
+              <input
+                type="text"
+                className="w-full border border-black rounded-md pl-10 pr-3 py-2"
+                value={filterTerm}
+                onChange={(e) => setFilterTerm(e.target.value)}
+                placeholder="Search approvers"
+              />
+              <MagnifyingGlassIcon className="h-5 w-5 text-black absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none" />
+            </div>
+          </div>
           <DataTable
             columns={columns}
-            data={userList}
+            data={filteredUserList}
             pagination
             striped
-            
             customStyles={{
               headRow: {
                 style: {

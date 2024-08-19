@@ -115,13 +115,15 @@ const Request = (props: Props) => {
   const [branchMap, setBranchMap] = useState<Map<number, string>>(new Map());
   
   useEffect(() => {
+    console.log("Fetching dataasdasd...");
     const fetchBranchData = async () => {
       try {
+        console.log("Fetching dataasdasd...");
         const response = await axios.get(
           `http://122.53.61.91:6002/api/view-branch`
         );
         const branches = response.data.data;
-  
+        
         // Create a mapping of id to branch_code
         const branchMapping = new Map<number, string>(
           branches.map((branch: { id: number; branch_code: string }) => [
@@ -134,6 +136,7 @@ const Request = (props: Props) => {
         setBranchMap(branchMapping);
   
         console.log("Branch Mapping:", branchMapping);
+        console.log(branches)
       } catch (error) {
         console.error("Error fetching branch data:", error);
       }
@@ -141,7 +144,7 @@ const Request = (props: Props) => {
   
     fetchBranchData();
   }, []);
-  
+  console.log('hey',branchList, branchMap)
 
   useEffect(() => {
     if (userId) {
@@ -186,20 +189,21 @@ const Request = (props: Props) => {
         return requests;
       case 1: // Pending Requests
         return requests.filter(
-          (item: Record) => item.status.trim() === "Pending"
+          (item: Record) => item.status.trim() === "Pending" || item.status.trim() === "Ongoing" 
         );
       case 2: // Approved Requests
         return requests.filter(
-          (item: Record) => item.status.trim() === "Approved"
+          (item: Record) => item.status.trim() === "Approved" 
         );
       case 3: // Unsuccessful Requests
         return requests.filter(
-          (item: Record) => item.status.trim() === "Unapproved"
+          (item: Record) => item.status.trim() === "Disapproved"
         );
       default:
         return requests;
     }
   };
+
   const refreshData = () => {
     if (userId) {
       console.log("Fetching data...");
@@ -284,7 +288,7 @@ const Request = (props: Props) => {
       ),
     },
     {
-      name: "Modify",
+      name: "Action",
       width: "150px",
       cell: (row: Record) => (
         <button
@@ -315,6 +319,7 @@ const Request = (props: Props) => {
           Send Request
         </button>
       </Link>
+     
       <div className="w-full  h-auto  drop-shadow-lg rounded-lg  md:mr-4 relative ">
         <div className="bg-white   rounded-lg  w-full flex flex-col items-center overflow-x-auto">
           <div className="w-full border-b-2  md:px-30">

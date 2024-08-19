@@ -94,7 +94,7 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
       Total: number;
       Approved: number;
       Pending: number;
-      Unapproved: number;
+      Disapproved: number;
     }[]
   >([]);
 
@@ -138,7 +138,7 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
           headers,
         })
         .then((response) => {
-          console.log("Total requests sent:", response.data);
+         
           setTotalRequestsSent(response.data.totalRequestSent);
           setTotalPendingRequests(response.data.totalPendingRequest);
           setTotalApprovedRequests(response.data.totalApprovedRequest);
@@ -170,7 +170,7 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
           headers,
         }
       );
-      console.log("data", response.data);
+     
       setRecords(response.data.request_forms);
       const data = response.data;
       const requests: Request[] = data.request_forms;
@@ -199,15 +199,14 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
       setApprovedRequests(approvedCount);
       setPendingRequests(pendingCount);
       setUnsuccessfulRequests(unsuccessfulCount);
-      console.log(approvedRequests, pendingRequests, unsuccessfulRequests);
-
+     
       processAreaChartData(requests);
       processBarChartData(requests);
     } catch (error) {
       console.error("Error fetching requests data:", error);
     }
   };
-  console.log("records", records);
+ 
   const processAreaChartData = (requests: Request[]) => {
     const today = new Date();
     let startDate: Date;
@@ -231,7 +230,7 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
         total: number;
         approved: number;
         pending: number;
-        unapproved: number;
+        disapproved: number;
       };
     } = {};
 
@@ -244,7 +243,7 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
             total: 0,
             approved: 0,
             pending: 0,
-            unapproved: 0,
+            disapproved: 0,
           };
         }
         aggregatedData[monthName].total += 1;
@@ -253,7 +252,7 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
         } else if (record.status === "Pending") {
           aggregatedData[monthName].pending += 1;
         } else if (record.status === "Disapproved") {
-          aggregatedData[monthName].unapproved += 1;
+          aggregatedData[monthName].disapproved += 1;
         }
       }
     });
@@ -278,7 +277,7 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
       Total: Math.floor(aggregatedData[month]?.total || 0),
       Approved: Math.floor(aggregatedData[month]?.approved || 0),
       Pending: Math.floor(aggregatedData[month]?.pending || 0),
-      Unapproved: Math.floor(aggregatedData[month]?.unapproved || 0),
+      Disapproved: Math.floor(aggregatedData[month]?.disapproved || 0),
     }));
 
     setAreaChartData(areaChartData);
@@ -309,7 +308,7 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
     }));
 
     setBarChartData(barChartData);
-    console.log("Bar chart data:", barChartData);
+  
   };
 
   useEffect(() => {
@@ -457,7 +456,7 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
               />
               <Area
                 type="monotone"
-                dataKey="Unapproved"
+                dataKey="Disapproved"
                 stroke="#E73774" // Red for unapproved requests
                 fillOpacity={0.3}
                 fill="#E73774"

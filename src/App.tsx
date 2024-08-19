@@ -50,7 +50,7 @@ const App: React.FC<AppProps> = ({ isdarkMode }) => {
   const toggleSidebar = () => {
     setIsSidebarVisible((prevIsSidebarVisible) => !prevIsSidebarVisible);
   };
-  console.log(isSidebarVisible);
+
 
   const [userInfoUpdated, setUserInfoUpdated] = useState(false);
   const updateUserInfo = () => {

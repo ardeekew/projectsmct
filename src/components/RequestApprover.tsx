@@ -132,7 +132,7 @@ const RequestApprover = (props: Props) => {
   const userId = localStorage.getItem("id");
   const [branchList, setBranchList] = useState<any[]>([]);
   const [branchMap, setBranchMap] = useState<Map<number, string>>(new Map());
-  
+
   useEffect(() => {
     const fetchBranchData = async () => {
       try {
@@ -140,27 +140,27 @@ const RequestApprover = (props: Props) => {
           `http://122.53.61.91:6002/api/view-branch`
         );
         const branches = response.data.data;
-  
+
         // Create a mapping of id to branch_code
         const branchMapping = new Map<number, string>(
           branches.map((branch: { id: number; branch_code: string }) => [
             branch.id,
-            branch.branch_code
+            branch.branch_code,
           ])
         );
-  
+
         setBranchList(branches);
         setBranchMap(branchMapping);
-  
+
         console.log("Branch Mapping:", branchMapping);
       } catch (error) {
         console.error("Error fetching branch data:", error);
       }
     };
-  
+
     fetchBranchData();
   }, []);
-  
+
   useEffect(() => {
     if (userId) {
       console.log("Fetching data...");
@@ -176,9 +176,12 @@ const RequestApprover = (props: Props) => {
       };
 
       axios
-        .get(`http://122.53.61.91:6002/api/request-forms/for-approval/${userId}`, {
-          headers,
-        })
+        .get(
+          `http://122.53.61.91:6002/api/request-forms/for-approval/${userId}`,
+          {
+            headers,
+          }
+        )
         .then((response) => {
           setRequests(response.data.request_forms);
           console.log("Requests:", response.data.request_forms);
@@ -199,31 +202,24 @@ const RequestApprover = (props: Props) => {
   };
 
   const filteredData = () => {
-    let filteredRequests: Record[] = [];
     switch (selected) {
       case 0: // All Requests
-        filteredRequests = requests;
-        break;
+        return requests;
       case 1: // Pending Requests
-        filteredRequests = requests.filter(
-          (item: Record) => item.status.trim() === "Pending"
+        return requests.filter(
+          (item: Record) => item.status.trim() === "Pending" || item.status.trim() === "Ongoing" 
         );
-        break;
-
-      case 2: // Ongoing Requests
-        filteredRequests = requests.filter(
-          (item: Record) => item.status.trim() === "Approved"
+      case 2: // Approved Requests
+        return requests.filter(
+          (item: Record) => item.status.trim() === "Approved" 
         );
-        break;
-      case 3: // Approved Requests
-        filteredRequests = requests.filter(
+      case 3: // Unsuccessful Requests
+        return requests.filter(
           (item: Record) => item.status.trim() === "Disapproved"
         );
-        break;
-       default:
-        filteredRequests = [];
+      default:
+        return requests;
     }
-    return filteredRequests;
   };
 
   const columns = [
@@ -255,7 +251,6 @@ const RequestApprover = (props: Props) => {
     {
       name: "Branch",
       selector: (row: Record) => {
-      
         const branchId = parseInt(row.form_data[0].branch, 10);
         return branchMap.get(branchId) || "Unknown";
       },
@@ -273,8 +268,9 @@ const RequestApprover = (props: Props) => {
               ? "bg-green"
               : row.status.trim() === "Disapproved"
               ? "bg-pink"
-            
-              : ""
+              : row.status.trim() === "Ongoing"
+              ? "bg-primary"
+              : "bg-red-600"
           } rounded-lg py-1 w-full md:w-full xl:w-3/4 2xl:w-2/4 text-center text-white`}
         >
           {row.status.trim()}
@@ -282,7 +278,7 @@ const RequestApprover = (props: Props) => {
       ),
     },
     {
-      name: "Modify",
+      name: "Action",
       width: "150px",
       cell: (row: Record) => (
         <button
@@ -314,9 +310,12 @@ const RequestApprover = (props: Props) => {
       };
 
       axios
-        .get(`http://122.53.61.91:6002/api/request-forms/for-approval/${userId}`, {
-          headers,
-        })
+        .get(
+          `http://122.53.61.91:6002/api/request-forms/for-approval/${userId}`,
+          {
+            headers,
+          }
+        )
         .then((response) => {
           setRequests(response.data.request_forms);
           console.log("Requests refreshed:", response.data.request_forms);
@@ -345,7 +344,7 @@ const RequestApprover = (props: Props) => {
         <div className="bg-white rounded-lg w-full flex flex-col items-center overflow-x-auto">
           <div className="w-full border-b-2 md:px-30">
             <ul className="px-2 md:px-30 flex justify-start items-center space-x-4 md:space-x-6 py-4 font-medium overflow-x-auto">
-              {items.map((item, index) => (
+            {items.map((item, index) => (
                 <li
                   key={index}
                   onClick={() => handleClick(index)}

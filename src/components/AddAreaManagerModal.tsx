@@ -65,7 +65,7 @@ const AddAreaManagerModal = ({
           }
         );
 
-        console.log("Response:", response.data);
+
 
         // Filter and map data to desired format
         const transformedData = response.data.data
@@ -80,7 +80,7 @@ const AddAreaManagerModal = ({
           }));
 
         setUsers(transformedData);
-        console.log("Users:", transformedData);
+
       } catch (error) {
         console.error("Error fetching users data:", error);
       }
@@ -109,7 +109,7 @@ const AddAreaManagerModal = ({
           }
         );
 
-        console.log("Branch Response:", response.data);
+     
         setBranches(response.data.data);
       } catch (error) {
         console.error("Error fetching branches:", error);
@@ -168,7 +168,7 @@ const AddAreaManagerModal = ({
           }
         );
 
-        console.log("Create Area Manager Response:", response.data);
+      
 
         // Assuming successful, close modal or show success message
         setIsLoading(false);

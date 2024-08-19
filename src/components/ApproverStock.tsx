@@ -159,7 +159,7 @@ const ApproversStock: React.FC<Props> = ({
         }
       );
 
-      console.log("response", response.data.data);
+
       setUser(response.data);
     } catch (error) {
       console.error("Failed to fetch approvers:", error);
@@ -183,13 +183,12 @@ const ApproversStock: React.FC<Props> = ({
           },
         }
       );
-      console.log('approvers', response.data);
+     
       const { notedby, approvedby } = response.data;
       setNotedBy(notedby);
       setApprovedBy(approvedby);
       setApprovers(approvers);
-      console.log("notedby", notedby);
-      console.log("approvedby", approvedby);
+    
     } catch (error) {
       console.error("Failed to fetch approvers:", error);
     } finally {
@@ -223,19 +222,14 @@ const ApproversStock: React.FC<Props> = ({
 
     try {
       setApprovedLoading(true);
-      console.log("Request Data:", requestData);
-      console.log(
-        "API Endpoint:",
-        `http://122.53.61.91:6002/api/request-forms/${record.id}/process`
-      );
-
+    
       const response = await axios.put(
         `http://122.53.61.91:6002/api/request-forms/${record.id}/process`,
         requestData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      console.log("Stock requisition updated successfully:", response.data);
+     
       setApprovedLoading(false);
       setModalStatus("approved");
       setShowSuccessModal(true);
@@ -273,7 +267,7 @@ const ApproversStock: React.FC<Props> = ({
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      console.log("Stock requisition updated successfully:", response.data);
+     
       setLoading(false);
       setModalStatus("disapproved"); // Set modal status to 'disapproved'
       setShowSuccessModal(true);
@@ -297,7 +291,7 @@ const ApproversStock: React.FC<Props> = ({
       notedBy: notedBy,
       user: user,
     };
-    console.log("dataas", data);
+   
 
     localStorage.setItem("printData", JSON.stringify(data));
     // Open a new window with PrintRefund component
@@ -309,7 +303,7 @@ const ApproversStock: React.FC<Props> = ({
     }
   };
 
-  console.log("stats", user.data);
+
   return (
     <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50">
       <div className="p-4 relative w-full mx-10 md:mx-0 z-10 md:w-1/2 space-y-auto h-3/4 overflow-scroll bg-white border-black rounded-t-lg shadow-lg">

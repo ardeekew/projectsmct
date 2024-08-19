@@ -308,8 +308,7 @@ const AddUserModal = ({
     const selectedBranch = branchList.find(
       (branch) => branch.id === selectedBranchId
     );
-    console.log("Selected Branch ID:", selectedBranchId); 
-    console.log("Selected Branch:", selectedBranch); 
+
   
     if (selectedBranch) {
   
@@ -326,12 +325,11 @@ const AddUserModal = ({
     );
   };
  // Check form state details
-console.log('Errors:', errors);
+
   const submitData = async (data: UserCredentials) => {
-    console.log("Data", data);
-    console.log("Starting submission");
+
     try {
-      console.log("Starting submission");
+ 
       setLoading(true);
       const response = await axios.post("http://122.53.61.91:6002/api/register", {
         email: data.email,
@@ -348,7 +346,7 @@ console.log('Errors:', errors);
         employee_id: data.employee_id,
       });
 
-      console.log("response", response.data);
+
 
       if (response.data.status) {
         openCompleteModal();
@@ -366,7 +364,7 @@ console.log('Errors:', errors);
   };
 
   const onSubmit = (data: UserCredentials) => {
-    console.log("Form submitted with:", data); // Debugging line
+
     submitData(data);
   };
   const pStyle = "font-medium w-full";

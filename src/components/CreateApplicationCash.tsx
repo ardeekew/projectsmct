@@ -10,6 +10,7 @@ import { z, ZodError } from "zod";
 import axios from "axios";
 import RequestSuccessModal from "./Modals/RequestSuccessModal";
 import ClipLoader from "react-spinners/ClipLoader";
+import { table } from "console";
 type CustomApprover = {
   id: number;
   name: string;
@@ -111,10 +112,10 @@ const CreateApplicationCash = (props: Props) => {
   );
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-        // Convert FileList to array and set it
-        setFile(Array.from(e.target.files));
+      // Convert FileList to array and set it
+      setFile(Array.from(e.target.files));
     }
-};
+  };
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
@@ -158,32 +159,33 @@ const CreateApplicationCash = (props: Props) => {
 
   const fetchCustomApprovers = async () => {
     try {
-        const id = localStorage.getItem("id");
-        const token = localStorage.getItem("token");
-        if (!token || !id) {
-            console.error("Token or user ID is missing");
-            return;
+      const id = localStorage.getItem("id");
+      const token = localStorage.getItem("token");
+      if (!token || !id) {
+        console.error("Token or user ID is missing");
+        return;
+      }
+
+      const response = await axios.get(
+        `http://122.53.61.91:6002/api/custom-approvers/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
+      );
 
-        const response = await axios.get(`http://122.53.61.91:6002/api/custom-approvers/${id}`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
-
-        if (Array.isArray(response.data.data)) {
-            setCustomApprovers(response.data.data);
-        } else {
-            console.error("Unexpected response format:", response.data);
-            setCustomApprovers([]); // Ensure that customApprovers is always an array
-        }
-
-        console.log("Custom Approvers:", response.data.data);
-    } catch (error) {
-        console.error("Error fetching custom approvers:", error);
+      if (Array.isArray(response.data.data)) {
+        setCustomApprovers(response.data.data);
+      } else {
+        console.error("Unexpected response format:", response.data);
         setCustomApprovers([]); // Ensure that customApprovers is always an array
+      }
+    } catch (error) {
+      console.error("Error fetching custom approvers:", error);
+      setCustomApprovers([]); // Ensure that customApprovers is always an array
     }
-};
+  };
 
   const handleOpenConfirmationModal = () => {
     setShowConfirmationModal(true);
@@ -260,7 +262,9 @@ const CreateApplicationCash = (props: Props) => {
     }
   };
 
-  const handleAddItem = () => {
+  const handleAddItem = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault(); // Prevent form submission
+
     setTableData([
       ...tableData,
       {
@@ -291,8 +295,7 @@ const CreateApplicationCash = (props: Props) => {
       const token = localStorage.getItem("token");
       const userId = localStorage.getItem("id");
       const branch_code = localStorage.getItem("branch_code");
-      console.log("branch_code", branch_code);
-      console.log("id", userId);
+
       if (!token || !userId) {
         console.error("Token or userId not found");
         return;
@@ -306,9 +309,6 @@ const CreateApplicationCash = (props: Props) => {
         return;
       }
 
-      console.log("data", data);
-      console.log("items", items);
-
       const missingFields: number[] = [];
       items.forEach((item, index) => {
         if (!item.cashDate || !item.itinerary) {
@@ -317,13 +317,7 @@ const CreateApplicationCash = (props: Props) => {
       });
 
       if (missingFields.length > 0) {
-        console.error(
-          "CashDate and itinerary are required for each item",
-          missingFields
-        );
-        missingFields.forEach((index) => {
-          console.log("Empty cashDate or itinerary:", items[index]);
-        });
+        missingFields.forEach((index) => {});
         // Handle the error accordingly, display an error message to the user, etc.
         return;
       }
@@ -342,12 +336,8 @@ const CreateApplicationCash = (props: Props) => {
         parseFloat(data.totalFare || "0") +
         parseFloat(data.totalContingency || "0");
 
-      console.log("Total Per Diem:", totalPerDiem);
-      console.log("Total:", total);
-
       // Calculate grand total
       const grand_total = (total + totalPerDiem).toFixed(2);
-      console.log("Grand total:", grand_total);
 
       // Validate if any item fields are empty
       const emptyItems: number[] = [];
@@ -358,32 +348,24 @@ const CreateApplicationCash = (props: Props) => {
       });
 
       if (emptyItems.length > 0) {
-        console.error(
-          "CashDate and itinerary are required for each item",
-          emptyItems
-        );
-        emptyItems.forEach((index) => {
-          console.log("Empty cashDate or itinerary:", items[index]);
-        });
+        emptyItems.forEach((index) => {});
         // Handle the error accordingly, display an error message to the user, etc.
         return;
       }
 
-     
+      const formData = new FormData();
 
-    const formData = new FormData();
+      file.forEach((file) => {
+        formData.append("attachment[]", file); // Use "attachment[]" to handle multiple files
+      });
+      formData.append("form_type", "Application For Cash Advance");
+      formData.append("approvers_id", String(selectedApproverList));
+      formData.append("user_id", userId);
 
-    file.forEach((file) => {
-      formData.append("attachment[]", file); // Use "attachment[]" to handle multiple files
-  });
-  formData.append("form_type", "Application For Cash Advance");
-        formData.append("approvers_id", String(selectedApproverList));
-        formData.append("user_id", userId);
-
-        formData.append(
-          "form_data",
-          JSON.stringify([
-              {
+      formData.append(
+        "form_data",
+        JSON.stringify([
+          {
             branch: branch_code,
             grand_total: grand_total,
             date: data.date,
@@ -407,10 +389,10 @@ const CreateApplicationCash = (props: Props) => {
               remarks: item.remarks,
             })),
           },
-      ])
-  );
+        ])
+      );
 
-  logFormData(formData);
+      logFormData(formData);
 
       // Display confirmation modal
       setShowConfirmationModal(true);
@@ -450,7 +432,7 @@ const CreateApplicationCash = (props: Props) => {
         }
       );
       setShowSuccessModal(true);
-      console.log("Request submitted successfully:", response.data);
+
       setFormSubmitted(true);
       setLoading(false);
     } catch (error) {
@@ -462,7 +444,6 @@ const CreateApplicationCash = (props: Props) => {
 
   const logFormData = (formData: any) => {
     for (let [key, value] of formData.entries()) {
-      console.log(key, value);
     }
   };
 
@@ -510,6 +491,7 @@ const CreateApplicationCash = (props: Props) => {
       textarea.style.height = `${Math.max(textarea.scrollHeight, 100)}px`; // Set to scroll height or minimum 100px
     }
   };
+console.log(tableData)
   return (
     <div className="bg-graybg dark:bg-blackbg w-full h-full pt-[15px] inline-flex flex-col px-[30px] pb-[15px]">
       <h1 className="text-primary text-[32px] font-bold inline-block">
@@ -691,13 +673,13 @@ const CreateApplicationCash = (props: Props) => {
                               style={{ minHeight: "50px", maxHeight: "400px" }}
                               onFocus={() =>
                                 handleTextareaHeight(index, "itinerary")
-                              } 
+                              }
                               onBlur={() =>
                                 handleTextareaHeight(index, "itinerary")
-                              } 
+                              }
                               onInput={() =>
                                 handleTextareaHeight(index, "itinerary")
-                              } 
+                              }
                             />
                             {validationErrors[`items.${index}.itinerary`] &&
                               formSubmitted && (
@@ -714,18 +696,24 @@ const CreateApplicationCash = (props: Props) => {
                               )}
                           </td>
                           <td className="p-1 border border-black">
-                          <textarea
-                      id={`activity-${index}`}
-                      value={item.activity}
-                      onChange={(e) =>
-                        handleChange(index, "activity", e.target.value)
-                      }
-                      className={`${inputStyle}`}
-                      style={{ minHeight: "50px", maxHeight: "400px" }} // Minimum height 100px, maximum height 400px (optional)
-                      onFocus={() => handleTextareaHeight(index, "activity")} // Adjust height on focus
-                      onBlur={() => handleTextareaHeight(index, "activity")} // Adjust height on blur
-                      onInput={() => handleTextareaHeight(index, "activity")} // Adjust height on input change
-                    />
+                            <textarea
+                              id={`activity-${index}`}
+                              value={item.activity}
+                              onChange={(e) =>
+                                handleChange(index, "activity", e.target.value)
+                              }
+                              className={`${inputStyle}`}
+                              style={{ minHeight: "50px", maxHeight: "400px" }} // Minimum height 100px, maximum height 400px (optional)
+                              onFocus={() =>
+                                handleTextareaHeight(index, "activity")
+                              } // Adjust height on focus
+                              onBlur={() =>
+                                handleTextareaHeight(index, "activity")
+                              } // Adjust height on blur
+                              onInput={() =>
+                                handleTextareaHeight(index, "activity")
+                              } // Adjust height on input change
+                            />
                           </td>
                           <td className="p-1 border border-black">
                             <input
@@ -796,120 +784,131 @@ const CreateApplicationCash = (props: Props) => {
             </div>
             <div className="flex justify-between ">
               <div>
-              <table className="border border-black  mt-10">
-                <tr>
-                  <th colSpan={2} className="bg-[#8EC7F7] ">
-                    <p className="font-semibold text-[12px] p-2">
-                      SUMMARY OF EXPENSES TO BE INCURRED (for C/A)
-                    </p>
-                  </th>
-                </tr>
-                <tr>
-                  <td className={`${tableStyle}`}>
-                    <p className="font-semibold  ">BOAT FARE</p>
-                  </td>
-                  <td className={`${tableStyle}`}>
-                    <input
-                      type="number"
-                      {...register("totalBoatFare", { required: true })}
-                      className="bg-white font-bold text-center"
-                      value={totalBoatFare.toFixed(2)}
-                      onChange={handleBoatFareChange}
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <td className={`${tableStyle}`}>
-                    <p className="font-semibold">HOTEL</p>
-                  </td>
-                  <td className={`${tableStyle}`}>
-                    <input
-                      type="number"
-                      {...register("totalHotel", { required: true })}
-                      className="bg-white font-bold text-center"
-                      value={totalHotel.toFixed(2)}
-                      onChange={handleHotelChange}
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <td className={`${tableStyle}`}>
-                    <p className="font-semibold">PER DIEM</p>
-                  </td>
-                  <td className={`${tableStyle} text-center`}>
-                    <p className="font-bold">{totalPerDiem.toFixed(2)}</p>
-                  </td>
-                </tr>
+                <table className="border border-black  mt-10">
+                  <tr>
+                    <th colSpan={2} className="bg-[#8EC7F7] ">
+                      <p className="font-semibold text-[12px] p-2">
+                        SUMMARY OF EXPENSES TO BE INCURRED (for C/A)
+                      </p>
+                    </th>
+                  </tr>
+                  <tr>
+                    <td className={`${tableStyle}`}>
+                      <p className="font-semibold  ">BOAT FARE</p>
+                    </td>
+                    <td className={`${tableStyle}`}>
+                      <input
+                        type="number"
+                        {...register("totalBoatFare", { required: true })}
+                        className="bg-white font-bold text-center"
+                        value={totalBoatFare.toFixed(2)}
+                        onChange={handleBoatFareChange}
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className={`${tableStyle}`}>
+                      <p className="font-semibold">HOTEL</p>
+                    </td>
+                    <td className={`${tableStyle}`}>
+                      <input
+                        type="number"
+                        {...register("totalHotel", { required: true })}
+                        className="bg-white font-bold text-center"
+                        value={totalHotel.toFixed(2)}
+                        onChange={handleHotelChange}
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className={`${tableStyle}`}>
+                      <p className="font-semibold">PER DIEM</p>
+                    </td>
+                    <td className={`${tableStyle} text-center`}>
+                      <p className="font-bold">{totalPerDiem.toFixed(2)}</p>
+                    </td>
+                  </tr>
 
-                <tr>
-                  <td className={`${tableStyle}`}>
-                    <p className="font-semibold  ">FARE</p>
-                  </td>
-                  <td className={`${tableStyle}`}>
-                    <input
-                      type="number"
-                      {...register("totalFare", { required: true })}
-                      className="bg-white font-bold text-center"
-                      value={totalFare.toFixed(2)}
-                      onChange={handleFareChange}
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <td className={`${tableStyle}`}>
-                    <p className="font-semibold  ">CONTINGENCY</p>
-                  </td>
-                  <td className={`${tableStyle}`}>
-                    <input
-                      type="number"
-                      {...register("totalContingency", { required: true })}
-                      className="bg-white font-bold text-center"
-                      value={totalContingency.toFixed(2)}
-                      onChange={handleContingencyChange}
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <td className={`${tableStyle} h-8`}></td>
-                  <td className={`${tableStyle}`}></td>
-                </tr>
-                <tr>
-                  <td className={`${tableStyle} h-14 font-bold`}>TOTAL</td>
-                  <td className={`${tableStyle} text-center `}>
-                    <p className="bg-white font-bold "> ₱{calculateTotal()} </p>
-                  </td>
-                </tr>
-              </table>
-              </div> 
+                  <tr>
+                    <td className={`${tableStyle}`}>
+                      <p className="font-semibold  ">FARE</p>
+                    </td>
+                    <td className={`${tableStyle}`}>
+                      <input
+                        type="number"
+                        {...register("totalFare", { required: true })}
+                        className="bg-white font-bold text-center"
+                        value={totalFare.toFixed(2)}
+                        onChange={handleFareChange}
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className={`${tableStyle}`}>
+                      <p className="font-semibold  ">CONTINGENCY</p>
+                    </td>
+                    <td className={`${tableStyle}`}>
+                      <input
+                        type="number"
+                        {...register("totalContingency", { required: true })}
+                        className="bg-white font-bold text-center"
+                        value={totalContingency.toFixed(2)}
+                        onChange={handleContingencyChange}
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className={`${tableStyle} h-8`}></td>
+                    <td className={`${tableStyle}`}></td>
+                  </tr>
+                  <tr>
+                    <td className={`${tableStyle} h-14 font-bold`}>TOTAL</td>
+                    <td className={`${tableStyle} text-center `}>
+                      <p className="bg-white font-bold ">
+                        {" "}
+                        ₱{calculateTotal()}{" "}
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </div>
               <div className="mt-10">
                 <p className="font-semibold">Attachments:</p>
-                <input id="file" type="file" multiple onChange={handleFileChange} />
+                <input
+                  id="file"
+                  type="file"
+                  multiple
+                  onChange={handleFileChange}
+                />
               </div>
             </div>
-           
+
             <div className="space-x-3 flex justify-end mt-20 pb-10">
               <button
+                type="button"
                 className={`bg-yellow ${buttonStyle}`}
                 onClick={handleAddItem}
               >
                 Add
               </button>
-              {tableData.length > 1 && (
+              {tableData.length >= 1 && (
                 <button
+                  type="button"
                   className={`${buttonStyle} bg-pink`}
                   onClick={handleRemoveItem}
                 >
                   Remove Item
                 </button>
               )}
+
               <button
                 className={`bg-primary ${buttonStyle}`}
                 type="submit"

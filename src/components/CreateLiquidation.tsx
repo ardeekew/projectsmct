@@ -40,7 +40,7 @@ const schema = z.object({
   totalExpense: z.string(),
   cashAdvance: z.string(),
   approver_list_id: z.number(),
-  approver:z.string(),
+  approver: z.string(),
   short: z.string(),
   items: z.array(
     z.object({
@@ -106,8 +106,13 @@ const CreateLiquidation = (props: Props) => {
   const [signature, setSignature] = useState("");
   const [file, setFile] = useState<File[]>([]);
   const [customApprovers, setCustomApprovers] = useState<CustomApprover[]>([]);
-  const [selectedApproverList, setSelectedApproverList] = useState<number | null>(null);
-  const [selectedApprover, setSelectedApprover] = useState<{ name: string }[]>([]);
+  const [selectedApproverList, setSelectedApproverList] = useState<
+    number | null
+  >(null);
+  const [employeeID, setEmployeeID] = useState<string | null>(null);
+  const [selectedApprover, setSelectedApprover] = useState<{ name: string }[]>(
+    []
+  );
   const {
     formState: { errors: formErrors },
   } = useForm<FormData>();
@@ -116,10 +121,10 @@ const CreateLiquidation = (props: Props) => {
   >({});
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-        // Convert FileList to array and set it
-        setFile(Array.from(e.target.files));
+      // Convert FileList to array and set it
+      setFile(Array.from(e.target.files));
     }
-};
+  };
   const [items, setItems] = useState<
     {
       liquidationDate: string;
@@ -154,38 +159,41 @@ const CreateLiquidation = (props: Props) => {
   const [tableData, setTableData] = useState<TableDataItem[]>(initialTableData);
   const [selectedRequestType, setSelectedRequestType] =
     useState("/request/loae");
-   
-    useEffect(() => {
-      fetchCustomApprovers();
-    }, []);
-  
-    const fetchCustomApprovers = async () => {
-      try {
-          const id = localStorage.getItem("id");
-          const token = localStorage.getItem("token");
-          if (!token || !id) {
-              console.error("Token or user ID is missing");
-              return;
-          }
-  
-          const response = await axios.get(`http://122.53.61.91:6002/api/custom-approvers/${id}`, {
-              headers: {
-                  Authorization: `Bearer ${token}`,
-              },
-          });
-  
-          if (Array.isArray(response.data.data)) {
-              setCustomApprovers(response.data.data);
-          } else {
-              console.error("Unexpected response format:", response.data);
-              setCustomApprovers([]); // Ensure that customApprovers is always an array
-          }
-  
-          console.log("Custom Approvers:", response.data.data);
-      } catch (error) {
-          console.error("Error fetching custom approvers:", error);
-          setCustomApprovers([]); // Ensure that customApprovers is always an array
+
+  useEffect(() => {
+    fetchCustomApprovers();
+  }, []);
+
+  const fetchCustomApprovers = async () => {
+    try {
+      const id = localStorage.getItem("id");
+      const token = localStorage.getItem("token");
+      if (!token || !id) {
+        console.error("Token or user ID is missing");
+        return;
       }
+
+      const response = await axios.get(
+        `http://122.53.61.91:6002/api/custom-approvers/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (Array.isArray(response.data.data)) {
+        setCustomApprovers(response.data.data);
+      } else {
+        console.error("Unexpected response format:", response.data);
+        setCustomApprovers([]); // Ensure that customApprovers is always an array
+      }
+
+      console.log("Custom Approvers:", response.data.data);
+    } catch (error) {
+      console.error("Error fetching custom approvers:", error);
+      setCustomApprovers([]); // Ensure that customApprovers is always an array
+    }
   };
 
   const handleChange = (
@@ -228,10 +236,10 @@ const CreateLiquidation = (props: Props) => {
   };
 
   const handleRemoveItem = () => {
-    if (items.length > 1) {
-      const updatedItems = [...items];
+    if (tableData.length > 1) {
+      const updatedItems = [...tableData];
       updatedItems.pop();
-      setItems(updatedItems);
+      setTableData(updatedItems);
     }
   };
   const totalExpense = tableData.reduce(
@@ -266,11 +274,13 @@ const CreateLiquidation = (props: Props) => {
     const storedFirstName = localStorage.getItem("firstName");
     const storedLastName = localStorage.getItem("lastName");
     const signature = localStorage.getItem("signature");
+    const employee_id = localStorage.getItem("employee_id");
     // Combine first name and last name
     const fullName = `${storedFirstName} ${storedLastName}`.trim();
 
     // Update the state variable with the combined name
     setName(fullName);
+    setEmployeeID(String(employee_id));
     setSignature(signature || "");
   }, []);
 
@@ -282,7 +292,7 @@ const CreateLiquidation = (props: Props) => {
   const handleCloseConfirmationModal = () => {
     setShowConfirmationModal(false);
   };
-
+  console.log(tableData.length);
   const onSubmit = async (data: FormData) => {
     try {
       if (!cashAdvance && errors.cashAdvance) {
@@ -290,7 +300,9 @@ const CreateLiquidation = (props: Props) => {
         return;
       }
 
-      const selectedList = customApprovers.find(approver => approver.id === selectedApproverList);
+      const selectedList = customApprovers.find(
+        (approver) => approver.id === selectedApproverList
+      );
       if (!selectedList) {
         console.error("Selected approver list not found");
         return;
@@ -347,21 +359,20 @@ const CreateLiquidation = (props: Props) => {
         parseFloat(totalExpense) - parseFloat(cashAdvance)
       ).toFixed(2);
 
-      
-    const formData = new FormData();
+      const formData = new FormData();
 
       // Append each file to FormData
       file.forEach((file) => {
         formData.append("attachment[]", file); // Use "attachment[]" to handle multiple files
-    });
+      });
 
-    formData.append("form_type", "Liquidation of Actual Expense");
-    formData.append("approvers_id", String(selectedApproverList));
-    formData.append("user_id", userId);
+      formData.append("form_type", "Liquidation of Actual Expense");
+      formData.append("approvers_id", String(selectedApproverList));
+      formData.append("user_id", userId);
 
-    formData.append(
-      "form_data",
-      JSON.stringify([
+      formData.append(
+        "form_data",
+        JSON.stringify([
           {
             date: data.date,
             branch: branch_code,
@@ -385,9 +396,8 @@ const CreateLiquidation = (props: Props) => {
               grandTotal: item.grandTotal,
             })),
           },
-      ])
-  );
-
+        ])
+      );
 
       // Display confirmation modal
       setShowConfirmationModal(true);
@@ -486,7 +496,7 @@ const CreateLiquidation = (props: Props) => {
         ))}
       </select>
       <div className="bg-white w-full mb-5 rounded-[12px] flex flex-col">
-      <div className="border-b flex justify-between flex-col px-[30px] md:flex-row ">
+        <div className="border-b flex justify-between flex-col px-[30px] md:flex-row ">
           <div>
             <h1 className=" text-[24px] text-left py-4 text-primary font-bold flex mr-2">
               <span className="mr-2 underline decoration-2 underline-offset-8">
@@ -496,23 +506,32 @@ const CreateLiquidation = (props: Props) => {
             </h1>
           </div>
           <div className="my-2  ">
-          <label className="block font-semibold mb-2">Approver List:</label>
-          <select
-            {...register("approver_list_id", { required: true })}
-            value={selectedApproverList !== null ? selectedApproverList.toString() : ""}
-            onChange={(e) => setSelectedApproverList(parseInt(e.target.value))}
-            className="border-2 border-black  p-2 rounded-md w-full"
-          >
-            <option value="">Select Approver List</option>
-            {customApprovers.map(approverList => (
-              <option key={approverList.id} value={approverList.id.toString()}>
-                {approverList.name}
-              </option>
-            ))}
-          </select>
-          {errors.approver_list_id && formSubmitted && (
-            <p className="text-red-500">Please select an approver list.</p>
-          )}
+            <label className="block font-semibold mb-2">Approver List:</label>
+            <select
+              {...register("approver_list_id", { required: true })}
+              value={
+                selectedApproverList !== null
+                  ? selectedApproverList.toString()
+                  : ""
+              }
+              onChange={(e) =>
+                setSelectedApproverList(parseInt(e.target.value))
+              }
+              className="border-2 border-black  p-2 rounded-md w-full"
+            >
+              <option value="">Select Approver List</option>
+              {customApprovers.map((approverList) => (
+                <option
+                  key={approverList.id}
+                  value={approverList.id.toString()}
+                >
+                  {approverList.name}
+                </option>
+              ))}
+            </select>
+            {errors.approver_list_id && formSubmitted && (
+              <p className="text-red-500">Please select an approver list.</p>
+            )}
           </div>
         </div>
         <form onSubmit={handleSubmit(onSubmit)}>
@@ -675,7 +694,6 @@ const CreateLiquidation = (props: Props) => {
                               }
                               className={`${tableInput}`}
                             />
-                           
                           </td>
                           <td className="p-1 border border-black">
                             <textarea
@@ -685,7 +703,6 @@ const CreateLiquidation = (props: Props) => {
                               }
                               className={`${tableInput}`}
                             ></textarea>
-                           
                           </td>
                           <td className="p-1 border border-black">
                             <textarea
@@ -699,7 +716,6 @@ const CreateLiquidation = (props: Props) => {
                               }
                               className={`${tableInput}`}
                             />
-                           
                           </td>
                           <td className="p-1 border border-black">
                             <input
@@ -714,7 +730,6 @@ const CreateLiquidation = (props: Props) => {
                               }
                               className={`${tableInput}`}
                             />
-                          
                           </td>
                           <td className="p-1 border border-black">
                             <input
@@ -725,7 +740,6 @@ const CreateLiquidation = (props: Props) => {
                               }
                               className={`${tableInput}`}
                             />
-                            
                           </td>
                           <td className="p-1 border border-black">
                             <textarea
@@ -739,7 +753,6 @@ const CreateLiquidation = (props: Props) => {
                               }
                               className={`${tableInput}resize-none h-[100px]  `}
                             />
-                           
                           </td>
                           <td className="p-1 border border-black">
                             <input
@@ -841,31 +854,40 @@ const CreateLiquidation = (props: Props) => {
                       <p className="font-semibold pl-2 ">EMPLOYEE NO.</p>
                     </td>
                     <td className={`${tableStyle}`}>
-                      <p className="font-semibold  ">$50</p>
+                      <p className="font-semibold  ">{employeeID}</p>
                     </td>
                   </tr>
                 </table>
               </div>
             </div>
             <div>
-                <p className="font-semibold">Attachments:</p>
-                <input id="file" type="file" multiple onChange={handleFileChange} />
-              </div>
+              <p className="font-semibold">Attachments:</p>
+              <input
+                id="file"
+                type="file"
+                multiple
+                onChange={handleFileChange}
+              />
+            </div>
             <div className="space-x-3 flex justify-end mt-20 pb-10">
               <button
+              type="button"
                 className={`bg-yellow ${buttonStyle}`}
                 onClick={handleAddItem}
               >
                 Add
               </button>
-              {items.length > 1 && (
-                <button
-                  className={`${buttonStyle} bg-pink`}
-                  onClick={handleRemoveItem}
-                >
-                  Remove Item
-                </button>
-              )}
+              <div>
+                {tableData.length > 1 && (
+                  <button
+                    type="button"
+                    className={`${buttonStyle} bg-pink`}
+                    onClick={handleRemoveItem}
+                  >
+                    Remove Item
+                  </button>
+                )}
+              </div>
               <button
                 className={`bg-primary ${buttonStyle}`}
                 type="submit"

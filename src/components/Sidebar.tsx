@@ -52,10 +52,10 @@ console.log(submenuOpen)
             path: "/dashboard/approver",
           },
           {
-            title: "View Request",
+            title: "View Requestss",
             submenu: false,
             icon: EnvelopeIcon,
-            path: "/request/rq",
+            path: "/request",
           },
           {
             title: "Create Request",

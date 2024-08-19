@@ -181,7 +181,8 @@ const SetupApprover = (props: Props) => {
   const deleteModalShow = (row: Record) => {
     setSelectedUser(row);
     setDeleteModal(true);
-    console.log("opened delete modal", row.user_id);
+
+
   };
 
   const closeDeleteModal = () => {
@@ -228,13 +229,14 @@ const SetupApprover = (props: Props) => {
     setShowDeletedSuccessModal(false);
   };
   const deleteUser = async () => {
+ console.log('type',selectedUser?.id)
     try {
-      if (!selectedUser || !selectedUser.user_id) {
-        console.error("Selected user or user_id is undefined");
+    
+      if (!userId || !selectedUser) {
+        console.error("User ID or selected user is missing");
         return;
       }
 
-      setisLoading(true);
       const token = localStorage.getItem("token");
       if (!token) {
         console.error("Token is missing");
@@ -245,30 +247,29 @@ const SetupApprover = (props: Props) => {
         Authorization: `Bearer ${token}`,
       };
 
-      // Prepare the data to send to the backend
-      const data = {
-        role: "User",
-        userIds: [selectedUser.user_id], // Ensure userIds is sent as an array
-      };
+      const response = await axios.delete(
+        `http://122.53.61.91:6002/api/delete-approver/${selectedUser.id}`,
+        {
+          headers,
+        }
+      );  
+      console.log(response.data)
 
-      // Send PUT request to update roles
-      const response = await axios.put(
-        `http://122.53.61.91:6002/api/update-role`, // Endpoint does not need user_id in URL
-        data,
-        { headers }
-      );
-
-      setisLoading(false);
-      openDeleteSuccessModal();
-      refreshData();
-      console.log("Role updated successfully:", response.data);
-      // Optionally handle success message or UI updates after successful update
+      if (response.data.status) {
+        console.log("User deleted successfully");
+        closeDeleteModal();
+        openDeleteSuccessModal();
+        refreshData();
+      } else {
+        console.error("Failed to delete user:", response.data.message);
+        // Handle error scenario, show error message or alert
+      }
     } catch (error) {
-      setisLoading(false);
-      console.error("Error updating role:", error);
-      // Handle error state or show error message to the user
+      console.error("Error deleting user:", error);
+      // Handle error scenario, show error message or alert
     }
   };
+
 
   const columns = [
     {

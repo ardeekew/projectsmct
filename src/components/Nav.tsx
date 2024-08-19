@@ -58,6 +58,21 @@ const Nav: React.FC<NavProps> = ({
   const [role, setRole] = useState("");
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem('token');
+ 
+      if (!token ) {
+       
+        localStorage.removeItem('token');
+     
+        navigate('/login'); // Redirect to login page
+      }
+    };
+
+    checkAuth();
+  }, [navigate]);
+
   const handleClose = () => {
     setIsOpen(false);
   };
@@ -346,7 +361,7 @@ const Nav: React.FC<NavProps> = ({
                           ? "/request/approver"
                           : notif.type === "App\\Notifications\\EmployeeNotification" ||
                             notif.type === "App\\Notifications\\ReturnRequestNotification"
-                          ? "/request/rq"
+                          ? "/request"
                           : "/profile";
 
                       return (

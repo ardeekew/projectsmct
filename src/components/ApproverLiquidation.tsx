@@ -177,7 +177,7 @@ const ApproverLiquidation: React.FC<Props> = ({
         }
       );
 
-      console.log("response", response.data.data);
+     
       setUser(response.data);
     } catch (error) {
       console.error("Failed to fetch approvers:", error);
@@ -219,8 +219,7 @@ const ApproverLiquidation: React.FC<Props> = ({
       setNotedBy(notedby);
       setApprovedBy(approvedby);
       setApprovers(approvers);
-      console.log("notedby", notedby);
-      console.log("approvedby", approvedby);
+     
     } catch (error) {
       console.error("Failed to fetch approvers:", error);
     } finally {
@@ -250,7 +249,7 @@ const ApproverLiquidation: React.FC<Props> = ({
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      console.log("Stock requisition updated successfully:", response.data);
+
       setLoading(false);
       setModalStatus('disapproved'); // Set modal status to 'disapproved'
       setShowSuccessModal(true);
@@ -279,8 +278,7 @@ const ApproverLiquidation: React.FC<Props> = ({
 
     try {
       setApprovedLoading(true);
-      console.log("Request Data:", requestData);
-      console.log("API Endpoint:", `http://122.53.61.91:6002/api/request-forms/${record.id}/process`);
+   
 
       const response = await axios.put(
         `http://122.53.61.91:6002/api/request-forms/${record.id}/process`,
@@ -288,7 +286,7 @@ const ApproverLiquidation: React.FC<Props> = ({
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      console.log("Stock requisition updated successfully:", response.data);
+
       setApprovedLoading(false);
       setModalStatus('approved'); 
       setShowSuccessModal(true);
@@ -311,7 +309,7 @@ const ApproverLiquidation: React.FC<Props> = ({
     return date.toLocaleDateString("en-US", options);
   };
 
-  console.log("record", record.form_data[0]);
+ 
 
  
 
@@ -374,7 +372,7 @@ const ApproverLiquidation: React.FC<Props> = ({
       notedBy: notedBy,
       user: user,
     };
-    console.log("dataas", data);
+    
 
   
     localStorage.setItem('printData', JSON.stringify(data));

@@ -80,7 +80,7 @@ const AddApproverModal = ({
           }
         );
   
-        console.log("Response:", response.data);
+      
   
         // Filter and map data to desired format
         const transformedData = response.data.data
@@ -95,7 +95,7 @@ const AddApproverModal = ({
           }));
   
         setUsers(transformedData);
-        console.log("Users:", transformedData);
+       
       } catch (error) {
         console.error("Error fetching users data:", error);
       }
@@ -149,7 +149,7 @@ const AddApproverModal = ({
         openCompleteModal();
         refreshData();
         setSelectedUsers([]);
-        console.log("Role updated successfully:", response.data);
+       
         // Optionally handle success message or UI updates after successful update
 
     } catch (error) {

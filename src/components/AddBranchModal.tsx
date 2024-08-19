@@ -63,7 +63,6 @@ const AddBranchModal = ({
         { headers }
       );
 
-      console.log("API Response:", response.data); // Log the full response for debugging
 
       if (response.status === 200 && response.data.status) {
         openCompleteModal();
