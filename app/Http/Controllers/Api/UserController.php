@@ -352,46 +352,69 @@ class UserController extends Controller
         }
     } */
     public function updateProfile(Request $request, $id)
-{
-    try {
-        $validated = $request->validate([
-            'firstName' => 'required|string|max:255',
-            'lastName' => 'required|string|max:255',
-            'contact' => 'required|string|max:255',
-            'branch_code' => 'required|string|max:255',
-            'branch' => 'required|string|max:255',
+    {
+        $validatedData = $request->validate([
+            'firstName' => 'required|string',
+            'lastName' => 'required|string',
             'email' => 'required|email',
-            'position' => 'required|string|max:255',
-            'userName' => 'required|string|max:255',
-            'role' => 'nullable|string|max:255',
-            'password' => 'nullable|string|min:5',
+            'contact' => 'required|string',
+            'userName' => 'required|string',
+            'position' => 'required|string',
+            'role' => 'required|string',
+            'branch_code' => 'nullable|string',
+            'branch' => 'nullable|string',
+            'profile_picture' => 'nullable|image', // Ensure this validation rule is correct
         ]);
-
-        $user = User::findOrFail($id);
-
-        // Update user with validated data
-        $user->fill($validated);
-
-        // Check if a new password is provided and update it
-        if ($request->has('password')) {
-            $user->password = bcrypt($request->input('password'));
+    
+        $user = User::find($id);
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
         }
-
+    
+        $user->firstName = $request->input('firstName');
+        $user->lastName = $request->input('lastName');
+        $user->email = $request->input('email');
+        $user->contact = $request->input('contact');
+        $user->userName = $request->input('userName');
+        $user->position = $request->input('position');
+        $user->role = $request->input('role');
+        $user->branch_code = $request->input('branch_code');
+        $user->branch = $request->input('branch');
+    
+        if ($request->hasFile('profile_picture')) {
+            $file = $request->file('profile_picture');
+            $path = $file->store('profile_pictures', 'public');
+            $user->profile_picture = $path;
+        }
+    
         $user->save();
-
-        return response()->json([
-            'message' => 'User updated successfully',
-            'data' => $user
-        ], 200);
-
-    } catch (\Exception $e) {
-        Log::error('An error occurred while updating the user: ' . $e->getMessage());
-        return response()->json([
-            'message' => 'An error occurred while updating the user',
-            'error' => $e->getMessage()
-        ], 500);
+    
+        return response()->json(['message' => 'User information updated successfully'], 200);
     }
-}
+
+    public function updateProfilePic(Request $request, $id)
+    {
+        $validatedData = $request->validate([
+            
+            'profile_picture' => 'nullable|image', // Ensure this validation rule is correct
+        ]);
+    
+        $user = User::find($id);
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+    
+        if ($request->hasFile('profile_picture')) {
+            $file = $request->file('profile_picture');
+            $path = $file->store('profile_pictures', 'public');
+            $user->profile_picture = $path;
+        }
+    
+        $user->save();
+    
+        return response()->json(['message' => 'User information updated successfully'], 200);
+    }
+    
 public function updateProfileUser(Request $request, $id)
 {
     try {
@@ -404,7 +427,7 @@ public function updateProfileUser(Request $request, $id)
             'email' => 'required|email',
             'position' => 'required|string|max:255',
             'userName' => 'required|string|max:255',
-           
+            'profile_picture' => 'nullable|image',
             'password' => 'nullable|string|min:5',
         ]);
 
@@ -481,6 +504,7 @@ public function updateProfileUser(Request $request, $id)
             $user->delete();
 
             return response()->json([
+                "status" => true,
                 'message' => 'User deleted successfully',
             ], 200);
 

@@ -22,246 +22,202 @@ class ApprovalProcessController extends Controller
 {
     //FOR APPROVER SIDE 
     public function processRequestForm(Request $request, $request_form_id)
-{
-    $validated = $request->validate([
-        'user_id' => 'required|exists:users,id',
-        'action' => 'required|in:approve,disapprove',
-        'comment' => 'nullable|string',
-    ]);
-
-    $user_id = $validated['user_id'];
-    $action = $validated['action'];
-    $comment = $validated['comment'];
-
-    DB::beginTransaction();
-
-    try {
-        $requestForm = RequestForm::findOrFail($request_form_id);
-
-        $approvalProcess = ApprovalProcess::where('request_form_id', $request_form_id)
-            ->where('user_id', $user_id)
-            ->where('status', 'Pending')
-            ->first();
-
-        if (!$approvalProcess) {
-            return response()->json([
-                'message' => 'You are not authorized to approve this request form or it has already been processed.',
-            ], 403);
-        }
-
-        $currentApprovalLevel = ApprovalProcess::where('request_form_id', $request_form_id)
-            ->where('status', 'Pending')
-            ->orderBy('level')
-            ->first();
-
-        if ($currentApprovalLevel->user_id !== $user_id) {
-            return response()->json([
-                'message' => 'It is not your turn to approve this request form.',
-            ], 403);
-        }
-
-        $approvalProcess->update([
-            'status' => $action === 'approve' ? 'Approved' : 'Disapproved',
-            'comment' => $comment,
+    {
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'action' => 'required|in:approve,disapprove',
+            'comment' => 'nullable|string',
         ]);
-
-        if ($action === 'approve') {
-            // Check if the current approver is the first approver
-            $firstApprovalProcess = ApprovalProcess::where('request_form_id', $request_form_id)
-                ->orderBy('level')
+    
+        $user_id = $validated['user_id'];
+        $action = $validated['action'];
+        $comment = $validated['comment'];
+    
+        DB::beginTransaction();
+    
+        try {
+            $requestForm = RequestForm::findOrFail($request_form_id);
+    
+            $approvalProcess = ApprovalProcess::where('request_form_id', $request_form_id)
+                ->where('user_id', $user_id)
+                ->where('status', 'Pending')
                 ->first();
-
-            if ($firstApprovalProcess && $firstApprovalProcess->user_id == $user_id) {
-                $requestForm->status = 'Ongoing';
-                $requestForm->save();
+    
+            if (!$approvalProcess) {
+                return response()->json([
+                    'message' => 'You are not authorized to approve this request form or it has already been processed.',
+                ], 403);
             }
-
-            $nextApprovalProcess = ApprovalProcess::where('request_form_id', $request_form_id)
+    
+            $currentApprovalLevel = ApprovalProcess::where('request_form_id', $request_form_id)
                 ->where('status', 'Pending')
                 ->orderBy('level')
                 ->first();
-
-            if ($nextApprovalProcess) {
-                $nextApprover = $nextApprovalProcess->user;
-                $firstname = $nextApprover->firstName;
-                $employee = $requestForm->user;
-                $requesterFirstname = $employee->firstName;
-                $requesterLasttname = $employee->lastName;
-                $nextApprover->notify(new ApprovalProcessNotification($nextApprovalProcess, $firstname,$requestForm,$requesterFirstname,$requesterLasttname));
-
-                // Broadcast the notification count update
-                $notificationCount = $nextApprover->unreadNotifications()->count();
-                broadcast(new NotificationEvent($nextApprover, $notificationCount));
-
+    
+            if ($currentApprovalLevel->user_id !== $user_id) {
+                return response()->json([
+                    'message' => 'It is not your turn to approve this request form.',
+                ], 403);
+            }
+    
+            $approvalProcess->update([
+                'status' => $action === 'approve' ? 'Approved' : 'Disapproved',
+                'comment' => $comment,
+            ]);
+    
+            if ($action === 'approve') {
+                // Check if the current approver is the first approver
+                $firstApprovalProcess = ApprovalProcess::where('request_form_id', $request_form_id)
+                    ->orderBy('level')
+                    ->first();
+    
+                if ($firstApprovalProcess && $firstApprovalProcess->user_id == $user_id) {
+                    $requestForm->status = 'Ongoing';
+                    $requestForm->save();
+                }
+    
+                $nextApprovalProcess = ApprovalProcess::where('request_form_id', $request_form_id)
+                    ->where('status', 'Pending')
+                    ->orderBy('level')
+                    ->first();
+    
+                if ($nextApprovalProcess) {
+                    $nextApprover = $nextApprovalProcess->user;
+                    $firstname = $nextApprover->firstName;
+                    $employee = $requestForm->user;
+                    $requesterFirstname = $employee->firstName;
+                    $requesterLasttname = $employee->lastName;
+                    $nextApprover->notify(new ApprovalProcessNotification($nextApprovalProcess, $firstname, $requestForm, $requesterFirstname, $requesterLasttname));
+    
+                    // Broadcast the notification count update
+                    $notificationCount = $nextApprover->unreadNotifications()->count();
+                    broadcast(new NotificationEvent($nextApprover, $notificationCount));
+    
+                } else {
+                    $requestForm->status = 'Approved';
+                    $formtype = $requestForm->form_type;
+                    $requestForm->save();
+                    $employee = $requestForm->user;
+                    $firstname = $employee->firstName;
+                    $employee->notify(new EmployeeNotification($requestForm, 'approved', $firstname, $formtype));
+    
+                    // Broadcast the notification count update
+                    $notificationCount = $employee->unreadNotifications()->count();
+                    broadcast(new NotificationEvent($employee, $notificationCount));
+                }
             } else {
-                $requestForm->status = 'Approved';
-                $formtype = $requestForm->form_type;
+                $requestForm->status = 'Disapproved';
                 $requestForm->save();
+                $formtype = $requestForm->form_type;
                 $employee = $requestForm->user;
                 $firstname = $employee->firstName;
-                $employee->notify(new EmployeeNotification($requestForm, 'approved', $firstname, $formtype));
-
+                $approverFirstname = $approvalProcess->user->firstName;
+                $approverLastname = $approvalProcess->user->lastName;
+                $employee->notify(new ReturnRequestNotification($requestForm, 'disapproved', $firstname, $approverFirstname, $approverLastname, $comment));
+    
                 // Broadcast the notification count update
                 $notificationCount = $employee->unreadNotifications()->count();
                 broadcast(new NotificationEvent($employee, $notificationCount));
+    
+                // Notify all previous approvers and update their status to "Rejected by [name]"
+                $previousApprovalProcesses = ApprovalProcess::where('request_form_id', $request_form_id)
+                    ->where('status', 'Approved')
+                    ->orderBy('level', 'asc') // Ensure we are processing in order
+                    ->get();
+    
+                foreach ($previousApprovalProcesses as $previousApprovalProcess) {
+                    $previousApprover = $previousApprovalProcess->user;
+                    $prevFirstName = $previousApprover->firstName;
+    
+                    // Update the previous approver's status to "Rejected by [name]"
+                    $previousApprovalProcess->update([
+                        'status' => "Rejected by $approverFirstname $approverLastname",
+                        'comment' => $comment,
+                    ]);
+    
+                    $requesterFirstname = $employee->firstName;
+                    $requesterLastname = $employee->lastName;
+                    $previousApprover->notify(new PreviousReturnRequestNotification($requestForm, 'disapproved', $prevFirstName, $approverFirstname, $approverLastname, $comment, $requesterFirstname, $requesterLastname));
+    
+                    // Broadcast the notification count update
+                    $notificationCount = $previousApprover->unreadNotifications()->count();
+                    broadcast(new NotificationEvent($previousApprover, $notificationCount));
+                }
             }
-        } else {
-            $requestForm->status = 'Disapproved';
-            $requestForm->save();
-            $formtype = $requestForm->form_type;
-            $employee = $requestForm->user;
-            $firstname = $employee->firstName;
-            $approverFirstname = $approvalProcess->user->firstName;
-            $approverLastname = $approvalProcess->user->lastName;
-            $employee->notify(new ReturnRequestNotification($requestForm, 'disapproved', $firstname, $approverFirstname, $approverLastname, $comment));
-
-            // Broadcast the notification count update
-            $notificationCount = $employee->unreadNotifications()->count();
-            broadcast(new NotificationEvent($employee, $notificationCount));
-
-            // Notify previous approver
-            $previousApprovalProcess = ApprovalProcess::where('request_form_id', $request_form_id)
-                ->where('status', 'Approved')
-                ->orderBy('level', 'desc')
-                ->first();
-
-            if ($previousApprovalProcess) {
-                $previousApprover = $previousApprovalProcess->user;
-                $prevFirstName = $previousApprover->firstName;
-                $requesterFirstname = $employee->firstName;
-                $requesterLastname = $employee->lastName;
-                $previousApprover->notify(new PreviousReturnRequestNotification($requestForm, 'disapproved', $prevFirstName, $approverFirstname, $approverLastname, $comment,$requesterFirstname,$requesterLastname));
-
-                // Broadcast the notification count update
-                $notificationCount = $previousApprover->unreadNotifications()->count();
-                broadcast(new NotificationEvent($previousApprover, $notificationCount));
-            }
+    
+            DB::commit();
+    
+            return response()->json([
+                'message' => 'Request form processed successfully',
+            ], 200);
+    
+        } catch (\Exception $e) {
+            DB::rollBack();
+    
+            return response()->json([
+                'message' => 'An error occurred',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        DB::commit();
-
-        return response()->json([
-            'message' => 'Request form processed successfully',
-        ], 200);
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-
-        return response()->json([
-            'message' => 'An error occurred',
-            'error' => $e->getMessage(),
-        ], 500);
     }
-}
     public function getRequestFormsForApproval($user_id)
     {
-
         try {
-
             // Retrieve all approval processes where the current user is involved
-
             $approvalProcesses = ApprovalProcess::where('user_id', $user_id)
-
-                ->whereIn('status', ['Pending', 'Approved', 'Disapproved'])
-
+             
                 ->orderBy('level')
-
                 ->with(['requestForm'])
-
                 ->get();
-
-
+    
             // Process each approval process
-
             $transformedApprovalProcesses = $approvalProcesses->map(function ($approvalProcess) use ($user_id) {
-
                 // Get the associated request form details
-
                 $requestForm = $approvalProcess->requestForm;
-
-
-                // Check if all previous levels are approved or disapproved
-
+    
+                // Check if all previous levels are approved, disapproved, or rejected
                 $previousLevelsApproved = $requestForm->approvalProcess
-
                     ->filter(function ($process) use ($approvalProcess) {
-
                         return $process->level < $approvalProcess->level;
-
                     })
-
                     ->every(function ($process) {
-
-                        return in_array($process->status, ['Approved', 'Disapproved']);
-
+                        // Include "Rejected by [name]" in the approval check
+                        return in_array($process->status, ['Approved', 'Disapproved']) || strpos($process->status, 'Rejected by') === 0;
                     });
-
-
+    
                 if (!$previousLevelsApproved) {
-
-                    return null; // Skip if previous levels are not approved or disapproved
-
+                    return null; // Skip if previous levels are not approved, disapproved, or rejected
                 }
-
-
+    
                 // Determine the status for the current approval process
-
                 $status = $approvalProcess->status;
-
-
+    
                 // Prepare the response format
-
                 return [
-
-                    //'user_id' => $approvalProcess->user_id,
-
                     'id' => $approvalProcess->requestForm->id,
-
                     'form_type' => $approvalProcess->requestForm->form_type,
-
                     'form_data' => $approvalProcess->requestForm->form_data, // Assuming form_data is JSON
-
                     'status' => $status,
-
                     'created_at' => $approvalProcess->created_at,
-
                     'updated_at' => $approvalProcess->updated_at,
-
                     'user_id' => $approvalProcess->requestForm->user_id,
-
                     'approvers_id' => $approvalProcess->requestForm->approvers_id,
-
                     'attachment' => $approvalProcess->requestForm->attachment,
-
-
                 ];
-
             })->filter(); // Filter out null values
-
-
+    
             return response()->json([
-
                 'message' => 'Approval processes you are involved in',
-
                 'request_forms' => $transformedApprovalProcesses->values(), // Ensure it's a zero-indexed array
-
             ], 200);
-
-
         } catch (\Exception $e) {
-
-
             return response()->json([
-
                 'message' => 'An error occurred',
-
                 'error' => $e->getMessage(),
-
             ], 500);
-
         }
-
     }
+    
 
 
     //vIEW INDIVIDUAL REQUEST TO APPROVE

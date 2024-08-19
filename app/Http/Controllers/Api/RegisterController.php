@@ -12,18 +12,50 @@ class RegisterController extends Controller
     public function register(Request $request)
     {
         try {
+            $positionData = [
+                "Accounting Clerk",
+                "Accounting Manager",
+                "Accounting Staff",
+                "Accounting Supervisor",
+                "Admin",
+                "Area Manager",
+                "Assistant Manager",
+                "Assistant Web Developer",
+                "Audit Manager",
+                "Audit Staff",
+                "Audit Supervisor",
+                "AVP - Finance",
+                "AVP - Sales and Marketing",
+                "Branch Supervisor/Manager",
+                "Cashier",
+                "CEO",
+                "HR Manager",
+                "HR Staff",
+                "IT Staff",
+                "IT/Automation Manager",
+                "Juinor Web Developer",
+                "Managing Director",
+                "Payroll Manager",
+                "Payroll Staff",
+                "Sales Representative",
+                "Senior Web Developer",
+                "Vice - President",
+                "User"
+              ];
+              
             $uservalidate = Validator::make($request->all(), [
                 "firstName" => 'required|string|max:255',
                 "lastName" => 'required|string|max:255',
                 "contact" => 'required|string|max:255',
-                "branch_code" => 'required|string|max:255',
+                "branch_code" => 'required|string|max:255|exists:branches,id',
                 "userName" => 'required|string|max:255',
                 "email" => "required|email|unique:users,email",
                 "password" => "required|min:5",
-                "position" => 'required|string|max:255',
+                "position" => 'required|string|max:255|in:'.implode(',', $positionData),
                 "signature" => "sometimes",
                 "branch" => "required|string|max:255",
-                "employee_id" => "required|string|max:255"
+                "employee_id" => "required|string|max:255|unique:users,employee_id",
+           
             
 
             ]);

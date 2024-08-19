@@ -52,6 +52,7 @@ class LoginController extends Controller
                 'signature' => $user->signature,
                 'email' => $user->email,
                 'profile_picture' => $user->profile_picture,
+                'employee_id' => $user->employee_id,
             ]);
         } catch (\Throwable $th) {
             return response()->json([
