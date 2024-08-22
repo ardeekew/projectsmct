@@ -130,7 +130,7 @@ const CreatePurchaseOrder = (props: Props) => {
             setCustomApprovers([]); // Ensure that customApprovers is always an array
         }
 
-        console.log("Custom Approvers:", response.data.data);
+      
     } catch (error) {
         console.error("Error fetching custom approvers:", error);
         setCustomApprovers([]); // Ensure that customApprovers is always an array
@@ -142,7 +142,7 @@ const onSubmit = async (data: any) => {
       const token = localStorage.getItem("token");
       const userId = localStorage.getItem("id");
       const branch_code = localStorage.getItem("branch_code");
-      console.log("id", userId);
+  
       if (!token || !userId) {
         console.error("Token or userId not found");
         return;
@@ -262,7 +262,7 @@ const onSubmit = async (data: any) => {
       );
       setLoading(false);
       setShowSuccessModal(true);
-      console.log("Request submitted successfully:", response.data);
+    
       setFormSubmitted(true);
     } catch (error) {
       console.error("An error occurred while submitting the request:", error);
@@ -493,7 +493,7 @@ const onSubmit = async (data: any) => {
                       onChange={(e) =>
                         handleInputChange(index, "description", e.target.value)
                       }
-                      className={`${inputStyle}`}
+                      className={`${inputStyle} p-2`}
                       style={{ minHeight: "100px", maxHeight: "400px" }} // Minimum height 100px, maximum height 400px (optional)
                       onFocus={() => handleTextareaHeight(index, "description")} // Adjust height on focus
                       onBlur={() => handleTextareaHeight(index, "description")} // Adjust height on blur
@@ -562,7 +562,7 @@ const onSubmit = async (data: any) => {
                       onChange={(e) =>
                         handleInputChange(index, "remarks", e.target.value)
                       }
-                      className={`${inputStyle}`}
+                      className={`${inputStyle} p-2`}
                       style={{ minHeight: "100px", maxHeight: "400px" }} // Minimum height 100px, maximum height 400px (optional)
                       onFocus={() => handleTextareaHeight(index, "remarks")} // Adjust height on focus
                       onBlur={() => handleTextareaHeight(index, "remarks")} // Adjust height on blur
@@ -572,12 +572,19 @@ const onSubmit = async (data: any) => {
                 </div>
               </div>
             ))}
-             <div className="flex justify-between">
-              <div>
+                <div className="flex justify-between flex-col md:flex-row">
+              <div className="w-full max-w-md  p-4">
                 <p className="font-semibold">Attachments:</p>
-                <input id="file" type="file" multiple onChange={handleFileChange} />
+                <input
+                  id="file"
+                  type="file"
+                  multiple
+                  onChange={handleFileChange}
+                  className="w-full mt-2"
+                />
               </div>
-              <div>
+
+              <div className="mt-4">
                 <p className="font-semibold">
                   Grand Total: ₱{calculateGrandTotal()}
                 </p>
@@ -602,6 +609,7 @@ const onSubmit = async (data: any) => {
                 className={`bg-primary ${buttonStyle}`}
                 type="submit"
                 onClick={handleFormSubmit}
+                disabled={loading}
               >
                 {loading ? <ClipLoader color="#36d7b7" /> : "Send Request"}
               </button>

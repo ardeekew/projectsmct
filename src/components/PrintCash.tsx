@@ -65,16 +65,16 @@ const PrintCash: React.FC<PrintRefundProps> = ({ data }) => {
       localStorage.removeItem('printData'); // Clean up after printing
     }
   }, [printData]);
-  console.log("printData", printData);
+ 
   const tableStyle = " border-black border py-4 font-bold";
   return (
-    <div className="print-container p-5 ">
+    <div className="print-container p-2 ">
        <style>
        {`
           @media print {
             .print-container {
-              padding: 5px;
-              margin: 4px;
+              padding: 2px;
+              margin: 2px;
             }
 
             table {
@@ -84,14 +84,14 @@ const PrintCash: React.FC<PrintRefundProps> = ({ data }) => {
             }
 
             th, td {
-              padding: 8px;
+              padding: 2px;
               border: 1px solid black;
               vertical-align: top;
-              font-size: 12px;
+              font-size: 9px;
             }
 
             .summary-table {
-              width: 100%;
+              width: 20%;
             }
 
             .flex-wrap {
@@ -246,12 +246,12 @@ const PrintCash: React.FC<PrintRefundProps> = ({ data }) => {
           Grand Total: {printData?.id.form_data[0].grand_total}
         </p>
    
-        <div className="mt-4 w-full">
-          <div className="flex flex-wrap justify-between w-full">
+        <div className="mt-4 ">
+          <div className="flex flex-wrap justify-start ">
             {/* Requested By Section */}
             <div className="mb-4 flex-grow">
               <h3 className="font-bold mb-3">Requested By:</h3>
-              <div className="flex flex-col items-center justify-center text-center relative pt-8">
+              <div className="flex flex-col items-start justify-start text-center relative pt-8">
                 <img
                   className="absolute top-2"
                   src={printData?.user.data.signature}
@@ -271,11 +271,11 @@ const PrintCash: React.FC<PrintRefundProps> = ({ data }) => {
             {/* Noted By Section */}
             <div className="mb-4 flex-grow">
               <h3 className="font-bold mb-3">Noted By:</h3>
-              <div className="flex flex-wrap justify-around">
+              <div className="flex flex-wrap justify-start  ">
                 {printData?.notedBy.map((approver: any, index: number) => (
                   <div
                     key={index}
-                    className="flex flex-col  mr-2 relative pt-8"
+                    className="flex flex-col  relative pt-8 mr-10"
                   >
                     {approver.status === "Approved" && (
                       <img
@@ -299,11 +299,11 @@ const PrintCash: React.FC<PrintRefundProps> = ({ data }) => {
             {/* Approved By Section */}
             <div className="mb-4 flex-grow">
               <h3 className="font-bold mb-3">Approved By:</h3>
-              <div className="flex flex-wrap justify-evenly">
+              <div className="flex flex-wrap justify-start ">
                 {printData?.approvedBy.map((approver: any, index: number) => (
                   <div
                     key={index}
-                    className="flex flex-col justify-start items-center mr-2 relative pt-8"
+                    className="flex flex-col justify-start items-start mr-10 relative pt-8"
                   >
                     {approver.status === "Approved" && (
                       <img

@@ -67,7 +67,7 @@ const roleOptions = [
   { label: "HR Staff", value: "HR Staff" },
   { label: "IT Staff", value: "IT Staff" },
   { label: "IT/Automation Manager", value: "IT/Automation Manager" },
-  { label: "Juinor Web Developer", value: "Juinor Web Developer" },
+  { label: "Junior Web Developer", value: "Junior Web Developer" },
   { label: "Managing Director", value: "Managing Director" },
   { label: "Payroll Manager", value: "Payroll Manager" },
   { label: "Payroll Staff", value: "Payroll Staff" },
@@ -172,7 +172,7 @@ const UpdateInformation = () => {
             },
           }
         );
-        console.log("Response:", response.data);
+      
 
         if (response.data.status) {
           setUser(response.data.data);
@@ -220,9 +220,9 @@ const UpdateInformation = () => {
     setSignatureButton(false);
     navigate("/profile");
   };
-  console.log(errors);
+
   const onSubmit: SubmitHandler<User> = async (data) => {
-    console.log("Form Data Submitted:", data); // Log form data
+  
 
     try {
       setSubmitting(true);
@@ -276,7 +276,7 @@ const UpdateInformation = () => {
         formData.append("profile_picture", newProfilePic);
       }
 
-      console.log("FormData entries:");
+    
       for (let [key, value] of formData.entries()) {
         console.log(`${key}: ${value}`);
       }
@@ -292,7 +292,7 @@ const UpdateInformation = () => {
         }
       );
 
-      console.log("User information updated successfully:", response.data);
+    
       setSubmitting(false);
       setShowSuccessModal(true);
     } catch (error: any) {
@@ -309,9 +309,7 @@ const UpdateInformation = () => {
     const selectedBranch = branchList.find(
       (branch) => branch.id === selectedBranchId
     );
-    console.log("Selected Branch ID:", selectedBranchId);
-    console.log("Selected Branch:", selectedBranch);
-
+   
     if (selectedBranch) {
       setValue("branch", selectedBranch.branch);
     } else {
@@ -319,19 +317,17 @@ const UpdateInformation = () => {
     }
   };
 
-  console.log(newBranchName);
-  console.log(newBranch);
+
   const handleClear = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     signature?.clear();
   };
 
-  console.log(newProfilePic);
   const saveSignature = () => {
     if (signatureRef.current) {
       const signatureImage = signatureRef.current.toDataURL();
       // You can save signatureImage or set it to a form field for submission
-      console.log("Signature Image:", signatureImage);
+    
     }
   };
   const signatureIsEmpty = () => {
@@ -344,7 +340,7 @@ const UpdateInformation = () => {
   useEffect(() => {
     if (signature) {
       signature.toDataURL("image/png");
-      console.log(signature.toDataURL("image/png"));
+  
     }
   }, [signature]);
   const handleImageClick = () => {
@@ -356,7 +352,7 @@ const UpdateInformation = () => {
       setSignatureButton(true);
       // Convert the signature to a data URL
       const signatureDataURL = signatureRef.current.toDataURL();
-      console.log("Signature Data URL:", signatureDataURL); // Check the console to verify the data
+    
 
       try {
         // Send the data URL to the backend API
@@ -371,7 +367,7 @@ const UpdateInformation = () => {
           }
         );
         setSignatureButton(false);
-        console.log(response.data); // Check the response for success or error messages
+      
       } catch (error) {
         setSignatureButton(false);
         console.error("Error saving signature:", error); // Log any errors
@@ -385,7 +381,7 @@ const UpdateInformation = () => {
   const handleProfilePicUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setNewProfilePic(file); // Store the selected file in state
-    console.log(newProfilePic);
+  
   };
   return (
     <div className="bg-graybg dark:bg-blackbg w-full h-screen pt-4 px-4 md:px-10 lg:px-30">

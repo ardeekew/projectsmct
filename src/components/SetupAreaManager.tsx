@@ -4,6 +4,7 @@ import {
   PencilSquareIcon,
   TrashIcon,
   XMarkIcon,
+  MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import { faCircleCheck } from "@fortawesome/free-solid-svg-icons";
@@ -41,8 +42,6 @@ interface Record {
   user: UserObject;
 }
 
-
-
 const tableCustomStyles = {
   headRow: {
     style: {
@@ -64,9 +63,7 @@ const tableCustomStyles = {
   },
 };
 
-const deleteUser = async () => {
-  
-};
+const deleteUser = async () => {};
 interface AreaManager {
   id: number;
   user_id: number;
@@ -83,8 +80,6 @@ interface AreaManager {
   }[];
   user: UserObject;
 }
-
- 
 
 interface UserObject {
   message: string;
@@ -110,7 +105,6 @@ interface User {
   employee_id: string;
 }
 const SetupAreaManager = (props: Props) => {
-
   const [darkMode, setDarkMode] = useState(true);
   const [selected, setSelected] = useState<number | null>(null);
   const [modalIsOpen, setModalIsOpen] = useState(false);
@@ -123,12 +117,19 @@ const SetupAreaManager = (props: Props) => {
   const [viewModalIsOpen, setViewModalIsOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<Record | null>(null);
   const [areaManagerList, setAreaManagerList] = useState<Record[]>([]);
-
+  const [filterTerm, setFilterTerm] = useState("");
   const [isLoading, setisLoading] = useState(false);
   const userId = localStorage.getItem("id");
-  const [areaManager, setAreaManager] = useState<{ branches: any[]; user: any; id: number; user_id: number; branch_id: number[]; } | null>(null);
-  const userData = areaManagerList.length > 0 ? areaManagerList[0]?.user?.data ?? null : null;
-
+  const [areaManager, setAreaManager] = useState<{
+    branches: any[];
+    user: any;
+    id: number;
+    user_id: number;
+    branch_id: number[];
+  } | null>(null);
+  const userData =
+    areaManagerList.length > 0 ? areaManagerList[0]?.user?.data ?? null : null;
+  const [fetchCompleted, setFetchCompleted] = useState(false);
   useEffect(() => {
     const fetchApproverData = async () => {
       try {
@@ -136,9 +137,6 @@ const SetupAreaManager = (props: Props) => {
           console.error("User ID is missing");
           return;
         }
-
-        console.log("Fetching approvers data...");
-        console.log("User ID:", userId);
 
         const token = localStorage.getItem("token");
         if (!token) {
@@ -150,6 +148,8 @@ const SetupAreaManager = (props: Props) => {
           Authorization: `Bearer ${token}`,
         };
 
+        setisLoading(true); // Start loading
+
         // Fetch area managers
         const response = await axios.get<{ data: AreaManager[] }>(
           `http://122.53.61.91:6002/api/view-area-managers`,
@@ -157,7 +157,7 @@ const SetupAreaManager = (props: Props) => {
             headers,
           }
         );
-        console.log("Response:", response.data);
+
         const areaManagerList: AreaManager[] = response.data.data;
 
         // Prepare array to hold promises for fetching user info
@@ -171,8 +171,8 @@ const SetupAreaManager = (props: Props) => {
               headers,
             }
           );
-          console.log("User Info Response:", userResponse.data);
-          const userInfo: Record = userResponse.data; // Assuming your API returns user info
+
+          const userInfo: Record = userResponse.data;
 
           // Fetch branches for each branch_id
           const branchPromises = areaManager.branch_id.map(async (branchId) => {
@@ -182,48 +182,49 @@ const SetupAreaManager = (props: Props) => {
                 headers,
               }
             );
-            return branchResponse.data; // Assuming your API returns branch data
+            return branchResponse.data;
           });
 
-          // Resolve all branch info promises
           const branchInfos = await Promise.all(branchPromises);
 
           // Combine area manager data with branch info and user info
           const areaManagerWithData = {
             ...areaManager,
             branches: branchInfos,
-            user: userInfo, // Adding user info to area manager data
+            user: userInfo,
           };
 
           areaManagersWithData.push(areaManagerWithData);
         }
 
-      
-        // Further processing or state update with areaManagersWithData
         setAreaManagerList(areaManagersWithData);
-        console.log("Area managers ", areaManagersWithData);
-
+        setisLoading(false); // Stop loading after data is fetched
+        setFetchCompleted(true); // Indicate fetch completion
       } catch (error) {
         console.error("Error fetching approvers data:", error);
+        setisLoading(false); // Stop loading on error
+        setFetchCompleted(true); // Indicate fetch completion
       }
     };
-    console.log(userData?.firstName);
+
     fetchApproverData();
   }, [userId]);
 
- 
-  
-  
+  const filteredAreaManager = areaManagerList.filter((areamanager) =>
+    Object.values(areamanager).some((value) =>
+      String(value).toLowerCase().includes(filterTerm.toLowerCase())
+    )
+  );
+
   const refreshData = async () => {
+    setFetchCompleted(false); // Reset fetch completion state
     try {
       setisLoading(true);
+
       if (!userId) {
         console.error("User ID is missing");
         return;
       }
-
-      console.log("Fetching approvers data...");
-      console.log("User ID:", userId);
 
       const token = localStorage.getItem("token");
       if (!token) {
@@ -235,31 +236,27 @@ const SetupAreaManager = (props: Props) => {
         Authorization: `Bearer ${token}`,
       };
 
-      // Fetch area managers
       const response = await axios.get<{ data: AreaManager[] }>(
         `http://122.53.61.91:6002/api/view-area-managers`,
         {
           headers,
         }
       );
-      console.log("Response:", response.data);
+
       const areaManagerList: AreaManager[] = response.data.data;
 
-      // Prepare array to hold promises for fetching user info
       const areaManagersWithData: any[] = [];
 
       for (const areaManager of areaManagerList) {
-        // Fetch user info based on user_id (which is id in users table)
         const userResponse = await axios.get<Record>(
           `http://122.53.61.91:6002/api/view-user/${areaManager.user_id}`,
           {
             headers,
           }
         );
-        console.log("User Info Response:", userResponse.data);
-        const userInfo: Record = userResponse.data; // Assuming your API returns user info
 
-        // Fetch branches for each branch_id
+        const userInfo: Record = userResponse.data;
+
         const branchPromises = areaManager.branch_id.map(async (branchId) => {
           const branchResponse = await axios.get(
             `http://122.53.61.91:6002/api/view-branch/${branchId}`,
@@ -267,37 +264,32 @@ const SetupAreaManager = (props: Props) => {
               headers,
             }
           );
-          return branchResponse.data; // Assuming your API returns branch data
+          return branchResponse.data;
         });
 
-        // Resolve all branch info promises
         const branchInfos = await Promise.all(branchPromises);
 
-        // Combine area manager data with branch info and user info
         const areaManagerWithData = {
           ...areaManager,
           branches: branchInfos,
-          user: userInfo, // Adding user info to area manager data
+          user: userInfo,
         };
 
         areaManagersWithData.push(areaManagerWithData);
       }
 
-    
-      // Further processing or state update with areaManagersWithData
       setAreaManagerList(areaManagersWithData);
-      console.log("Area managers ", areaManagersWithData);
-setisLoading(false);
+      setisLoading(false);
+      setFetchCompleted(true);
     } catch (error) {
       console.error("Error fetching approvers data:", error);
+      setisLoading(false);
+      setFetchCompleted(true);
     }
-
-    
   };
   const viewModalShow = (row: Record) => {
     setSelectedUser(row);
     setViewModalIsOpen(true);
-    console.log("opened view modal");
   };
 
   const viewModalClose = () => {
@@ -308,7 +300,6 @@ setisLoading(false);
   const deleteModalShow = (row: Record) => {
     setSelectedUser(row);
     setDeleteModal(true);
-    console.log("opened delete modalasd", row.user_id);
   };
 
   const closeDeleteModal = () => {
@@ -326,7 +317,6 @@ setisLoading(false);
 
   const openModal = () => {
     setModalIsOpen(true);
-    console.log("opened modal");  
   };
 
   const closeModal = () => {
@@ -341,7 +331,6 @@ setisLoading(false);
     setShowCompleteModal(false);
   };
   const openSuccessModal = () => {
-    console.log("opened success modal");
     setShowSuccessModal(true);
     setEditModal(false);
   };
@@ -361,7 +350,10 @@ setisLoading(false);
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2  space-y-2  sm:gap-2 sm:space-y-0 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 ">
         {row.branches.map((branchInfo, index) => (
-          <div className="bg-primary p-2 rounded-[12px] w-20 text-center " key={index}>
+          <div
+            className="bg-primary p-2 rounded-[12px] w-20 text-center "
+            key={index}
+          >
             <ul className=" text-white">{branchInfo.data[0].branch_code}</ul>
           </div>
         ))}
@@ -369,77 +361,74 @@ setisLoading(false);
     );
   };
 
-
- const deleteUser = async () => {
-  try {
-    setisLoading(true);
-    const token = localStorage.getItem("token");
-    if (!token) {
+  const deleteUser = async () => {
+    try {
+      setisLoading(true);
+      const token = localStorage.getItem("token");
+      if (!token) {
         console.error("Token is missing");
         return;
-    }
+      }
 
-    const headers = {
+      const headers = {
         Authorization: `Bearer ${token}`,
-    };
-console.log('selectedUser', selectedUser?.id);
-    // Send PUT request to update user's role
-    const response = await axios.delete(
+      };
+
+      // Send PUT request to update user's role
+      const response = await axios.delete(
         `http://122.53.61.91:6002/api/delete-area-manager/${selectedUser?.id}`,
-      
+
         { headers }
-    );
+      );
 
-    setisLoading(false);
-    openDeleteSuccessModal();
-    refreshData();
-    console.log("Role updated successfully:", response.data);
-    // Optionally handle success message or UI updates after successful update
-} catch (error) {
-    setisLoading(false);
-    console.error("Error updating role:", error);
-    // Handle error state or show error message to the user
-    // Example: show error message in a toast or modal
-    // showErrorToast("Failed to update role. Please try again later.");
-}
+      setisLoading(false);
+      openDeleteSuccessModal();
+      refreshData();
 
-}
-const columns = [
-  {
-    name: "ID",
-    selector: (row: Record) => row.id,
-    width: "60px",
-  },
-  {
-    name: "Name",
-    selector: (row: Record) => {
-      const user = row.user;
-      const firstName = user?.data?.firstName ?? '';
-      const lastName = user?.data?.lastName ?? '';
-      return `${firstName} ${lastName}`;
+      // Optionally handle success message or UI updates after successful update
+    } catch (error) {
+      setisLoading(false);
+      console.error("Error updating role:", error);
+      // Handle error state or show error message to the user
+      // Example: show error message in a toast or modal
+      // showErrorToast("Failed to update role. Please try again later.");
+    }
+  };
+  const columns = [
+    {
+      name: "ID",
+      selector: (row: Record) => row.id,
+      width: "60px",
     },
-  },
-  {
-    name: "Assigned Branches",
-    cell: (row: Record) => getAssignedBranches(row),
-  },
-  {
-    name: "Modify",
-    cell: (row: Record) => (
-      <div className="flex space-x-2">
-       <PencilSquareIcon
+    {
+      name: "Name",
+      selector: (row: Record) => {
+        const user = row.user;
+        const firstName = user?.data?.firstName ?? "";
+        const lastName = user?.data?.lastName ?? "";
+        return `${firstName} ${lastName}`;
+      },
+    },
+    {
+      name: "Assigned Branches",
+      cell: (row: Record) => getAssignedBranches(row),
+    },
+    {
+      name: "Action",
+      cell: (row: Record) => (
+        <div className="flex space-x-2">
+          <PencilSquareIcon
             className="text-primary size-8 cursor-pointer"
             onClick={() => editModalShow(row)}
           />
-        <TrashIcon
-          className="text-[#A30D11] size-8 cursor-pointer"
-          onClick={() => deleteModalShow(row)}
-        />
-      </div>
-    ),
-  },
-];
-
+          <TrashIcon
+            className="text-[#A30D11] size-8 cursor-pointer"
+            onClick={() => deleteModalShow(row)}
+          />
+        </div>
+      ),
+    },
+  ];
 
   const pStyle = "font-medium";
   const inputStyle = "border border-black rounded-md p-1";
@@ -450,53 +439,69 @@ const columns = [
           <h1 className="pl-4 sm:pl-[30px] text-[24px] text-left py-4 text-primary font-bold mr-2 underline decoration-2 underline-offset-8">
             Area Manager
           </h1>
-          <div className="flex items-end justify-between mx-2 bg-white">
+          <div className="flex items-end justify-end  mx-2 bg-white">
             <div>
-              <input type="text" placeholder="Search" className={inputStyle} />
-            </div>
-            <div>
-              <button className="bg-primary text-white rounded-[12px] p-1"
-                onClick={openModal}>
+              <button
+                className="bg-primary text-white rounded-[12px] p-2"
+                onClick={openModal}
+              >
                 + Create New
               </button>
             </div>
           </div>
+          <div className="sm:mx-0 md:mx-4 my-2 relative w-2/12">
+            <div className="relative flex-grow">
+              <input
+                type="text"
+                className="w-full border border-black rounded-md pl-10 pr-3 py-2"
+                value={filterTerm}
+                onChange={(e) => setFilterTerm(e.target.value)}
+                placeholder="Search Area Manager"
+              />
+              <MagnifyingGlassIcon className="h-5 w-5 text-black absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none" />
+            </div>
+          </div>
           {isLoading ? (
-        <div className="flex justify-center items-center">
-          <ClipLoader color="#36d7b7" />
-        </div>
-      )  : (
-        <DataTable
-          columns={columns}
-          data={areaManagerList}
-          pagination
-          striped
-          progressPending={isLoading}
-          progressComponent={<p>Loading...</p>}
-          noDataComponent={<p><ClipLoader color="#36d7b7" /></p>}
-          customStyles={{
-            headRow: {
-              style: {
-                fontSize: "18px",
-                fontWeight: "bold",
-                color: "black",
-                backgroundColor: "#FFFF",
-              },
-            },
-            rows: {
-              style: {
-                color: "black", 
-                backgroundColor: "#E7F1F9", 
-              },
-              stripedStyle: {
-                color: "black",
-                backgroundColor: "#FFFFFF", 
-              },
-            },
-          }}
-        
-        />
-      )}
+            <div className="flex justify-center items-center">
+              <ClipLoader color="#36d7b7" />
+            </div>
+          ) : (
+            <DataTable
+              columns={columns}
+              data={filteredAreaManager}
+              pagination
+              striped
+              progressPending={isLoading}
+              progressComponent={<p>Loading...</p>}
+              noDataComponent={
+                fetchCompleted && filteredAreaManager.length === 0 ? (
+                  <p>No data available.</p>
+                ) : (
+                  <ClipLoader color="#36d7b7" />
+                )
+              }
+              customStyles={{
+                headRow: {
+                  style: {
+                    fontSize: "18px",
+                    fontWeight: "bold",
+                    color: "black",
+                    backgroundColor: "#FFFF",
+                  },
+                },
+                rows: {
+                  style: {
+                    color: "black",
+                    backgroundColor: "#E7F1F9",
+                  },
+                  stripedStyle: {
+                    color: "black",
+                    backgroundColor: "#FFFFFF",
+                  },
+                },
+              }}
+            />
+          )}
         </div>
       </div>
       <AddAreaManagerModal
@@ -527,7 +532,7 @@ const columns = [
         entityType="Area Manager"
       />
       <EditAreaManager
-      closeSuccessModal={closeSuccessModal}
+        closeSuccessModal={closeSuccessModal}
         refreshData={refreshData}
         editModal={editModal}
         editModalClose={editModalClose}
@@ -550,4 +555,3 @@ const columns = [
 };
 
 export default SetupAreaManager;
-

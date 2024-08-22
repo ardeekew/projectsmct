@@ -28,6 +28,8 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { useUser } from '../context/UserContext';
+
 
 type Props = {};
 
@@ -117,7 +119,10 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
   const [totalDisapprovedRequests, setTotalDisapprovedRequests] = useState<
     number | null
   >(null);
-  const userId = localStorage.getItem("id");
+
+  const { userId, email, role, branchCode, contact, signature } = useUser();
+  const firstName = localStorage.getItem("firstName")
+  const lastName = localStorage.getItem("lastName")
   useEffect(() => {
     if (userId) {
       setLoading(true);
@@ -314,9 +319,9 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
   useEffect(() => {
     fetchData();
   }, []);
-  const firstName = localStorage.getItem("firstName");
+  
   return (
-    <div className="bg-graybg dark:bg-blackbg h-full pt-[26px] px-[30px]">
+    <div className="bg-graybg dark:bg-blackbg h-full pt-[26px] px-[30px] pb-20">
       <div className="bg-primary w-full sm:w-full h-[210px] rounded-[12px] pl-[30px] flex flex-row justify-between items-center">
         <div>
           <p className="text-[15px] lg:text-[20px]">Hi, {firstName} 👋</p>
@@ -415,7 +420,7 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
           </div>
         </div>
       </div>
-      <div className="flex gap-4">
+      <div className="flex gap-4 flex-col md:flex-row ">
         <div className="flex-7 pt-2 bg-white drop-shadow-lg w-full rounded-[12px] h-[327px] mt-4">
           <h1 className="text-center font-bold text-lg ">
             REQUESTS THIS MONTH

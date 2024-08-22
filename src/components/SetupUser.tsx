@@ -41,7 +41,39 @@ const SetupUser = (props: Props) => {
   const [selectedUser, setSelectedUser] = useState<Record | null>(null);
   const [userList, setUserList] = useState<Record[]>([]);
   const userId = localStorage.getItem("id");
- 
+  const [branchList, setBranchList] = useState<any[]>([]);
+  const [branchMap, setBranchMap] = useState<Map<number, string>>(new Map());
+  
+  useEffect(() => {
+  
+    const fetchBranchData = async () => {
+      try {
+     
+        const response = await axios.get(
+          `http://122.53.61.91:6002/api/view-branch`
+        );
+        const branches = response.data.data;
+        
+        // Create a mapping of id to branch_code
+        const branchMapping = new Map<number, string>(
+          branches.map((branch: { id: number; branch_code: string }) => [
+            branch.id,
+            branch.branch_code
+          ])
+        );
+  
+        setBranchList(branches);
+        setBranchMap(branchMapping);
+  
+      
+      } catch (error) {
+        console.error("Error fetching branch data:", error);
+      }
+    };
+  
+    fetchBranchData();
+  }, []);
+  
   const [filterTerm , setFilterTerm] = useState("")
   useEffect(() => {
     const fetchUserData = async () => {
@@ -51,8 +83,7 @@ const SetupUser = (props: Props) => {
           return;
         }
 
-        console.log("Fetching data...");
-        console.log("User ID:", userId);
+   
 
         const token = localStorage.getItem("token");
         if (!token) {
@@ -70,7 +101,7 @@ const SetupUser = (props: Props) => {
             headers,
           }
         );
-        console.log("Response:", response.data);
+     
         // Transform data to match columns selector
         const transformedData = response.data.data.map(
           (item: Record, index: number) => ({
@@ -88,7 +119,7 @@ const SetupUser = (props: Props) => {
         );
     
         setUserList(transformedData);
-        console.log("Users:", transformedData);
+     
       } catch (error) {
         console.error("Error fetching users data:", error);
       }
@@ -127,7 +158,7 @@ const SetupUser = (props: Props) => {
       );
 
       if (response.data.status) {
-        console.log("User deleted successfully");
+
         closeDeleteModal();
         openDeleteSuccessModal();
         refreshData();
@@ -211,8 +242,7 @@ const SetupUser = (props: Props) => {
         return;
       }
 
-      console.log("Fetching data...");
-      console.log("User ID:", userId);
+
 
       const token = localStorage.getItem("token");
       if (!token) {
@@ -230,7 +260,7 @@ const SetupUser = (props: Props) => {
           headers,
         }
       );
-      console.log("Response:", response.data);
+
       // Transform data to match columns selector
       const transformedData = response.data.data.map(
         (item: Record, index: number) => ({
@@ -266,7 +296,11 @@ const SetupUser = (props: Props) => {
 
     {
       name: "Branch code",
-      selector: (row: Record) => row.branch_code,
+      selector: (row: Record) => {
+      
+        const branchId = parseInt(row.branch_code, 10);
+        return branchMap.get(branchId) || "Unknown";
+      },
     },
     {
       name: "Email",
@@ -277,7 +311,7 @@ const SetupUser = (props: Props) => {
       selector: (row: Record) => row.role,
     },
     {
-      name: "Modify",
+      name: "Action",
       cell: (row: Record) => (
         <div className="flex space-x-2 items-center">
           <PencilSquareIcon
@@ -323,7 +357,7 @@ const SetupUser = (props: Props) => {
                 className="w-full border border-black rounded-md pl-10 pr-3 py-2"
                 value={filterTerm}
                 onChange={(e) => setFilterTerm(e.target.value)}
-                placeholder="Search approvers"
+                placeholder="Search user"
               />
               <MagnifyingGlassIcon className="h-5 w-5 text-black absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none" />
             </div>

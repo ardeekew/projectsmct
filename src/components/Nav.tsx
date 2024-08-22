@@ -61,18 +61,29 @@ const Nav: React.FC<NavProps> = ({
   useEffect(() => {
     const checkAuth = () => {
       const token = localStorage.getItem('token');
- 
-      if (!token ) {
-       
+      const expiresAt = localStorage.getItem('expires_at');
+
+      if (!token || !expiresAt) {
+        // Token or expiration time is missing, clear data and redirect to login
         localStorage.removeItem('token');
+        localStorage.removeItem('expires_at');
+        navigate('/login'); // Redirect to login page
+        return;
+      }
+
+      // Check if the token has expired
+      const expirationDate = new Date(expiresAt);
+      if (new Date() > expirationDate) {
+        alert('Your token has expired. Please log in again.'); 
      
+        localStorage.removeItem('token');
+        localStorage.removeItem('expires_at');
         navigate('/login'); // Redirect to login page
       }
     };
 
     checkAuth();
   }, [navigate]);
-
   const handleClose = () => {
     setIsOpen(false);
   };
@@ -92,7 +103,7 @@ const Nav: React.FC<NavProps> = ({
   };
 
   const handleNotificationClick = async (notifId: string) => {
-    console.log("Notification ID:", notifId); // Ensure notifId is defined
+   
     if (!notifId) {
       console.error("Notification ID is undefined");
       return;
@@ -302,9 +313,6 @@ const Nav: React.FC<NavProps> = ({
                   <Link to="/help" onClick={handleClose}>
                     <li className={`${listProfile}`}>Help</li>
                   </Link>
-                  <Link to="/login" onClick={handleClose}>
-                    <li className={`${listProfile}`}>Sign out</li>
-                  </Link>
                 </ul>
               </div>
             )}
@@ -367,7 +375,7 @@ const Nav: React.FC<NavProps> = ({
                       return (
                         <Link to={linkTo} key={notif.notification_id}>
                           <li
-                            className="px-4 py-4 hover:bg-[#E0E0F9] cursor-pointer border-b flex items-center"
+                            className={`px-4 py-4 hover:bg-[#E0E0F9] cursor-pointer border-b flex items-center`}
                             onClick={() =>
                               handleNotificationClick(notif.notification_id)
                             }
@@ -382,7 +390,7 @@ const Nav: React.FC<NavProps> = ({
                             </div>
                             <div className="ml-4 flex-1">
                               <p
-                                className={`text-primary text-sm ${
+                                className={` ${notif.type === "App\\Notifications\\EmployeeNotification"? "text-green" : notif.type === "App\\Notifications\\PreviousReturnRequestNotification" || notif.type === "App\\Notifications\\ReturnRequestNotification"? "text-red-500" :"text-primary" } text-sm ${
                                   notif.read_at ? "" : "font-bold"
                                 } text-center`}
                               >

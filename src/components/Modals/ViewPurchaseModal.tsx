@@ -92,9 +92,17 @@ const ViewPurchaseModal: React.FC<Props> = ({
   const [printWindow, setPrintWindow] = useState<Window | null>(null);
   const [newAttachments, setNewAttachments] = useState<File[]>([]);
   const [originalAttachments, setOriginalAttachments] = useState<string[]>([]);
-  const [removedAttachments, setRemovedAttachments] = useState<(string | number)[]>([]);
+  const [removedAttachments, setRemovedAttachments] = useState<
+    (string | number)[]
+  >([]);
   const [branchList, setBranchList] = useState<any[]>([]);
   const [branchMap, setBranchMap] = useState<Map<number, string>>(new Map());
+  const hasDisapprovedInNotedBy = notedBy.some(
+    (user) => user.status === "Disapproved"
+  );
+  const hasDisapprovedInApprovedBy = approvedBy.some(
+    (user) => user.status === "Disapproved"
+  );
 
   useEffect(() => {
     const fetchBranchData = async () => {
@@ -114,8 +122,6 @@ const ViewPurchaseModal: React.FC<Props> = ({
 
         setBranchList(branches);
         setBranchMap(branchMapping);
-
-        console.log("Branch Mapping:", branchMapping);
       } catch (error) {
         console.error("Error fetching branch data:", error);
       }
@@ -123,7 +129,7 @@ const ViewPurchaseModal: React.FC<Props> = ({
 
     fetchBranchData();
   }, []);
-  
+
   useEffect(() => {
     const currentUserId = localStorage.getItem("id");
     const attachments = JSON.parse(record.attachment);
@@ -174,7 +180,6 @@ const ViewPurchaseModal: React.FC<Props> = ({
         }
       );
 
-      console.log("response", response.data.data);
       setUser(response.data);
     } catch (error) {
       console.error("Failed to fetch approvers:", error);
@@ -279,9 +284,6 @@ const ViewPurchaseModal: React.FC<Props> = ({
       const { notedby, approvedby } = response.data;
       setNotedBy(notedby);
       setApprovedBy(approvedby);
-
-      console.log("notedby", notedby);
-      console.log("approvedby", approvedby);
     } catch (error) {
       console.error("Failed to fetch approvers:", error);
     } finally {
@@ -309,7 +311,6 @@ const ViewPurchaseModal: React.FC<Props> = ({
         ? response.data.data
         : [];
       setApprovers(approversData);
-      console.log("Approvers:", approvers);
     } catch (error) {
       console.error("Failed to fetch approvers:", error);
     } finally {
@@ -324,15 +325,17 @@ const ViewPurchaseModal: React.FC<Props> = ({
 
   const handleRemoveAttachment = (index: number) => {
     // Get the path of the attachment to be removed
-    const attachmentPath = attachmentUrl[index].split("storage/attachments/")[1];
-    
+    const attachmentPath = attachmentUrl[index].split(
+      "storage/attachments/"
+    )[1];
+
     // Add the path to the removedAttachments state
     setRemovedAttachments((prevRemoved) => [...prevRemoved, attachmentPath]);
 
     // Remove the attachment from the current list
     setAttachmentUrl((prevUrls) => prevUrls.filter((_, i) => i !== index));
-};
-  console.log("newAttach", newAttachments);
+  };
+
   const handleSaveChanges = async () => {
     // Simple validation
     if (
@@ -386,13 +389,12 @@ const ViewPurchaseModal: React.FC<Props> = ({
       newAttachments.forEach((file, index) => {
         formData.append("new_attachments[]", file);
       });
-  
 
-       // Append removed attachments
+      // Append removed attachments
       removedAttachments.forEach((path, index) => {
         formData.append("removed_attachments[]", String(path));
       });
-    
+
       const response = await axios.post(
         `http://122.53.61.91:6002/api/update-request/${record.id}`,
         formData,
@@ -404,7 +406,6 @@ const ViewPurchaseModal: React.FC<Props> = ({
         }
       );
 
-      console.log("Purchase Modal updated successfully:", response.data);
       setLoading(false);
       setIsEditing(false);
       setSavedSuccessfully(true);
@@ -418,7 +419,7 @@ const ViewPurchaseModal: React.FC<Props> = ({
       );
     }
   };
-  console.log("Record:", record.approvers_id);
+
   const handlePrint = () => {
     // Construct the data object to be passed
     const data = {
@@ -427,7 +428,6 @@ const ViewPurchaseModal: React.FC<Props> = ({
       notedBy: notedBy,
       user: user,
     };
-    console.log("dataas", data);
 
     localStorage.setItem("printData", JSON.stringify(data));
     // Open a new window with PrintRefund component
@@ -442,10 +442,13 @@ const ViewPurchaseModal: React.FC<Props> = ({
     <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 z-50">
       <div className="p-4 relative w-full mx-10 md:mx-0 z-10 md:w-1/2 space-y-auto h-3/4 overflow-scroll bg-white border-black rounded-t-lg shadow-lg">
         <div className=" top-2 flex justify-end cursor-pointer sticky">
-          <XMarkIcon className="h-6 w-6 text-black" onClick={closeModal} />
+          <XMarkIcon
+            className="h-8 w-8 text-black  bg-white rounded-full p-1  "
+            onClick={closeModal}
+          />
         </div>
         <div className="justify-start items-start flex flex-col space-y-4 w-full">
-          {!fetchingApprovers && !isFetchingApprovers  && (
+          {!fetchingApprovers && !isFetchingApprovers && (
             <>
               <button
                 className="bg-blue-600 p-1 px-2 rounded-md text-white"
@@ -487,7 +490,7 @@ const ViewPurchaseModal: React.FC<Props> = ({
           </div>
 
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2 w-full">
-          <div className="w-full">
+            <div className="w-full">
               <h1>Branch</h1>
               <input
                 type="text"
@@ -735,7 +738,8 @@ const ViewPurchaseModal: React.FC<Props> = ({
                       >
                         <div className="flex flex-col items-center justify-center text-center">
                           <p className="relative inline-block uppercase font-medium text-center pt-6">
-                            {user.status.toLowerCase() === "approved" && (
+                            {(user.status === "Approved" ||
+                              user.status.split(" ")[0] === "Rejected") && (
                               <img
                                 className="absolute top-2"
                                 src={user.signature}
@@ -751,6 +755,29 @@ const ViewPurchaseModal: React.FC<Props> = ({
                           <p className="font-bold text-[12px] text-center">
                             {user.position}
                           </p>
+                          {hasDisapprovedInApprovedBy ||
+                          hasDisapprovedInNotedBy ? (
+                            // Show "Disapproved" if it is present in either list
+                            user.status === "Disapproved" ? (
+                              <p className="font-bold text-[12px] text-center text-red-500">
+                                {user.status}
+                              </p>
+                            ) : // Do not show any status if "Disapproved" is present
+                            null
+                          ) : (
+                            // Show other statuses only if "Disapproved" is not present in either list
+                            <p
+                              className={`font-bold text-[12px] text-center ${
+                                user.status === "Approved"
+                                  ? "text-green"
+                                  : user.status === "Pending"
+                                  ? "text-yellow"
+                                  : ""
+                              }`}
+                            >
+                              {user.status}
+                            </p>
+                          )}
                         </div>
                       </li>
                     ))}
@@ -766,7 +793,8 @@ const ViewPurchaseModal: React.FC<Props> = ({
                       >
                         <div className="flex flex-col items-center justify-center text-center">
                           <p className="relative inline-block uppercase font-medium text-center pt-6">
-                            {user.status.toLowerCase() === "approved" && (
+                            {(user.status === "Approved" ||
+                              user.status.split(" ")[0] === "Rejected") && (
                               <img
                                 className="absolute top-2"
                                 src={user.signature}
@@ -782,6 +810,29 @@ const ViewPurchaseModal: React.FC<Props> = ({
                           <p className="font-bold text-[12px] text-center">
                             {user.position}
                           </p>
+                          {hasDisapprovedInApprovedBy ||
+                          hasDisapprovedInNotedBy ? (
+                            // Show "Disapproved" if it is present in either list
+                            user.status === "Disapproved" ? (
+                              <p className="font-bold text-[12px] text-center text-red-500">
+                                {user.status}
+                              </p>
+                            ) : // Do not show any status if "Disapproved" is present
+                            null
+                          ) : (
+                            // Show other statuses only if "Disapproved" is not present in either list
+                            <p
+                              className={`font-bold text-[12px] text-center ${
+                                user.status === "Approved"
+                                  ? "text-green"
+                                  : user.status === "Pending"
+                                  ? "text-yellow"
+                                  : ""
+                              }`}
+                            >
+                              {user.status}
+                            </p>
+                          )}
                         </div>
                       </li>
                     ))}
@@ -884,7 +935,7 @@ const ViewPurchaseModal: React.FC<Props> = ({
             </ul>
           </div>
 
-          <div className="md:absolute right-11 top-2 items-center">
+          <div className="md:absolute  right-20 top-2 items-center">
             {isEditing ? (
               <div>
                 <button
@@ -906,7 +957,8 @@ const ViewPurchaseModal: React.FC<Props> = ({
               </div>
             ) : (
               !fetchingApprovers &&
-              !isFetchingApprovers && editableRecord.status === 'Pending' && (
+              !isFetchingApprovers &&
+              editableRecord.status === "Pending" && (
                 <button
                   className="bg-blue-500 ml-2 rounded-xl p-2 flex text-white"
                   onClick={handleEdit}

@@ -59,42 +59,32 @@ const Profile = ({ isdarkMode }: { isdarkMode: boolean }) => {
   const navigate = useNavigate();
 
 
+  useEffect(() => {
     const fetchBranchData = async () => {
       try {
         if (!token) {
           console.error("Token is missing");
           return;
         }
-  
+
         const headers = {
           Authorization: `Bearer ${token}`,
         };
-  
-        const response = await axios.get(
-          `http://122.53.61.91:6002/api/view-branch`,
-          {
-            headers,
-          }
-        );
+
+        const response = await axios.get(`http://122.53.61.91:6002/api/view-branch`, { headers });
         const branches = response.data.data;
-        const branchOptions = branches.map(
-          (branch: { id: number; branch_code: string }) => ({
-            id: branch.id,
-            branch_code: branch.branch_code,
-          })
-        );
+        const branchOptions = branches.map((branch: { id: number; branch_code: string }) => ({
+          id: branch.id,
+          branch_code: branch.branch_code,
+        }));
         setBranchList(branchOptions);
-        console.log(branchList);
       } catch (error) {
         console.error("Error fetching branch data:", error);
       }
     };
-  
-    if (shouldRefresh) {
-      fetchBranchData();
-      setShouldRefresh(false); // Reset the flag after refetching
-    }
 
+    fetchBranchData();
+  }, [token]);
   
   useEffect(() => {
     if (signature) {
@@ -102,20 +92,9 @@ const Profile = ({ isdarkMode }: { isdarkMode: boolean }) => {
       console.log(signature.toDataURL("image/png"));
     }
   }, [signature]);
-  useEffect(() => {
-    if (shouldRefresh) {
-      fetchBranchData(); // Fetch branch data
-      setShouldRefresh(false); // Reset the flag
-  
-      // Fetch user information after branch data is fetched
-      if (branchList.length) {
-        fetchUserInformation();
-      }
-    } else {
-      fetchBranchData(); // Fetch branch data initially
-    }
-  }, [shouldRefresh, token, id, branchList]);
  
+ 
+  useEffect(() => {
     const fetchUserInformation = async () => {
       try {
         if (!token || !branchList.length) {
@@ -125,40 +104,26 @@ const Profile = ({ isdarkMode }: { isdarkMode: boolean }) => {
         const headers = {
           Authorization: `Bearer ${token}`,
         };
-        const response = await axios.get(
-          `http://122.53.61.91:6002/api/view-user/${id}`,
-          {
-            headers,
-          }
-        );
+        const response = await axios.get(`http://122.53.61.91:6002/api/view-user/${id}`, { headers });
 
         if (response.data.status) {
           const userData = response.data.data;
           setUser(userData);
-          console.log(userData)
-          // Find the branch code for the user's branch ID
-          console.log('Branch List:', branchList);
-          const branch = branchList.find(b => b.id === Number(userData.branch_code));
 
-          console.log('Branch:', branch);
-      
+          const branch = branchList.find(b => b.id === Number(userData.branch_code));
           if (branch) {
             setSelectedBranchCode(branch.branch_code);
           }
         } else {
-          throw new Error(
-            response.data.message || "Failed to fetch user information"
-          );
+          throw new Error(response.data.message || "Failed to fetch user information");
         }
       } catch (error: any) {
-        setError(
-          error.response?.data?.message ||
-            "An error occurred while fetching user information"
-        );
+        setError(error.response?.data?.message || "An error occurred while fetching user information");
       }
     };
 
     fetchUserInformation();
+  }, [token, id, branchList]);
 
   
   const handleClear = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -278,7 +243,7 @@ const Profile = ({ isdarkMode }: { isdarkMode: boolean }) => {
     inputRef.current?.click();
   };
 
-  const baseUrl = "http://122.53.61.91:6002/storage/profile_pictures/";
+
   const profilePictureUrl = newProfilePic
     ? URL.createObjectURL(newProfilePic) // Create a temporary URL for the new profile picture
     : user?.profile_picture
@@ -327,7 +292,7 @@ const Profile = ({ isdarkMode }: { isdarkMode: boolean }) => {
           }
         );
     
-        console.log("Profile picture updated successfully:", response.data);
+       
         setSubmitting(false);
         setShowSuccessModal(true);
       } catch (error: any) {
@@ -343,7 +308,7 @@ const Profile = ({ isdarkMode }: { isdarkMode: boolean }) => {
     if (signatureRef.current) {
       const signatureImage = signatureRef.current.toDataURL();
       // You can save signatureImage or set it to a form field for submission
-      console.log("Signature Image:", signatureImage);
+    
     }
   };
   const signatureIsEmpty = () => {
@@ -360,7 +325,7 @@ const Profile = ({ isdarkMode }: { isdarkMode: boolean }) => {
       setSignatureButton(true);
       // Convert the signature to a data URL
       const signatureDataURL = signatureRef.current.toDataURL();
-      console.log("Signature Data URL:", signatureDataURL); // Check the console to verify the data
+   
 
       try {
         // Send the data URL to the backend API
@@ -375,7 +340,7 @@ const Profile = ({ isdarkMode }: { isdarkMode: boolean }) => {
           }
         );
         setSignatureButton(false);
-        console.log(response.data); // Check the response for success or error messages
+       
       } catch (error) {
         setSignatureButton(false);
         console.error("Error saving signature:", error); // Log any errors
@@ -389,7 +354,7 @@ const Profile = ({ isdarkMode }: { isdarkMode: boolean }) => {
   const handleProfilePicUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setNewProfilePic(file); // Store the selected file in state
-    console.log(newProfilePic);
+ 
   };
     
   return (

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { XMarkIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon, MagnifyingGlassIcon} from "@heroicons/react/24/outline";
 import { set, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -59,7 +59,7 @@ const AddApproverModal = ({
   const [users, setUsers] = useState<Record[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
   const [isButtonVisible, setIsButtonVisible] = useState(false);
-
+  const [filterTerm, setFilterTerm] =useState("");
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -106,6 +106,11 @@ const AddApproverModal = ({
     }
   }, [modalIsOpen]);
   
+  const filteredApproverlist = users.filter(user =>
+    Object.values(user).some(value =>
+      String(value).toLowerCase().includes(filterTerm.toLowerCase())
+    )
+  );
 
   useEffect(() => {
     // Check if at least one user is selected
@@ -182,14 +187,27 @@ const AddApproverModal = ({
           onClick={closeModal}
         />
       </div>
+     
       <div className="bg-white w-10/12 sm:w-1/3  x-20    overflow-y-auto  h-2/3 relative">
+      <div className="sm:mx-0 md:mx-4 my-2 relative w-1/2">
+            <div className="relative flex-grow">
+              <input
+                type="text"
+                className="w-full border border-black rounded-md pl-10 pr-3 py-2"
+                value={filterTerm}
+                onChange={(e) => setFilterTerm(e.target.value)}
+                placeholder="Search approvers"
+              />
+              <MagnifyingGlassIcon className="h-5 w-5 text-black absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none" />
+            </div>
+          </div>
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <ClipLoader size={35} color={"#123abc"} loading={loading} />
           </div>
         ) : (
           <div className="">
-            {users.map((user, index) => (
+            {filteredApproverlist.map((user, index) => (
               <div
                 key={user.id}
                 className={`flex items-center justify-between mb-2 ${

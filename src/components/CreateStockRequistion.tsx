@@ -69,10 +69,10 @@ const CreateStockRequistion = (props: Props) => {
     []
   );
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (e.target.files) {
-          // Convert FileList to array and set it
-          setFile(Array.from(e.target.files));
-      }
+    if (e.target.files) {
+      // Convert FileList to array and set it
+      setFile(Array.from(e.target.files));
+    }
   };
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
@@ -129,8 +129,6 @@ const CreateStockRequistion = (props: Props) => {
         console.error("Unexpected response format:", response.data);
         setCustomApprovers([]); // Ensure that customApprovers is always an array
       }
-
-      console.log("Custom Approvers:", response.data.data);
     } catch (error) {
       console.error("Error fetching custom approvers:", error);
       setCustomApprovers([]); // Ensure that customApprovers is always an array
@@ -159,104 +157,101 @@ const CreateStockRequistion = (props: Props) => {
 
   const onSubmit = async (data: any) => {
     try {
-        setLoading(true);
+      setLoading(true);
 
-        const token = localStorage.getItem("token");
-        const userId = localStorage.getItem("id");
-        const branch_code = localStorage.getItem("branch_code");
+      const token = localStorage.getItem("token");
+      const userId = localStorage.getItem("id");
+      const branch_code = localStorage.getItem("branch_code");
 
-        if (!token || !userId) {
-            console.error("Token or userId not found");
-            return;
+      if (!token || !userId) {
+        console.error("Token or userId not found");
+        return;
+      }
+
+      const selectedList = customApprovers.find(
+        (approver) => approver.id === selectedApproverList
+      );
+      if (!selectedList) {
+        console.error("Selected approver list not found");
+        return;
+      }
+
+      if (
+        items.some((item) =>
+          Object.entries(item)
+            .filter(([key, value]) => key !== "remarks")
+            .some(([key, value]) => value === "")
+        )
+      ) {
+        console.error("Item fields cannot be empty");
+        return;
+      }
+
+      let grandTotal = 0;
+      items.forEach((item) => {
+        if (item.totalAmount) {
+          grandTotal += parseFloat(item.totalAmount);
         }
+      });
 
-        const selectedList = customApprovers.find(
-            (approver) => approver.id === selectedApproverList
-        );
-        if (!selectedList) {
-            console.error("Selected approver list not found");
-            return;
-        }
+      const formData = new FormData();
 
-        if (
-            items.some((item) =>
-                Object.entries(item)
-                    .filter(([key, value]) => key !== "remarks")
-                    .some(([key, value]) => value === "")
-            )
-        ) {
-            console.error("Item fields cannot be empty");
-            return;
-        }
+      // Append each file to FormData
+      file.forEach((file) => {
+        formData.append("attachment[]", file);
+      });
 
-        let grandTotal = 0;
-        items.forEach((item) => {
-            if (item.totalAmount) {
-                grandTotal += parseFloat(item.totalAmount);
-            }
-        });
+      formData.append("form_type", "Stock Requisition Slip");
+      formData.append("approvers_id", String(selectedApproverList));
+      formData.append("user_id", userId);
 
-      
+      formData.append(
+        "form_data",
+        JSON.stringify([
+          {
+            purpose: data.purpose,
+            date: data.date,
+            branch: branch_code,
+            grand_total: grandTotal.toFixed(2),
+            items: items.map((item) => ({
+              quantity: item.quantity,
+              description: item.description,
+              unitCost: item.unitCost,
+              totalAmount: item.totalAmount,
+              remarks: item.remarks,
+            })),
+          },
+        ])
+      );
 
-        const formData = new FormData();
+      // Log formData content
+      logFormData(formData);
 
-        // Append each file to FormData
-        file.forEach((file) => {
-            formData.append("attachment[]", file); 
-        });
-
-        formData.append("form_type", "Stock Requisition Slip");
-        formData.append("approvers_id", String(selectedApproverList));
-        formData.append("user_id", userId);
-
-        formData.append(
-            "form_data",
-            JSON.stringify([
-                {
-                    purpose: data.purpose,
-                    date: data.date,
-                    branch: branch_code,
-                    grand_total: grandTotal.toFixed(2),
-                    items: items.map((item) => ({
-                        quantity: item.quantity,
-                        description: item.description,
-                        unitCost: item.unitCost,
-                        totalAmount: item.totalAmount,
-                        remarks: item.remarks,
-                    })),
-                },
-            ])
-        );
-
-        // Log formData content
-        logFormData(formData);
-
-        // Display confirmation modal
-        setShowConfirmationModal(true);
-        setFormData(formData);
-
+      // Display confirmation modal
+      setShowConfirmationModal(true);
+      setFormData(formData);
     } catch (error) {
-        console.error("An error occurred while preparing the request:", error);
+      console.error("An error occurred while preparing the request:", error);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-};
-  
+  };
+
   const handleConfirmSubmit = async () => {
     setShowConfirmationModal(false);
     const token = localStorage.getItem("token");
-  
+
     if (!selectedApproverList) {
       alert("Please select an approver.");
       return;
     }
-  
+
     try {
       setLoading(true);
-  
+
       // Log formData content
       logFormData(formData);
-  
+
       const response = await axios.post(
         "http://122.53.61.91:6002/api/create-request",
         formData,
@@ -267,7 +262,7 @@ const CreateStockRequistion = (props: Props) => {
           },
         }
       );
-      console.log("Request submitted successfully:", response.data);
+
       setShowSuccessModal(true);
       setFormSubmitted(true);
       setLoading(false);
@@ -277,14 +272,13 @@ const CreateStockRequistion = (props: Props) => {
       setLoading(false);
     }
   };
-  
+
   const logFormData = (formData: any) => {
     for (let [key, value] of formData.entries()) {
       console.log(key, value);
     }
   };
-  
-  
+
   const handleCancelSubmit = () => {
     // Close the confirmation modal
     setShowConfirmationModal(false);
@@ -354,7 +348,6 @@ const CreateStockRequistion = (props: Props) => {
 
     setItems(updatedItems);
   };
-  console.log("items", selectedApproverList);
 
   const handleTextareaHeight = (index: number, field: string) => {
     const textarea = document.getElementById(
@@ -385,7 +378,7 @@ const CreateStockRequistion = (props: Props) => {
         ))}
       </select>
 
-      <div className="bg-white w-full  mb-5 rounded-[12px] flex flex-col">
+      <div className="bg-white w-full  mb-5 rounded-[12px] flex flex-col ">
         <div className="border-b flex justify-between flex-col px-[30px] md:flex-row ">
           <div>
             <h1 className=" text-[24px] text-left py-4 text-primary font-bold flex mr-2">
@@ -429,41 +422,44 @@ const CreateStockRequistion = (props: Props) => {
             <div className="flex flex-col sm:flex-row justify-between">
               <div className="">
                 <p className="font-bold">Purpose:</p>
-                <div className="flex flex-col md:flex-row md:space-x-2 ">
+                <div className="flex flex-col space-y-2 mt-2 ">
                   <div>
-                    <label className="">
-                      Repair & Maintenance
-                      <input
+                  <input
                         type="radio"
                         id="repair_maintenance"
                         value="Repair & Maintenance"
                         className="size-4 ml-1"
                         {...register("purpose")}
                       />
+                    <label className="">
+                      Repair & Maintenance
+                     
                     </label>
                   </div>
                   <div>
-                    <label className="">
-                      Repo. Recon
-                      <input
+                  <input
                         type="radio"
                         id="repo_recon"
                         value="Repo. Recon"
                         className="size-4 ml-1"
                         {...register("purpose", { required: true })}
                       />
+                    <label className="">
+                      Repo. Recon
+                    
                     </label>
                   </div>
                   <div>
-                    <label className="">
-                      Office/Service Used
-                      <input
+                  <input
                         type="radio"
                         id="office_service_used"
                         value="Office/Service Used"
                         className="size-4 ml-1"
                         {...register("purpose", { required: true })}
                       />
+                    <label className="">
+                      Office/Service Used
+                     
                     </label>
                   </div>
                 </div>
@@ -562,7 +558,7 @@ const CreateStockRequistion = (props: Props) => {
                         <p className="text-red-500">Unit Cost Required</p>
                       )}
                   </div>
-                  <div className={`${itemDiv}`}>
+                  <div className={`${itemDiv} `}>
                     <label className="font-semibold">Total Amount:</label>
                     <input
                       type="number"
@@ -605,12 +601,19 @@ const CreateStockRequistion = (props: Props) => {
               </div>
             ))}
 
-            <div className="flex justify-between">
-              <div>
+            <div className="flex justify-between flex-col md:flex-row">
+              <div className="w-full max-w-md  p-4">
                 <p className="font-semibold">Attachments:</p>
-                <input id="file" type="file" multiple onChange={handleFileChange} />
+                <input
+                  id="file"
+                  type="file"
+                  multiple
+                  onChange={handleFileChange}
+                  className="w-full mt-2"
+                />
               </div>
-              <div>
+
+              <div className="mt-4">
                 <p className="font-semibold">
                   Grand Total: ₱{calculateGrandTotal()}
                 </p>
@@ -635,6 +638,7 @@ const CreateStockRequistion = (props: Props) => {
                 className={`bg-primary ${buttonStyle}`}
                 type="submit"
                 onClick={handleFormSubmit}
+                disabled={loading}
               >
                 {loading ? <ClipLoader color="#36d7b7" /> : "Send Request"}
               </button>

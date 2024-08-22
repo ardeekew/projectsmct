@@ -21,7 +21,7 @@ const PrintStock: React.FC<PrintRefundProps> = ({ data }) => {
   } else if (printData?.user?.data?.branch === "Des Strong Motors, Inc.") {
     logo = <img src={DSMLogo} alt="DSM Logo" />;
   } else if (printData?.user?.data?.branch === "Des Appliance Plaza, Inc.") {
-    logo = <img src={DAPLogo} alt="DAP Logo"/>;
+    logo = <img src={DAPLogo} alt="DAP Logo" />;
   } else if (printData?.user?.data?.branch === "Honda Des, Inc.") {
     logo = <img src={HDILogo} alt="HDI Logo" />;
   } else {
@@ -49,31 +49,32 @@ const PrintStock: React.FC<PrintRefundProps> = ({ data }) => {
 
   useEffect(() => {
     // Retrieve the data from localStorage
-    const storedData = localStorage.getItem('printData');
+    const storedData = localStorage.getItem("printData");
     if (storedData) {
       const parsedData = JSON.parse(storedData);
       setPrintData(parsedData); // Set the printData state
     }
 
-   
-    localStorage.removeItem('printData');
+    localStorage.removeItem("printData");
   }, []);
-  
-  useEffect(() => {
+
+/*   useEffect(() => {
     if (printData !== null) {
       window.print();
-      localStorage.removeItem('printData'); // Clean up after printing
+      localStorage.removeItem("printData"); // Clean up after printing
     }
-  }, [printData]);
+  }, [printData]); */
   console.log("printData", printData);
   const tableStyle = "border-b border-black";
   return (
     <div className="print-container   ">
       <div className="border-2 border-black px-4 pt-2">
         <div className="flex flex-col justify-center items-center">
-        <div className="justify-center w-1/2 mt-10 ">{logo}</div>
-        
-          <h1 className="font-bold text-lg uppercase">Stock Requisition Slip</h1>
+          <div className="justify-center w-1/2 mt-10 ">{logo}</div>
+
+          <h1 className="font-bold text-lg uppercase">
+            Stock Requisition Slip
+          </h1>
           <div className="flex flex-col items-center font-bold mt-2">
             <h1 className="font-medium text-[16px] uppercase underline">
               {printData?.user.data.branch}
@@ -82,7 +83,7 @@ const PrintStock: React.FC<PrintRefundProps> = ({ data }) => {
           </div>
         </div>
         <div className="flex justify-end pr-6">
-        <p className=" mb-2 flex font-bold ">
+          <p className=" mb-2 flex font-bold ">
             Date:{" "}
             <p className="underline ml-2 mb-2">
               {formatDate(printData?.id.form_data[0].date)}
@@ -94,12 +95,12 @@ const PrintStock: React.FC<PrintRefundProps> = ({ data }) => {
       
      <p>Date: {formatDate(data.date)}</p> */}
         <div className="flex justify-center w-full">
-        <table className="w-full border-separate border-spacing-x-4"> 
+          <table className="w-full border-separate border-spacing-x-4">
             <thead className="">
-              <tr >
-                <th >Quantity</th>
-                <th >Description</th>
-                <th >Unit Cost</th>
+              <tr>
+                <th>Quantity</th>
+                <th>Description</th>
+                <th>Unit Cost</th>
                 <th>Total Amount</th>
                 <th>Remarks</th>
               </tr>
@@ -116,17 +117,13 @@ const PrintStock: React.FC<PrintRefundProps> = ({ data }) => {
                       <td className={`${tableStyle}`}>{item.remarks}</td>
                     </tr>
                   ))}
-                  {[...Array(Math.max(5 - formData.items.length, 0))].map(
-                    (_, emptyIndex) => (
-                      <tr key={`empty-${index}-${emptyIndex}`}>
-                        <td className={`${tableStyle} py-3`}></td>
-                        <td className={`${tableStyle}`}></td>
-                        <td className={`${tableStyle}`}></td>
-                        <td className={`${tableStyle}`}></td>
-                        <td className={`${tableStyle}`}></td>
-                      </tr>
-                    )
-                  )}
+                  <tr key="empty-0-0">
+                    <td className={`${tableStyle} py-4`}></td>
+                    <td className={`${tableStyle}`}></td>
+                    <td className={`${tableStyle}`}></td>
+                    <td className={`${tableStyle}`}></td>
+                    <td className={`${tableStyle}`}></td>
+                  </tr>
                 </React.Fragment>
               ))}
             </tbody>
@@ -136,12 +133,12 @@ const PrintStock: React.FC<PrintRefundProps> = ({ data }) => {
           Grand Total: ₱ {printData?.id.form_data[0].grand_total}
         </p>
 
-        <div className="mt-4 w-full">
-          <div className="flex flex-wrap justify-between w-full">
+        <div className="mt-4 ">
+          <div className="flex flex-wrap justify-start ">
             {/* Requested By Section */}
             <div className="mb-4 flex-grow">
               <h3 className="font-bold mb-3">Requested By:</h3>
-              <div className="flex flex-col items-center justify-center text-center relative pt-8">
+              <div className="flex flex-col items-start justify-start text-center relative pt-8">
                 <img
                   className="absolute top-2"
                   src={printData?.user.data.signature}
@@ -161,11 +158,11 @@ const PrintStock: React.FC<PrintRefundProps> = ({ data }) => {
             {/* Noted By Section */}
             <div className="mb-4 flex-grow">
               <h3 className="font-bold mb-3">Noted By:</h3>
-              <div className="flex flex-wrap justify-around">
+              <div className="flex flex-wrap justify-start  ">
                 {printData?.notedBy.map((approver: any, index: number) => (
                   <div
                     key={index}
-                    className="flex flex-col  mr-2 relative pt-8"
+                    className="flex flex-col  relative pt-8 mr-10"
                   >
                     {approver.status === "Approved" && (
                       <img
@@ -189,11 +186,11 @@ const PrintStock: React.FC<PrintRefundProps> = ({ data }) => {
             {/* Approved By Section */}
             <div className="mb-4 flex-grow">
               <h3 className="font-bold mb-3">Approved By:</h3>
-              <div className="flex flex-wrap justify-evenly">
+              <div className="flex flex-wrap justify-start ">
                 {printData?.approvedBy.map((approver: any, index: number) => (
                   <div
                     key={index}
-                    className="flex flex-col justify-start items-center mr-2 relative pt-8"
+                    className="flex flex-col justify-start items-start mr-10 relative pt-8"
                   >
                     {approver.status === "Approved" && (
                       <img

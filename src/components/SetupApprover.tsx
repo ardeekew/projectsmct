@@ -4,6 +4,7 @@ import {
   PencilSquareIcon,
   TrashIcon,
   XMarkIcon,
+  MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import { faCircleCheck } from "@fortawesome/free-solid-svg-icons";
@@ -77,6 +78,37 @@ const SetupApprover = (props: Props) => {
   const [approverList, setApproverList] = useState<Record[]>([]);
   const [isLoading, setisLoading] = useState(false);
   const userId = localStorage.getItem("id");
+  const [filterTerm, setFilterTerm]= useState("");
+  const [branchList, setBranchList] = useState<any[]>([]);
+  const [branchMap, setBranchMap] = useState<Map<number, string>>(new Map());
+
+  useEffect(() => {
+    const fetchBranchData = async () => {
+      try {
+        const response = await axios.get(
+          `http://122.53.61.91:6002/api/view-branch`
+        );
+        const branches = response.data.data;
+
+        // Create a mapping of id to branch_name
+        const branchMapping = new Map<number, string>(
+          branches.map((branch: { id: number; branch_code: string }) => [
+            branch.id,
+            branch.branch_code,
+          ])
+        );
+
+        setBranchList(branches);
+        setBranchMap(branchMapping);
+
+   
+      } catch (error) {
+        console.error("Error fetching branch data:", error);
+      }
+    };
+
+    fetchBranchData();
+  }, []);
 
   useEffect(() => {
     const fetchApproverData = async () => {
@@ -86,8 +118,7 @@ const SetupApprover = (props: Props) => {
           return;
         }
 
-        console.log("Fetching approvers data...");
-        console.log("User ID:", userId);
+      
 
         const token = localStorage.getItem("token");
         if (!token) {
@@ -105,7 +136,7 @@ const SetupApprover = (props: Props) => {
             headers,
           }
         );
-        console.log("Response:", response.data);
+      
         // Transform data to match columns selector
         const transformedData = response.data.data.map(
           (item: Record, index: number) => ({
@@ -120,7 +151,7 @@ const SetupApprover = (props: Props) => {
         );
 
         setApproverList(transformedData);
-        console.log("Approvers:", transformedData);
+      
       } catch (error) {
         console.error("Error fetching approvers data:", error);
       }
@@ -128,7 +159,11 @@ const SetupApprover = (props: Props) => {
 
     fetchApproverData();
   }, [userId]);
-
+  const filteredApproverlist = approverList.filter(approver =>
+    Object.values(approver).some(value =>
+      String(value).toLowerCase().includes(filterTerm.toLowerCase())
+    )
+  );
   const refreshData = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -147,7 +182,7 @@ const SetupApprover = (props: Props) => {
           headers,
         }
       );
-      console.log("Response:", response.data);
+    
       // Transform data to match columns selector
       const transformedData = response.data.data.map(
         (item: Record, index: number) => ({
@@ -162,7 +197,7 @@ const SetupApprover = (props: Props) => {
       );
 
       setApproverList(transformedData);
-      console.log("Approvers:", transformedData);
+   
     } catch (error) {
       console.error("Error fetching approvers data:", error);
     }
@@ -170,7 +205,7 @@ const SetupApprover = (props: Props) => {
   const viewModalShow = (row: Record) => {
     setSelectedUser(row);
     setViewModalIsOpen(true);
-    console.log("opened view modal");
+  
   };
 
   const viewModalClose = () => {
@@ -229,7 +264,7 @@ const SetupApprover = (props: Props) => {
     setShowDeletedSuccessModal(false);
   };
   const deleteUser = async () => {
- console.log('type',selectedUser?.id)
+
     try {
     
       if (!userId || !selectedUser) {
@@ -273,22 +308,18 @@ const SetupApprover = (props: Props) => {
 
   const columns = [
     {
-      name: "User ID",
-      selector: (row: Record) => row.id,
-    },
-  
-
-    {
-      name: "Assigned Branches ",
-      selector: (row: Record) => row.branch,
-    },
-    {
       name: "Name",
       selector: (row: Record) => row.name,
     },
-
     {
-      name: "Modify",
+      name: "Assigned Branches ",
+      selector: (row: Record) => {
+        const branchId = parseInt(row.branch_code, 10);
+        return branchMap.get(branchId) || "Unknown";
+      },
+    },
+      {
+      name: "Action",
       cell: (row: Record) => (
         <div className="flex space-x-2">
            
@@ -319,9 +350,21 @@ const SetupApprover = (props: Props) => {
               </button>
             </div>
           </div>
+          <div className="sm:mx-0 md:mx-4 my-2 relative w-2/12">
+            <div className="relative flex-grow">
+              <input
+                type="text"
+                className="w-full border border-black rounded-md pl-10 pr-3 py-2"
+                value={filterTerm}
+                onChange={(e) => setFilterTerm(e.target.value)}
+                placeholder="Search approvers"
+              />
+              <MagnifyingGlassIcon className="h-5 w-5 text-black absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none" />
+            </div>
+          </div>
           <DataTable
             columns={columns}
-            data={approverList}
+            data={filteredApproverlist}
             pagination
             striped
             customStyles={tableCustomStyles}

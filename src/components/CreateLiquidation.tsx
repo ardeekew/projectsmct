@@ -10,6 +10,7 @@ import { z, ZodError } from "zod";
 import axios from "axios";
 import RequestSuccessModal from "./Modals/RequestSuccessModal";
 import ClipLoader from "react-spinners/ClipLoader";
+import { useUser } from '../context/UserContext';
 type CustomApprover = {
   id: number;
   name: string;
@@ -157,6 +158,7 @@ const CreateLiquidation = (props: Props) => {
     },
   ]);
   const [tableData, setTableData] = useState<TableDataItem[]>(initialTableData);
+   const { userId, firstName, lastName, email, role, branchCode, contact } = useUser();
   const [selectedRequestType, setSelectedRequestType] =
     useState("/request/loae");
 
@@ -189,7 +191,7 @@ const CreateLiquidation = (props: Props) => {
         setCustomApprovers([]); // Ensure that customApprovers is always an array
       }
 
-      console.log("Custom Approvers:", response.data.data);
+   
     } catch (error) {
       console.error("Error fetching custom approvers:", error);
       setCustomApprovers([]); // Ensure that customApprovers is always an array
@@ -292,7 +294,7 @@ const CreateLiquidation = (props: Props) => {
   const handleCloseConfirmationModal = () => {
     setShowConfirmationModal(false);
   };
-  console.log(tableData.length);
+ 
   const onSubmit = async (data: FormData) => {
     try {
       if (!cashAdvance && errors.cashAdvance) {
@@ -316,16 +318,15 @@ const CreateLiquidation = (props: Props) => {
       setName(firstName + " " + lastName);
       const eSig = localStorage.getItem("signature");
       const branch_code = localStorage.getItem("branch_code");
-      console.log("id", userId);
+  
       if (!token || !userId) {
         console.error("Token or userId not found");
         return;
       }
 
-      console.log("data", data);
-      console.log("items", tableData);
+     
       setItems(tableData);
-      console.log("itemss oring", items);
+   
       const emptyItems: number[] = [];
       items.forEach((item, index) => {
         if (Object.values(item).some((value) => value === "")) {
@@ -333,23 +334,8 @@ const CreateLiquidation = (props: Props) => {
         }
       });
 
-      if (emptyItems.length > 0) {
-        console.error("Item fields cannot be empty", emptyItems);
-
-        // Log the item at index 0 to identify which fields are empty
-        console.log("Empty item:", items[0]);
-
-        // Display error message to the user or handle it accordingly
-        return;
-      }
-      // Check if any item fields are empty
-      if (
-        items.some((item) => Object.values(item).some((value) => value === ""))
-      ) {
-        console.error("Item fields cannot be empty");
-        // Display error message to the user or handle it accordingly
-        return;
-      }
+    
+      
 
       // Calculate total expense by summing up all grand totals
       const totalExpense = tableData
@@ -432,7 +418,7 @@ const CreateLiquidation = (props: Props) => {
         }
       );
       setShowSuccessModal(true);
-      console.log("Request submitted successfully:", response.data);
+
       setFormSubmitted(true);
       setLoading(false);
     } catch (error) {
@@ -779,7 +765,7 @@ const CreateLiquidation = (props: Props) => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 md:gap-2">
+            <div className="grid grid-cols-1 lg:grid-cols-2 md:gap-2 overflow-x-auto">
               <div>
                 <table className="border border-black  mt-10 w-full">
                   <tr>
@@ -860,15 +846,17 @@ const CreateLiquidation = (props: Props) => {
                 </table>
               </div>
             </div>
-            <div>
-              <p className="font-semibold">Attachments:</p>
-              <input
-                id="file"
-                type="file"
-                multiple
-                onChange={handleFileChange}
-              />
-            </div>
+          
+            <div className="w-full max-w-md  p-4">
+                <p className="font-semibold">Attachments:</p>
+                <input
+                  id="file"
+                  type="file"
+                  multiple
+                  onChange={handleFileChange}
+                  className="w-full mt-2"
+                />
+              </div>
             <div className="space-x-3 flex justify-end mt-20 pb-10">
               <button
               type="button"
@@ -892,6 +880,7 @@ const CreateLiquidation = (props: Props) => {
                 className={`bg-primary ${buttonStyle}`}
                 type="submit"
                 onClick={handleFormSubmit}
+                disabled={loading}
               >
                 {loading ? <ClipLoader color="#36d7b7" /> : "Send Request"}
               </button>

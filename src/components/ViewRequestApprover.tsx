@@ -36,8 +36,8 @@ type MyFormData = {
   purpose: string;
   items: MyItem[];
   approvers: {
-    noted_by: { firstName: string; lastName: string }[];
-    approved_by: { firstName: string; lastName: string }[];
+    noted_by: { firstName: string; lastName: string; status: string }[];
+    approved_by: { firstName: string; lastName: string; status: string }[];
   };
   date: string;
   branch: string;
@@ -110,11 +110,12 @@ const ViewRequestApprover = (props: Props) => {
   const [selectedRecord, setSelectedRecord] = useState<Record | null>(null);
   const [sortOrder, setSortOrder] = useState("desc");
   const userId = localStorage.getItem("id");
+  
 
+ 
   useEffect(() => {
     if (userId) {
-      console.log("Fetching data...");
-      console.log("User ID:", userId);
+  
       const token = localStorage.getItem("token");
       if (!token) {
         console.error("Token is missing");
@@ -131,7 +132,7 @@ const ViewRequestApprover = (props: Props) => {
         })
         .then((response) => {
           setRequests(response.data.data); // Assuming response.data.data contains your array of data
-          console.log("Requests:", response.data.data);
+        
         })
         .catch((error) => {
           console.error("Error fetching requests data:", error);
@@ -170,8 +171,7 @@ const ViewRequestApprover = (props: Props) => {
   };
   const refreshData = () => {
     if (userId) {
-      console.log("Fetching data...");
-      console.log("User ID:", userId);
+     
       const token = localStorage.getItem("token");
       if (!token) {
         console.error("Token is missing");

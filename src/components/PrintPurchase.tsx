@@ -115,17 +115,13 @@ const PrintPurchase: React.FC<PrintRefundProps> = ({ data }) => {
                       <td className={`${tableStyle}`}>{item.remarks}</td>
                     </tr>
                   ))}
-                  {[...Array(Math.max(5 - formData.items.length, 0))].map(
-                    (_, emptyIndex) => (
-                      <tr key={`empty-${index}-${emptyIndex}`}>
-                        <td className={`${tableStyle} py-3`}></td>
-                        <td className={`${tableStyle}`}></td>
-                        <td className={`${tableStyle}`}></td>
-                        <td className={`${tableStyle}`}></td>
-                        <td className={`${tableStyle}`}></td>
-                      </tr>
-                    )
-                  )}
+                 <tr key="empty-0-0">
+                    <td className={`${tableStyle} py-4`}></td>
+                    <td className={`${tableStyle}`}></td>
+                    <td className={`${tableStyle}`}></td>
+                    <td className={`${tableStyle}`}></td>
+                    <td className={`${tableStyle}`}></td>
+                  </tr>
                 </React.Fragment>
               ))}
             </tbody>
@@ -135,12 +131,12 @@ const PrintPurchase: React.FC<PrintRefundProps> = ({ data }) => {
           Grand Total: ₱ {printData?.id.form_data[0].grand_total}
         </p>
 
-        <div className="mt-4 w-full">
-          <div className="flex flex-wrap justify-between w-full">
+        <div className="mt-4 ">
+          <div className="flex flex-wrap justify-start ">
             {/* Requested By Section */}
             <div className="mb-4 flex-grow">
               <h3 className="font-bold mb-3">Requested By:</h3>
-              <div className="flex flex-col items-center justify-center text-center relative pt-8">
+              <div className="flex flex-col items-start justify-start text-center relative pt-8">
                 <img
                   className="absolute top-2"
                   src={printData?.user.data.signature}
@@ -160,11 +156,11 @@ const PrintPurchase: React.FC<PrintRefundProps> = ({ data }) => {
             {/* Noted By Section */}
             <div className="mb-4 flex-grow">
               <h3 className="font-bold mb-3">Noted By:</h3>
-              <div className="flex flex-wrap justify-around">
+              <div className="flex flex-wrap justify-start  ">
                 {printData?.notedBy.map((approver: any, index: number) => (
                   <div
                     key={index}
-                    className="flex flex-col  mr-2 relative pt-8"
+                    className="flex flex-col  relative pt-8 mr-10"
                   >
                     {approver.status === "Approved" && (
                       <img
@@ -188,11 +184,11 @@ const PrintPurchase: React.FC<PrintRefundProps> = ({ data }) => {
             {/* Approved By Section */}
             <div className="mb-4 flex-grow">
               <h3 className="font-bold mb-3">Approved By:</h3>
-              <div className="flex flex-wrap justify-evenly">
+              <div className="flex flex-wrap justify-start ">
                 {printData?.approvedBy.map((approver: any, index: number) => (
                   <div
                     key={index}
-                    className="flex flex-col justify-start items-center mr-2 relative pt-8"
+                    className="flex flex-col justify-start items-start mr-10 relative pt-8"
                   >
                     {approver.status === "Approved" && (
                       <img

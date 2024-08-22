@@ -11,6 +11,7 @@ import DSMLogo from "./assets/DSM.jpg";
 import DAPLogo from "./assets/DAP.jpg";
 import HDILogo from "./assets/HDI.jpg";
 import ApproveSuccessModal from "./ApproveSuccessModal";
+import Avatar from "./assets/avatar.png";
 type Props = {
   closeModal: () => void;
   record: Record;
@@ -120,6 +121,14 @@ const ApproverCashAdvance: React.FC<Props> = ({
     "approved"
   );
   let logo;
+  const [branchList, setBranchList] = useState<any[]>([]);
+  const [branchMap, setBranchMap] = useState<Map<number, string>>(new Map());
+  const hasDisapprovedInNotedBy = notedBy.some(
+    (user) => user.status === "Disapproved"
+  );
+  const hasDisapprovedInApprovedBy = approvedBy.some(
+    (user) => user.status === "Disapproved"
+  );
   if (user?.data?.branch === "Strong Motocentrum, Inc.") {
     logo = <img src={SMCTLogo} alt="SMCT Logo" />;
   } else if (user?.data?.branch === "Des Strong Motors, Inc.") {
@@ -131,6 +140,32 @@ const ApproverCashAdvance: React.FC<Props> = ({
   } else {
     logo = null; // Handle the case where branch does not match any of the above
   }
+  useEffect(() => {
+    const fetchBranchData = async () => {
+      try {
+        const response = await axios.get(
+          `http://122.53.61.91:6002/api/view-branch`
+        );
+        const branches = response.data.data;
+
+        // Create a mapping of id to branch_name
+        const branchMapping = new Map<number, string>(
+          branches.map((branch: { id: number; branch_code: string }) => [
+            branch.id,
+            branch.branch_code,
+          ])
+        );
+
+        setBranchList(branches);
+        setBranchMap(branchMapping);
+      } catch (error) {
+        console.error("Error fetching branch data:", error);
+      }
+    };
+
+    fetchBranchData();
+  }, []);
+
   useEffect(() => {
     const currentUserId = localStorage.getItem("id");
 
@@ -188,7 +223,6 @@ const ApproverCashAdvance: React.FC<Props> = ({
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-  
       setLoading(false);
       setModalStatus("disapproved"); // Set modal status to 'disapproved'
       setShowSuccessModal(true);
@@ -221,8 +255,6 @@ const ApproverCashAdvance: React.FC<Props> = ({
 
     try {
       setApprovedLoading(true);
-   
-  
 
       const response = await axios.put(
         `http://122.53.61.91:6002/api/request-forms/${record.id}/process`,
@@ -230,7 +262,6 @@ const ApproverCashAdvance: React.FC<Props> = ({
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-    
       setApprovedLoading(false);
       setModalStatus("approved");
       setShowSuccessModal(true);
@@ -316,7 +347,6 @@ const ApproverCashAdvance: React.FC<Props> = ({
     }));
   };
 
- 
   const fetchUser = async (id: number) => {
     setisFetchingUser(true);
     try {
@@ -334,7 +364,6 @@ const ApproverCashAdvance: React.FC<Props> = ({
         }
       );
 
-     
       setUser(response.data);
     } catch (error) {
       console.error("Failed to fetch approvers:", error);
@@ -363,7 +392,6 @@ const ApproverCashAdvance: React.FC<Props> = ({
       setNotedBy(notedby);
       setApprovedBy(approvedby);
       setApprovers(approvers);
-   
     } catch (error) {
       console.error("Failed to fetch approvers:", error);
     } finally {
@@ -378,7 +406,6 @@ const ApproverCashAdvance: React.FC<Props> = ({
       notedBy: notedBy,
       user: user,
     };
-
 
     localStorage.setItem("printData", JSON.stringify(data));
     // Open a new window with PrintRefund component
@@ -435,7 +462,7 @@ const ApproverCashAdvance: React.FC<Props> = ({
                   ? "bg-green"
                   : record.status.trim() === "Disapproved"
                   ? "bg-pink"
-                  : ""
+                  : "bg-pink"
               } rounded-lg  py-1 w-1/3
              font-medium text-[14px] text-center ml-2 text-white`}
             >
@@ -449,8 +476,11 @@ const ApproverCashAdvance: React.FC<Props> = ({
               <h1>Branch</h1>
               <input
                 type="text"
-                className="border border-black rounded-md p-1 mt-2 w-full "
-                value={record.form_data[0].branch}
+                className="border border-black rounded-md p-1 mt-2 w-full"
+                value={
+                  branchMap.get(parseInt(record.form_data[0].branch, 10)) ||
+                  "Unknown"
+                }
                 readOnly
               />
             </div>
@@ -797,7 +827,8 @@ const ApproverCashAdvance: React.FC<Props> = ({
                       >
                         <div className="flex flex-col items-center justify-center text-center">
                           <p className="relative inline-block uppercase font-medium text-center pt-6">
-                            {user.status.toLowerCase() === "approved" && (
+                            {(user.status === "Approved" ||
+                              user.status.split(" ")[0] === "Rejected") && (
                               <img
                                 className="absolute top-2"
                                 src={user.signature}
@@ -813,6 +844,29 @@ const ApproverCashAdvance: React.FC<Props> = ({
                           <p className="font-bold text-[12px] text-center">
                             {user.position}
                           </p>
+                          {hasDisapprovedInApprovedBy ||
+                          hasDisapprovedInNotedBy ? (
+                            // Show "Disapproved" if it is present in either list
+                            user.status === "Disapproved" ? (
+                              <p className="font-bold text-[12px] text-center text-red-500">
+                                {user.status}
+                              </p>
+                            ) : // Do not show any status if "Disapproved" is present
+                            null
+                          ) : (
+                            // Show other statuses only if "Disapproved" is not present in either list
+                            <p
+                              className={`font-bold text-[12px] text-center ${
+                                user.status === "Approved"
+                                  ? "text-green"
+                                  : user.status === "Pending"
+                                  ? "text-yellow"
+                                  : ""
+                              }`}
+                            >
+                              {user.status}
+                            </p>
+                          )}
                         </div>
                       </li>
                     ))}
@@ -828,7 +882,8 @@ const ApproverCashAdvance: React.FC<Props> = ({
                       >
                         <div className="flex flex-col items-center justify-center text-center">
                           <p className="relative inline-block uppercase font-medium text-center pt-6">
-                            {user.status.toLowerCase() === "approved" && (
+                            {(user.status === "Approved" ||
+                              user.status.split(" ")[0] === "Rejected") && (
                               <img
                                 className="absolute top-2"
                                 src={user.signature}
@@ -844,6 +899,29 @@ const ApproverCashAdvance: React.FC<Props> = ({
                           <p className="font-bold text-[12px] text-center">
                             {user.position}
                           </p>
+                          {hasDisapprovedInApprovedBy ||
+                          hasDisapprovedInNotedBy ? (
+                            // Show "Disapproved" if it is present in either list
+                            user.status === "Disapproved" ? (
+                              <p className="font-bold text-[12px] text-center text-red-500">
+                                {user.status}
+                              </p>
+                            ) : // Do not show any status if "Disapproved" is present
+                            null
+                          ) : (
+                            // Show other statuses only if "Disapproved" is not present in either list
+                            <p
+                              className={`font-bold text-[12px] text-center ${
+                                user.status === "Approved"
+                                  ? "text-green"
+                                  : user.status === "Pending"
+                                  ? "text-yellow"
+                                  : ""
+                              }`}
+                            >
+                              {user.status}
+                            </p>
+                          )}
                         </div>
                       </li>
                     ))}
@@ -855,31 +933,89 @@ const ApproverCashAdvance: React.FC<Props> = ({
           <div className="w-full">
             <h1 className="font-bold">Attachments:</h1>
             <div>
-              {attachmentUrl.map((url, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <a
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-500"
-                  >
-                    {url.split("/").pop()}
-                  </a>
-                </div>
-              ))}
+              {attachmentUrl.length > 0 ? (
+                attachmentUrl.map((url, index) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500"
+                    >
+                      {url.split("/").pop()}
+                    </a>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500">No attachments</p>
+              )}
             </div>
           </div>
           <div className="w-full">
-            <h1 className="flex">
-              Comments<p className="text-red-600">*</p>
-            </h1>
-            <textarea
-              className="border h-32 border-black rounded-md p-1 mt-2 w-full "
-              placeholder="e.g."
-              value={comments}
-              onChange={(e) => setComments(e.target.value)}
-            />
+            <h2 className="text-lg font-bold mb-2">Comments:</h2>
+
+            {(record.status === "Pending") && (
+              <div>
+                <textarea
+                  className="border h-auto border-black rounded-md p-1 mt-2 w-full"
+                  placeholder="Enter your comments here.."
+                  value={comments}
+                  onChange={(e) => setComments(e.target.value)}
+                />
+              </div>
+            )}
+
+            {/* Comments Section */}
+            <ul className="flex flex-col w-full mb-4 space-y-4">
+              {notedBy.filter((user) => user.comment).length > 0 ||
+              approvedBy.filter((user) => user.comment).length > 0 ? (
+                <>
+                  {notedBy
+                    .filter((user) => user.comment)
+                    .map((user, index) => (
+                      <div className="flex flex-row w-full" key={index}>
+                        <img
+                          alt="logo"
+                          className="cursor-pointer hidden sm:block"
+                          src={Avatar}
+                          height={35}
+                          width={45}
+                        />
+                        <li className="flex flex-col justify-between pl-2">
+                          <h3 className="font-bold text-lg">
+                            {user.firstname} {user.lastname}
+                          </h3>
+                          <p>{user.comment}</p>
+                        </li>
+                      </div>
+                    ))}
+
+                  {approvedBy
+                    .filter((user) => user.comment)
+                    .map((user, index) => (
+                      <div className="flex flex-row w-full" key={index}>
+                        <img
+                          alt="logo"
+                          className="cursor-pointer hidden sm:block"
+                          src={Avatar}
+                          height={35}
+                          width={45}
+                        />
+                        <li className="flex flex-col justify-between pl-2">
+                          <h3 className="font-bold text-lg">
+                            {user.firstname} {user.lastname}
+                          </h3>
+                          <p>{user.comment}</p>
+                        </li>
+                      </div>
+                    ))}
+                </>
+              ) : (
+                <p className="text-gray-500">No comments yet</p>
+              )}
+            </ul>
           </div>
+
           {record.status === "Pending" && (
             <div className="w-full space-x-2 flex items-center justify-between">
               <button

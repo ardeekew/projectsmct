@@ -341,7 +341,7 @@ const AddAreaManagerModal = ({
           onClick={handleConfirmSelection}
           className="bg-primary text-white h-12 font-bold py-2 px-4 rounded cursor-pointer"
         >
-          {isLoading ? <ClipLoader color="#36d7b7" /> : "Add Approver"}
+          {isLoading ? <ClipLoader color="#36d7b7" /> : "Add Area Manager"}
         </button>
         <button
           onClick={handleCancel}

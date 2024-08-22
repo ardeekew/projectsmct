@@ -25,21 +25,14 @@ const data: { [key: string]: string } = {
 const Help: React.FC<Props> = ({}) => {
   const [darkMode, setDarkMode] = useState(true);
   return (
-    <div className="bg-graybg dark:bg-blackbg  h-full pt-[26px]  px-[35px] ">
-      <div className="bg-primary w-full sm:w-full h-2/4 rounded-[12px] pl-[30px] flex flex-col justify-center items-center">
+    <div className="bg-graybg dark:bg-blackbg  h-full py-[26px]  px-[35px] ">
+      <div className="bg-primary w-full sm:w-full h-96 rounded-[12px] pl-[30px] flex flex-col justify-center items-center">
         <p className="text-5xl text-white font-bold ">Help Center</p>
-        <p className="mt-2  ">Have questions? Search your question</p>
-        <div className="relative">
-          <MagnifyingGlassIcon className="size-6 text-black absolute  left-2 top-6 transform -translate-y-1/2 h-6 w-6  " />
-          <input
-            type="text"
-            className="mt-2 rounded-[12px] p-1 px-14 border border-black"
-            placeholder="Search"
-          />
-        </div>
+        <p className="mt-2  ">Explore Our Categories to Quickly Access the Information You Need.</p>
+       
       </div>
 
-      <div className="grid grid-cols-3 mt-14 gap-4 mx-20">
+      <div className="grid grid-cols-1 md:grid-cols-3 mt-14 gap-4 w-full">
       <Link to="/help/user" className="cursor-pointer block bg-white border-2 rounded-lg px-6 py-6">
         <QuestionMarkCircleIcon className="size-14 text-primary    "/>
         <p className="font-bold text-lg mt-4">FAQs</p>

@@ -129,7 +129,7 @@ const CreateRefund = (props: Props) => {
         setCustomApprovers([]); // Ensure that customApprovers is always an array
       }
 
-      console.log("Custom Approvers:", response.data.data);
+   
     } catch (error) {
       console.error("Error fetching custom approvers:", error);
       setCustomApprovers([]); // Ensure that customApprovers is always an array
@@ -151,7 +151,7 @@ const CreateRefund = (props: Props) => {
       const token = localStorage.getItem("token");
       const userId = localStorage.getItem("id");
       const branch_code = localStorage.getItem("branch_code");
-      console.log("id", userId);
+     
       if (!token || !userId) {
         console.error("Token or userId not found");
         return;
@@ -253,7 +253,7 @@ const CreateRefund = (props: Props) => {
         }
       );
       setShowSuccessModal(true);
-      console.log("Request submitted successfully:", response.data);
+     
       setFormSubmitted(true);
       setLoading(false);
     } catch (error) {
@@ -541,14 +541,23 @@ const CreateRefund = (props: Props) => {
                 </div>
               </div>
             ))}
-            <div className="flex justify-between">
-            <div>
+             <div className="flex justify-between flex-col md:flex-row">
+              <div className="w-full max-w-md  p-4">
                 <p className="font-semibold">Attachments:</p>
-                <input id="file" type="file" multiple onChange={handleFileChange} />
+                <input
+                  id="file"
+                  type="file"
+                  multiple
+                  onChange={handleFileChange}
+                  className="w-full mt-2"
+                />
               </div>
-              <p className="font-semibold">
-                Grand Total: ₱{calculateGrandTotal()}
-              </p>
+
+              <div className="mt-4">
+                <p className="font-semibold">
+                  Grand Total: ₱{calculateGrandTotal()}
+                </p>
+              </div>
             </div>
             <div className="space-x-3 flex justify-end mt-20 pb-10">
               <button
@@ -569,6 +578,7 @@ const CreateRefund = (props: Props) => {
                 className={`bg-primary ${buttonStyle}`}
                 type="submit"
                 onClick={handleFormSubmit}
+                disabled={loading}
               >
                 {loading ? <ClipLoader color="#36d7b7" /> : "Send Request"}
               </button>

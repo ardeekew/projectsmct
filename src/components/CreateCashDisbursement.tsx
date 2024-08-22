@@ -69,10 +69,10 @@ const CreateCashDisbursement = (props: Props) => {
   >({});
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-        // Convert FileList to array and set it
-        setFile(Array.from(e.target.files));
+      // Convert FileList to array and set it
+      setFile(Array.from(e.target.files));
     }
-};
+  };
   const navigate = useNavigate();
   const [items, setItems] = useState<
     {
@@ -91,7 +91,6 @@ const CreateCashDisbursement = (props: Props) => {
       remarks: "",
     },
   ]);
- 
 
   const {
     register,
@@ -107,32 +106,33 @@ const CreateCashDisbursement = (props: Props) => {
 
   const fetchCustomApprovers = async () => {
     try {
-        const id = localStorage.getItem("id");
-        const token = localStorage.getItem("token");
-        if (!token || !id) {
-            console.error("Token or user ID is missing");
-            return;
+      const id = localStorage.getItem("id");
+      const token = localStorage.getItem("token");
+      if (!token || !id) {
+        console.error("Token or user ID is missing");
+        return;
+      }
+
+      const response = await axios.get(
+        `http://122.53.61.91:6002/api/custom-approvers/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
+      );
 
-        const response = await axios.get(`http://122.53.61.91:6002/api/custom-approvers/${id}`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
-
-        if (Array.isArray(response.data.data)) {
-            setCustomApprovers(response.data.data);
-        } else {
-            console.error("Unexpected response format:", response.data);
-            setCustomApprovers([]); // Ensure that customApprovers is always an array
-        }
-
-        console.log("Custom Approvers:", response.data.data);
-    } catch (error) {
-        console.error("Error fetching custom approvers:", error);
+      if (Array.isArray(response.data.data)) {
+        setCustomApprovers(response.data.data);
+      } else {
+        console.error("Unexpected response format:", response.data);
         setCustomApprovers([]); // Ensure that customApprovers is always an array
+      }
+    } catch (error) {
+      console.error("Error fetching custom approvers:", error);
+      setCustomApprovers([]); // Ensure that customApprovers is always an array
     }
-};
+  };
   // Function to close the confirmation modal
   const handleCloseConfirmationModal = () => {
     setShowConfirmationModal(false);
@@ -144,7 +144,7 @@ const CreateCashDisbursement = (props: Props) => {
       const token = localStorage.getItem("token");
       const userId = localStorage.getItem("id");
       const branch_code = localStorage.getItem("branch_code");
-      console.log("id", userId);
+
       if (!token || !userId) {
         console.error("Token or userId not found");
         return;
@@ -176,22 +176,21 @@ const CreateCashDisbursement = (props: Props) => {
         }
       });
 
-  
-    const formData = new FormData();
+      const formData = new FormData();
 
-     // Append each file to FormData
-     file.forEach((file) => {
-      formData.append("attachment[]", file); // Use "attachment[]" to handle multiple files
-  });
+      // Append each file to FormData
+      file.forEach((file) => {
+        formData.append("attachment[]", file); // Use "attachment[]" to handle multiple files
+      });
 
-  formData.append("form_type", "Cash Disbursement Requisition Slip");
-  formData.append("approvers_id", String(selectedApproverList));
-  formData.append("user_id", userId);
+      formData.append("form_type", "Cash Disbursement Requisition Slip");
+      formData.append("approvers_id", String(selectedApproverList));
+      formData.append("user_id", userId);
 
-  formData.append(
-    "form_data",
-    JSON.stringify([
-        {
+      formData.append(
+        "form_data",
+        JSON.stringify([
+          {
             date: data.date,
             branch: branch_code,
             grand_total: grandTotal.toFixed(2),
@@ -203,8 +202,8 @@ const CreateCashDisbursement = (props: Props) => {
               remarks: item.remarks,
             })),
           },
-      ])
-  );
+        ])
+      );
       // Display confirmation modal
       setShowConfirmationModal(true);
       setFormData(formData);
@@ -233,7 +232,7 @@ const CreateCashDisbursement = (props: Props) => {
       logFormData(formData);
 
       // Perform the actual form submission
-     const response = await axios.post(
+      const response = await axios.post(
         "http://122.53.61.91:6002/api/create-request",
         formData,
         {
@@ -244,7 +243,7 @@ const CreateCashDisbursement = (props: Props) => {
         }
       );
       setShowSuccessModal(true);
-      console.log("Request submitted successfully:", response.data);
+
       setFormSubmitted(true);
       setLoading(false);
     } catch (error) {
@@ -530,12 +529,19 @@ const CreateCashDisbursement = (props: Props) => {
               </div>
             ))}
 
-             <div className="flex justify-between">
-              <div>
+            <div className="flex justify-between flex-col md:flex-row">
+              <div className="w-full max-w-md  p-4">
                 <p className="font-semibold">Attachments:</p>
-                <input id="file" type="file" multiple onChange={handleFileChange} />
+                <input
+                  id="file"
+                  type="file"
+                  multiple
+                  onChange={handleFileChange}
+                  className="w-full mt-2"
+                />
               </div>
-              <div>
+
+              <div className="mt-4">
                 <p className="font-semibold">
                   Grand Total: ₱{calculateGrandTotal()}
                 </p>
@@ -560,6 +566,7 @@ const CreateCashDisbursement = (props: Props) => {
                 className={`bg-primary ${buttonStyle}`}
                 type="submit"
                 onClick={handleFormSubmit}
+                disabled={loading}
               >
                 {loading ? <ClipLoader color="#36d7b7" /> : "Send Request"}
               </button>

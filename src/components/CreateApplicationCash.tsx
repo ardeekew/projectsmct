@@ -491,7 +491,7 @@ const CreateApplicationCash = (props: Props) => {
       textarea.style.height = `${Math.max(textarea.scrollHeight, 100)}px`; // Set to scroll height or minimum 100px
     }
   };
-console.log(tableData)
+
   return (
     <div className="bg-graybg dark:bg-blackbg w-full h-full pt-[15px] inline-flex flex-col px-[30px] pb-[15px]">
       <h1 className="text-primary text-[32px] font-bold inline-block">
@@ -602,10 +602,10 @@ console.log(tableData)
               </div>
             </div>
 
-            <div className="mt-4 w-full overflow-x-auto">
+            <div className="mt-4 w-full overflow-x-auto md:overflow-auto">
               <div className="w-full border-collapse border border-black">
                 <div className="table-container">
-                  <table className="border-collapse border border-black ">
+                  <table className="border-collapse w-full border border-black ">
                     <thead className="bg-[#8EC7F7]">
                       <tr>
                         <th className={`${tableStyle}`}>Date</th>
@@ -782,7 +782,7 @@ console.log(tableData)
                 </div>
               </div>
             </div>
-            <div className="flex justify-between ">
+            <div className="flex justify-between overflow-x-auto ">
               <div>
                 <table className="border border-black  mt-10">
                   <tr>
@@ -880,17 +880,22 @@ console.log(tableData)
                   </tr>
                 </table>
               </div>
-              <div className="mt-10">
+             
+            </div>
+            <div className="flex justify-between flex-col md:flex-row">
+              <div className="w-full max-w-md  p-4">
                 <p className="font-semibold">Attachments:</p>
                 <input
                   id="file"
                   type="file"
                   multiple
                   onChange={handleFileChange}
+                  className="w-full mt-2"
                 />
               </div>
-            </div>
 
+         
+            </div>
             <div className="space-x-3 flex justify-end mt-20 pb-10">
               <button
                 type="button"
@@ -913,6 +918,7 @@ console.log(tableData)
                 className={`bg-primary ${buttonStyle}`}
                 type="submit"
                 onClick={handleFormSubmit}
+                disabled={loading}
               >
                 {loading ? <ClipLoader color="#36d7b7" /> : "Send Request"}
               </button>

@@ -4,6 +4,7 @@ import {
   PencilSquareIcon,
   TrashIcon,
   XMarkIcon,
+  MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import { faCircleCheck } from "@fortawesome/free-solid-svg-icons";
@@ -58,6 +59,7 @@ const SetupBranch = (props: Props) => {
   const [branchList, setBranchList] = useState<Record[]>([]);
   const [isLoading, setisLoading] = useState(false);
   const userId = localStorage.getItem("id");
+  const [filterTerm , setFilterTerm] = useState("")
 
   useEffect(() => {
     const fetchBranchData = async () => {
@@ -81,7 +83,7 @@ const SetupBranch = (props: Props) => {
           headers,
         });
 
-        console.log("Response:", response.data);
+       
 
         // Assuming response.data.data is the array of branches
         setBranchList(response.data.data);
@@ -100,13 +102,18 @@ const SetupBranch = (props: Props) => {
   const viewModalShow = (row: Record) => {
     setSelectedUser(row);
     setViewModalIsOpen(true);
-    console.log("opened view modal");
+
   };
 
   const viewModalClose = () => {
     setSelectedUser(null);
     setViewModalIsOpen(false);
   };
+  const filteredBranch = branchList.filter(branch =>
+    Object.values(branch).some(value =>
+      String(value).toLowerCase().includes(filterTerm.toLowerCase())
+    )
+  );
   const deleteUser = async () => {
     try {
         setisLoading(true);
@@ -119,7 +126,7 @@ const SetupBranch = (props: Props) => {
         const headers = {
             Authorization: `Bearer ${token}`,
         };
-console.log('selectedUser', selectedUser?.id);
+
         // Send PUT request to update user's role
         const response = await axios.delete(
             `http://122.53.61.91:6002/api/delete-branch/${selectedUser?.id}`,
@@ -130,7 +137,7 @@ console.log('selectedUser', selectedUser?.id);
         setisLoading(false);
         openDeleteSuccessModal();
         refreshData();
-        console.log("Role updated successfully:", response.data);
+   
         // Optionally handle success message or UI updates after successful update
     } catch (error) {
         setisLoading(false);
@@ -207,7 +214,7 @@ console.log('selectedUser', selectedUser?.id);
       selector: (row: Record) => row.branch_code,
     },
     {
-      name: "Modify",
+      name: "Action",
       cell: (row: Record) => (
         <div className="flex space-x-2">
           <PencilSquareIcon
@@ -270,9 +277,21 @@ console.log('branchList', branchList);
               </button>
             </div>
           </div>
+          <div className="sm:mx-0 md:mx-4 my-2 relative w-2/12">
+            <div className="relative flex-grow">
+              <input
+                type="text"
+                className="w-full border border-black rounded-md pl-10 pr-3 py-2"
+                value={filterTerm}
+                onChange={(e) => setFilterTerm(e.target.value)}
+                placeholder="Search branch"
+              />
+              <MagnifyingGlassIcon className="h-5 w-5 text-black absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none" />
+            </div>
+          </div>
           <DataTable
             columns={columns}
-            data={branchList}
+            data={filteredBranch}
             pagination
             striped
             customStyles={{

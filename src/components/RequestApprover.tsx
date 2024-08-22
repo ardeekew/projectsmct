@@ -15,10 +15,13 @@ import ApproverCashAdvance from "./ApproverCashAdvance";
 import ApproverCashDisbursement from "./ApproverCashDisbursement";
 import ApproverLiquidation from "./ApproverLiquidation";
 import ApproverRefund from "./ApproverRefund";
-
+import { QuestionMarkCircleIcon } from "@heroicons/react/24/outline";
+import { request } from "http";
 type Props = {};
 
 type Record = {
+  pending_approver: string;
+  requested_by:string;
   id: number;
   created_at: Date;
   user_id: number;
@@ -35,9 +38,12 @@ type Record = {
   grandTotal: string;
   approvers_id: number;
   attachment: string;
+  
 };
 
 type MyFormData = {
+  
+  requested_by:string;
   approvers_id: number;
   purpose: string;
   items: MyItem[];
@@ -152,7 +158,7 @@ const RequestApprover = (props: Props) => {
         setBranchList(branches);
         setBranchMap(branchMapping);
 
-        console.log("Branch Mapping:", branchMapping);
+      
       } catch (error) {
         console.error("Error fetching branch data:", error);
       }
@@ -163,8 +169,7 @@ const RequestApprover = (props: Props) => {
 
   useEffect(() => {
     if (userId) {
-      console.log("Fetching data...");
-      console.log("User ID:", userId);
+     
       const token = localStorage.getItem("token");
       if (!token) {
         console.error("Token is missing");
@@ -215,7 +220,7 @@ const RequestApprover = (props: Props) => {
         );
       case 3: // Unsuccessful Requests
         return requests.filter(
-          (item: Record) => item.status.trim() === "Disapproved"
+          (item: Record) => item.status.startsWith("Rejected") || item.status ==="Disapproved"
         );
       default:
         return requests;
@@ -230,17 +235,20 @@ const RequestApprover = (props: Props) => {
       sortable: true,
     },
     {
-      name: "User ID",
-      selector: (row: Record) => row.user_id,
-      width: "80px",
+      name: "Requested by",
+      sortable:true,
+      selector: (row: Record) => row.requested_by,
+     
     },
     {
       name: "Request Type",
+      sortable: true,
       selector: (row: Record) => row.form_type,
       width: "300px",
     },
     {
       name: "Date",
+      sortable: true,
       selector: (row: Record) =>
         new Date(row.created_at).toLocaleDateString(undefined, {
           year: "numeric",
@@ -250,6 +258,7 @@ const RequestApprover = (props: Props) => {
     },
     {
       name: "Branch",
+      sortable: true,
       selector: (row: Record) => {
         const branchId = parseInt(row.form_data[0].branch, 10);
         return branchMap.get(branchId) || "Unknown";
@@ -259,21 +268,40 @@ const RequestApprover = (props: Props) => {
       name: "Status",
       selector: (row: Record) => row.status,
       sortable: true,
+      width: "300px",
       cell: (row: Record) => (
-        <div
-          className={`${
-            row.status.trim() === "Pending"
-              ? "bg-yellow"
-              : row.status.trim() === "Approved"
-              ? "bg-green"
-              : row.status.trim() === "Disapproved"
-              ? "bg-pink"
-              : row.status.trim() === "Ongoing"
-              ? "bg-primary"
-              : "bg-red-600"
-          } rounded-lg py-1 w-full md:w-full xl:w-3/4 2xl:w-2/4 text-center text-white`}
-        >
-          {row.status.trim()}
+        <div className="relative flex items-center group">
+          {/* Status Badge */}
+          <div
+            className={`${
+              row.status.trim() === "Pending"
+                ? "bg-yellow"
+                : row.status.trim() === "Approved"
+                ? "bg-green"
+                : row.status.trim() === "Disapproved" || row.status.trim().startsWith("Rejected")
+                ? "bg-pink"
+                : row.status.trim() === "Ongoing"
+                ? "bg-blue-500"
+                : "bg-red-600"
+            } rounded-lg py-1 px-3 text-center text-white flex items-center`}
+          >
+            {row.status.trim()}
+          </div>
+  
+          {/* Tooltip Icon */}
+          {(row.status === "Pending" || row.status === "Approved") && (
+          <div className=" relative top-1/2 justify-center items-center flex ml-4 transform -translate-x-full -translate-y-1/2  group-hover:opacity-100 transition-opacity duration-300 z-10">
+            <QuestionMarkCircleIcon className="w-6 h-6 text-gray-500 absolute" />
+          </div>
+          )}
+          {/* Tooltip */}
+          {(row.status === "Pending" || row.status === "Approved") && (
+          <div className="h-auto mb-4 absolute drop-shadow-sm   mt-2 hidden group-hover:block  bg-gray-600  ml-10  text-black p-1 rounded-md shadow-lg w-full z-40">
+            <p className="text-[11px] text-white">
+         Pending: {row.pending_approver} 
+            </p>
+          </div>
+          )}
         </div>
       ),
     },
@@ -297,8 +325,7 @@ const RequestApprover = (props: Props) => {
 
   const refreshData = () => {
     if (userId) {
-      console.log("Refreshing data...");
-      console.log("User ID:", userId);
+    
       const token = localStorage.getItem("token");
       if (!token) {
         console.error("Token is missing");
@@ -318,7 +345,7 @@ const RequestApprover = (props: Props) => {
         )
         .then((response) => {
           setRequests(response.data.request_forms);
-          console.log("Requests refreshed:", response.data.request_forms);
+          console.log("Requests refreshed:", requests);
         })
         .catch((error) => {
           console.error("Error refreshing requests data:", error);

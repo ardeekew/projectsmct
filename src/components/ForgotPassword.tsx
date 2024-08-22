@@ -14,11 +14,11 @@ const ForgotPassword: React.FC = () => {
   const navigate = useNavigate();
 
   const handleResetPassword = async () => {
-    console.log("Resetting password...");
+   
     setError(null); // Clear any previous error message
     setSuccess(null); // Clear any previous success message
     setLoading(true); // Start the loading indicator
-console.log(email);
+
     if (!email) {
       setError("Please enter your email address."); // Set error if no email is provided
       setLoading(false); // Stop the loading indicator
@@ -30,7 +30,7 @@ console.log(email);
       const response = await axios.post("http://122.53.61.91:6002/api/password/email", {
         email,
       });
-      console.log(response.data);
+   
 
     
       setSuccess(response.data.message);

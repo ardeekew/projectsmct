@@ -68,7 +68,7 @@ const EditAreaManager = ({
   const [areaManagerData, setAreaManagerData] = useState<Record | null>(null);
 
   useEffect(() => {
-    console.log("Selected User:", selectedUser);
+
     const fetchBranches = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -87,7 +87,7 @@ const EditAreaManager = ({
           }
         );
 
-        console.log("Branch Response:", response.data);
+      
         setAreaManagerData(response.data.data);
 
         // If selectedUser has branches, pre-select them
@@ -125,7 +125,7 @@ const EditAreaManager = ({
           }
         );
 
-        console.log("Area Manager Response:", response.data);
+     ;
 
         // Assuming your API response includes selected branch IDs for the area manager
         const selectedBranchIds = response.data.selected_branches.map(
@@ -163,7 +163,7 @@ const EditAreaManager = ({
           }
         );
 
-        console.log("Branch Response", response.data);
+      
         setBranches(response.data.data);
       } catch (error) {
         console.error("Error fetching branches:", error);
@@ -213,7 +213,7 @@ const EditAreaManager = ({
           branch_id: selectedBranches, // Ensure this is an array of branch IDs
         };
         
-        console.log('ID SELECT', selectedUser.user_id);
+       
         const response = await axios.post(
           `http://122.53.61.91:6002/api/update-area-manager/${selectedUser.user_id}`,
           putData,
@@ -222,7 +222,7 @@ const EditAreaManager = ({
           }
         );
 
-        console.log("Update Area Manager Response:", response.data);
+     
 
         // Assuming successful, close modal or show success message
         openSuccessModal();

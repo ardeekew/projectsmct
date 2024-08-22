@@ -176,9 +176,7 @@ useEffect(() => {
       (branch) => branch.id === selectedBranchId
     );
     setEditedBranchCode(selectedBranch?.id.toString() || "");
-    console.log("Selected Branch ID:", selectedBranchId);
-    console.log("Selected Branch:", selectedBranch);
-
+   
     if (selectedBranch) {
       setEditedBranch(selectedBranch.id.toString());
     } else {
@@ -290,7 +288,7 @@ useEffect(() => {
             },
           }
         );
-        console.log("Response from server (Branch):", response.data);
+      
       } else if (entityType === "User") {
         response = await axios.post(
           `http://122.53.61.91:6002/api/update-profile/${selectedUser.id}`,
@@ -302,7 +300,7 @@ useEffect(() => {
             },
           }
         );
-        console.log("Response from server (User):", response.data);
+      
       } else if (entityType === "Custom") {
         try {
 
@@ -322,8 +320,7 @@ useEffect(() => {
               },
             }
           );
-          console.log(response)
-          console.log("Response from server (Custom):", response.data);
+        
         } catch (error) {
           console.error("Error updating approvers:", error);
         }
@@ -386,7 +383,7 @@ useEffect(() => {
     { label: "HR Staff", value: "HR Staff" },
     { label: "IT Staff", value: "IT Staff" },
     { label: "IT/Automation Manager", value: "IT/Automation Manager" },
-    { label: "Juinor Web Developer", value: "Juinor Web Developer" },
+    { label: "Junior Web Developer", value: "Junior Web Developer" },
     { label: "Managing Director", value: "Managing Director" },
     { label: "Payroll Manager", value: "Payroll Manager" },
     { label: "Payroll Staff", value: "Payroll Staff" },

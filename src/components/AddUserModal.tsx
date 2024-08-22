@@ -64,7 +64,7 @@ const roleOptions = [
   { label: "HR Staff", value: "HR Staff" },
   { label: "IT Staff", value: "IT Staff" },
   { label: "IT/Automation Manager", value: "IT/Automation Manager" },
-  { label: "Juinor Web Developer", value: "Juinor Web Developer" },
+  { label: "Junior Web Developer", value: "Junior Web Developer" },
   { label: "Managing Director", value: "Managing Director" },
   { label: "Payroll Manager", value: "Payroll Manager" },
   { label: "Payroll Staff", value: "Payroll Staff" },

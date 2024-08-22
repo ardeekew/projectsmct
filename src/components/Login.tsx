@@ -1,4 +1,4 @@
-import React, { useState, CSSProperties } from "react";
+import React, { useState, CSSProperties, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Slice from "./assets/Slice.png";
 import building from "./assets/building.jpg";
@@ -43,6 +43,18 @@ const Login: React.FC = () => {
     margin: "0 auto",
     borderColor: "red",
   };
+  useEffect(() => {
+    const checkAuthRedirect = () => {
+      const token = localStorage.getItem('token');
+      
+      if (token) {
+        // If token exists, redirect to the dashboard
+        navigate('/profile'); // Change this to your dashboard route
+      }
+    };
+
+    checkAuthRedirect();
+  }, [navigate]);
 
   const submitData: SubmitHandler<UserCredentials> = async (data) => {
     try {
@@ -51,51 +63,48 @@ const Login: React.FC = () => {
         email: data.email,
         password: data.password,
       });
-      console.log(response.data);
-      console.log(response.data.id);
+  
       if (response.data.status) {
+        updateUser(
+          response.data.id,
+          response.data.firstName,
+          response.data.lastName,
+          response.data.email,
+          response.data.role,
+          response.data.branch_code,
+          response.data.contact,
+          response.data.signature
+        );
+  
         localStorage.setItem("token", response.data.token);
         // Save other relevant user data
         localStorage.setItem("id", response.data.id);
         localStorage.setItem("firstName", response.data.firstName);
         localStorage.setItem("lastName", response.data.lastName);
-        localStorage.setItem("email", response.data.email);
-        localStorage.setItem("role", response.data.role);
         localStorage.setItem("contact", response.data.contact);
         localStorage.setItem("branch_code", response.data.branch_code);
         localStorage.setItem("signature", response.data.signature);
         localStorage.setItem("profile_picture", response.data.profile_picture);
         localStorage.setItem("employee_id", response.data.employee_id);
-      
-        // Update context or state with user data if needed
-        updateUser(
-          response.data.userId,
-          response.data.firstName,
-          response.data.lastName,
-          response.data.email,
-          response.data.role,
-          response.data.contact,
-          response.data.profile_picture,
-          response.data.employee_id,
-        );
+     
+        localStorage.setItem('expires_at', response.data.expires_at);
         if (response.data.role === "approver") {
           navigate("/dashboard/approver");
         } else {
           navigate("/dashboard");
         }
       } else {
-        // Display the error message from the response
         alert(JSON.stringify(response.data.message));
         setLoading(false);
       }
     } catch (error) {
       console.error(error);
-      // Handle network errors or other exceptions
       alert("An error occurred while logging in. Please try again later.");
       setLoading(false);
     }
   };
-
+  
+  
   const inputStyle =
     "w-full lg:max-w-[417px] lg:h-[56px] md:h-10  p-2 bg-gray-300 rounded-lg";
   return (
@@ -115,13 +124,19 @@ const Login: React.FC = () => {
             <div className="mb-4">
               <h1 className="lg:text-lg text-base mb-2">Email</h1>
               <input
-                type="email"
-                {...register("email")}
+               
+                {...register("email", {
+                  required: "Email is required",
+                  pattern: {
+                    value: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}$/,
+                    message: "Invalid email address",
+                  },
+                })}
                 placeholder="Enter Email"
                 className={`${inputStyle}`}
               />
               {errors.email && (
-                <p className="text-red-500 text-xs"> {errors.email.message}</p>
+                <p className="text-red-500 text-xs mt-1"> {errors.email.message}</p>
               )}
             </div>
             <div className="mb-4">

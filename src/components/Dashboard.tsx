@@ -8,6 +8,8 @@ import DataTable from "react-data-table-component";
 import ClipLoader from "react-spinners/ClipLoader";
 import { set } from "react-hook-form";
 import { CheckIcon, ChartBarIcon } from "@heroicons/react/24/solid";
+import { useUser } from '../context/UserContext';
+
 
 interface FormData {
   purpose: string;
@@ -68,11 +70,14 @@ const Dashboard: React.FC = () => {
   const [totalApprovedRequests, setTotalApprovedRequests] = useState<number | null>(null);
   const [totalPendingRequests, setTotalPendingRequests] = useState<number | null>(null);
   const [totalDisapprovedRequests, setTotalDisapprovedRequests] = useState<number | null>(null);
-  const userId = localStorage.getItem("id");
-  const name = localStorage.getItem("firstName");
+
   const [branchList, setBranchList] = useState<any[]>([]);
   const [branchMap, setBranchMap] = useState<Map<number, string>>(new Map());
-  
+  const { email, role, branchCode, contact, signature } = useUser();
+  const firstName = localStorage.getItem("firstName");
+  const lastName = localStorage.getItem("lastName");
+  const userId = localStorage.getItem("id")
+ 
   useEffect(() => {
     const fetchBranchData = async () => {
       try {
@@ -92,7 +97,7 @@ const Dashboard: React.FC = () => {
         setBranchList(branches);
         setBranchMap(branchMapping);
   
-        console.log("Branch Mapping:", branchMapping);
+    
       } catch (error) {
         console.error("Error fetching branch data:", error);
       }
@@ -133,7 +138,7 @@ const Dashboard: React.FC = () => {
       axios
         .get(`http://122.53.61.91:6002/api/total-request-sent/${userId}`, { headers })
         .then((response) => {
-          console.log("Total requests sent:", response.data);
+     
           setTotalRequestsSent(response.data.totalRequestSent);
           setTotalPendingRequests(response.data.totalPendingRequest);
           setTotalApprovedRequests(response.data.totalApprovedRequest)
@@ -160,11 +165,7 @@ const Dashboard: React.FC = () => {
       width: "100px",
       sortable: true,
     },
-    {
-      name: "User ID",
-      selector: (row: Request) => row.user_id,
-      width: "80px",
-    },
+   
     {
       name: "Request Type",
       selector: (row: Request) => row.form_type,
@@ -212,10 +213,11 @@ const Dashboard: React.FC = () => {
     },
   ];
 
-  const firstName = localStorage.getItem("firstName");
+
 
   return (
     <div className="bg-graybg dark:bg-blackbg h-full pt-[26px] px-[35px]">
+      
       <div className="bg-primary w-full sm:w-full h-[210px] rounded-[12px] pl-[30px] flex flex-row justify-between items-center">
         <div>
           <p className="text-[15px] lg:text-[20px]">Hi, {firstName} 👋</p>

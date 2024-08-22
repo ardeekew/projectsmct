@@ -93,8 +93,7 @@ const CustomRequest = (props: Props) => {
     const fetchRequests = () => {
       if (userId) {
         setLoading(true);
-        console.log("Fetching data...");
-        console.log("User ID:", userId);
+       
         const token = localStorage.getItem("token");
         if (!token) {
           console.error("Token is missing");
@@ -110,7 +109,7 @@ const CustomRequest = (props: Props) => {
             headers,
           })
           .then(async (response) => {
-            console.log("Response:", response.data);
+          
             const responseData = response.data;
             if (!Array.isArray(responseData.data)) {
               console.error("Expected data to be an array:", responseData);
@@ -172,7 +171,7 @@ const CustomRequest = (props: Props) => {
               });
             }
             setLoading(false);
-            console.log("Formatted Requests:", formattedRequests);
+          
             setRequests(formattedRequests);
           })
           .catch((error) => {
@@ -210,7 +209,7 @@ const CustomRequest = (props: Props) => {
       );
   
       if (response.data.message === 'Custom approvers deleted successfully') {
-        console.log("Custom approvers deleted successfully");
+     
         closeDeleteModal();
         openDeleteSuccessModal();
         refreshData();
@@ -227,8 +226,7 @@ const CustomRequest = (props: Props) => {
   const refreshData = () => {
     if (userId) {
       setLoading(true);
-      console.log("Fetching data...");
-      console.log("User ID:", userId);
+    
       const token = localStorage.getItem("token");
       if (!token) {
         console.error("Token is missing");
@@ -244,7 +242,7 @@ const CustomRequest = (props: Props) => {
           headers,
         })
         .then(async (response) => {
-          console.log("Response:", response.data);
+        
           const responseData = response.data;
           if (!Array.isArray(responseData.data)) {
             console.error("Expected data to be an array:", responseData);
@@ -306,7 +304,7 @@ const CustomRequest = (props: Props) => {
             });
           }
           setLoading(false);
-          console.log("Formatted Requests:", formattedRequests);
+        
           setRequests(formattedRequests);
         })
         .catch((error) => {
@@ -322,7 +320,7 @@ const CustomRequest = (props: Props) => {
 
 
   const deleteModalShow = (row: Record) => {
-    console.log(row)
+  
     setSelectedUser(row);
     setDeleteModal(true);
   };

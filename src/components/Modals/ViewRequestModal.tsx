@@ -88,7 +88,14 @@ const ViewRequestModal: React.FC<Props> = ({
   const [removedAttachments, setRemovedAttachments] = useState<(string | number)[]>([]);
   const [branchList, setBranchList] = useState<any[]>([]);
   const [branchMap, setBranchMap] = useState<Map<number, string>>(new Map());
+  const hasDisapprovedInNotedBy = notedBy.some(
+    (user) => user.status === "Disapproved"
+  );
+  const hasDisapprovedInApprovedBy = approvedBy.some(
+    (user) => user.status === "Disapproved"
+  );
 
+  
   useEffect(() => {
     const fetchBranchData = async () => {
       try {
@@ -108,7 +115,7 @@ const ViewRequestModal: React.FC<Props> = ({
         setBranchList(branches);
         setBranchMap(branchMapping);
 
-        console.log("Branch Mapping:", branchMapping);
+      
       } catch (error) {
         console.error("Error fetching branch data:", error);
       }
@@ -165,7 +172,7 @@ const ViewRequestModal: React.FC<Props> = ({
         }
       );
 
-      console.log("response", response.data.data);
+
       setUser(response.data);
     } catch (error) {
       console.error("Failed to fetch approvers:", error);
@@ -189,13 +196,12 @@ const ViewRequestModal: React.FC<Props> = ({
           },
         }
       );
-      console.log("response", response.data);
+   
       const { notedby, approvedby } = response.data;
       setNotedBy(notedby);
       setApprovedBy(approvedby);
       setApprovers(approvers);
-      console.log("notedby", notedby);
-      console.log("approvedby", approvedby);
+   
     } catch (error) {
       console.error("Failed to fetch approvers:", error);
     } finally {
@@ -359,7 +365,7 @@ const ViewRequestModal: React.FC<Props> = ({
         }
       );
 
-      console.log("Request refund updated successfully:", response.data);
+   
       setLoading(false);
       setIsEditing(false);
       setSavedSuccessfully(true);
@@ -373,7 +379,7 @@ const ViewRequestModal: React.FC<Props> = ({
       );
     }
   };
-  console.log("record", editableRecord);
+ 
   if (!record) return null;
   const fetchApprovers = async (userId: number) => {
     setFetchingApprovers(true);
@@ -396,7 +402,7 @@ const ViewRequestModal: React.FC<Props> = ({
         ? response.data.data
         : [];
       setApprovers(approversData);
-      console.log("Approvers:", approvers);
+   
     } catch (error) {
       console.error("Failed to fetch approvers:", error);
     } finally {
@@ -425,8 +431,8 @@ const ViewRequestModal: React.FC<Props> = ({
   return (
     <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 z-50">
       <div className="p-4 relative w-full mx-10 md:mx-0 z-10 md:w-1/2 space-y-auto h-3/4 overflow-scroll bg-white border-black rounded-t-lg shadow-lg">
-        <div className=" top-2 flex justify-end cursor-pointer sticky">
-          <XMarkIcon className="h-6 w-6 text-black" onClick={closeModal} />
+      <div className=" top-2 flex justify-end cursor-pointer sticky">
+          <XMarkIcon className="h-8 w-8 text-black  bg-white rounded-full p-1  " onClick={closeModal} />
         </div>
         <div className="justify-start items-start flex flex-col space-y-4 w-full">
           {!fetchingApprovers && !isFetchingApprovers &&   (
@@ -624,7 +630,7 @@ const ViewRequestModal: React.FC<Props> = ({
                 }
                 onChange={(e) => {
                   const selectedApproverId = parseInt(e.target.value);
-                  console.log("Selected Approver ID:", selectedApproverId);
+                
                   setEditedApprovers(selectedApproverId);
                 }}
                 disabled={!isEditing}
@@ -667,6 +673,7 @@ const ViewRequestModal: React.FC<Props> = ({
                       <p className="font-bold text-[12px] text-center">
                         {user.data?.position}
                       </p>
+                    
                     </div>
                   </div>
                 </div>
@@ -681,7 +688,7 @@ const ViewRequestModal: React.FC<Props> = ({
                       >
                         <div className="flex flex-col items-center justify-center text-center">
                           <p className="relative inline-block uppercase font-medium text-center pt-6">
-                            {user.status.toLowerCase() === "approved" && (
+                          {(user.status === "Approved" || user.status.split(" ")[0] === "Rejected" ) && (
                               <img
                                 className="absolute top-2"
                                 src={user.signature}
@@ -697,6 +704,29 @@ const ViewRequestModal: React.FC<Props> = ({
                           <p className="font-bold text-[12px] text-center">
                             {user.position}
                           </p>
+                          {hasDisapprovedInApprovedBy ||
+                          hasDisapprovedInNotedBy ? (
+                            // Show "Disapproved" if it is present in either list
+                            user.status === "Disapproved" ? (
+                              <p className="font-bold text-[12px] text-center text-red-500">
+                                {user.status}
+                              </p>
+                            ) : // Do not show any status if "Disapproved" is present
+                            null
+                          ) : (
+                            // Show other statuses only if "Disapproved" is not present in either list
+                            <p
+                              className={`font-bold text-[12px] text-center ${
+                                user.status === "Approved"
+                                  ? "text-green"
+                                  : user.status === "Pending"
+                                  ? "text-yellow"
+                                  : ""
+                              }`}
+                            >
+                              {user.status}
+                            </p>
+                          )}
                         </div>
                       </li>
                     ))}
@@ -712,7 +742,7 @@ const ViewRequestModal: React.FC<Props> = ({
                       >
                         <div className="flex flex-col items-center justify-center text-center">
                           <p className="relative inline-block uppercase font-medium text-center pt-6">
-                            {user.status.toLowerCase() === "approved" && (
+                             {(user.status === "Approved" || user.status.split(" ")[0] === "Rejected" ) && (
                               <img
                                 className="absolute top-2"
                                 src={user.signature}
@@ -728,6 +758,29 @@ const ViewRequestModal: React.FC<Props> = ({
                           <p className="font-bold text-[12px] text-center">
                             {user.position}
                           </p>
+                          {hasDisapprovedInApprovedBy ||
+                          hasDisapprovedInNotedBy ? (
+                            // Show "Disapproved" if it is present in either list
+                            user.status === "Disapproved" ? (
+                              <p className="font-bold text-[12px] text-center text-red-500">
+                                {user.status}
+                              </p>
+                            ) : // Do not show any status if "Disapproved" is present
+                            null
+                          ) : (
+                            // Show other statuses only if "Disapproved" is not present in either list
+                            <p
+                              className={`font-bold text-[12px] text-center ${
+                                user.status === "Approved"
+                                  ? "text-green"
+                                  : user.status === "Pending"
+                                  ? "text-yellow"
+                                  : ""
+                              }`}
+                            >
+                              {user.status}
+                            </p>
+                          )}
                         </div>
                       </li>
                     ))}
@@ -819,7 +872,7 @@ const ViewRequestModal: React.FC<Props> = ({
                 ))}
             </ul>
           </div>
-          <div className="md:absolute right-11 top-2 items-center">
+          <div className="md:absolute  right-20 top-2 items-center">
             {isEditing ? (
               <div>
                 <button

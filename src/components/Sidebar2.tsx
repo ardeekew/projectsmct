@@ -112,6 +112,7 @@ const Sidebar2: React.FC<SidebarProps> = ({ darkMode, role }) => {
     // Redirect to login page
     navigate("/login");
   };
+ 
   const listStyle =
     "relative mx-2 group flex items-center text-[18px] text-gray-400 font-medium py-2 pr-3 px-2 cursor-pointer rounded-lg";
   const pStyle = "group-hover:text-primary font text-lg px-2  rounded-lg";

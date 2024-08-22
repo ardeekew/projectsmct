@@ -1,109 +1,62 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useState, ReactNode, useContext } from 'react';
 
 interface UserContextType {
   userId: string | null;
   firstName: string | null;
   lastName: string | null;
   email: string | null;
-  role: string | null; // Add role property
+  role: string | null;
   branchCode: string | null;
   contact: string | null;
   signature: string | null;
-  setUserId: React.Dispatch<React.SetStateAction<string | null>>;
-  setFirstName: React.Dispatch<React.SetStateAction<string | null>>;
-  setLastName: React.Dispatch<React.SetStateAction<string | null>>;
-  setEmail: React.Dispatch<React.SetStateAction<string | null>>;
-  setRole: React.Dispatch<React.SetStateAction<string | null>>; // Add setRole method
-  setBranchCode: React.Dispatch<React.SetStateAction<string | null>>;
-  setContact: React.Dispatch<React.SetStateAction<string | null>>;
-  setSignature: React.Dispatch<React.SetStateAction<string | null>>;
-  updateUser: (
-    userId: string | null,
-    firstName: string | null,
-    lastName: string | null,
-    email: string | null,
-    role: string | null, // Include role parameter
-    branchCode: string | null,
-    contact: string | null,
-    signature: string | null
-  ) => void;
+  updateUser: (userId: string, firstName: string, lastName: string, email: string, role: string, branchCode: string, contact: string, signature: string) => void;
 }
 
-const UserContext = createContext<UserContextType>({
-  userId: null,
-  firstName: null,
-  lastName: null,
-  email: null,
-  role: null, // Initialize role as null
-  branchCode: null,
-  contact: null,
-  signature: null,
-  setUserId: () => {},
-  setFirstName: () => {},
-  setLastName: () => {},
-  setEmail: () => {},
-  setRole: () => {}, // Add setRole method
-  setBranchCode: () => {},
-  setContact: () => {},
-  setSignature: () => {},
-  updateUser: () => {},
-});
+const UserContext = createContext<UserContextType | undefined>(undefined);
 
-export const useUser = () => useContext(UserContext);
-
-export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [userId, setUserId] = useState<string | null>(null);
   const [firstName, setFirstName] = useState<string | null>(null);
   const [lastName, setLastName] = useState<string | null>(null);
   const [email, setEmail] = useState<string | null>(null);
-  const [role, setRole] = useState<string | null>(null); // Add role state
+  const [role, setRole] = useState<string | null>(null);
   const [branchCode, setBranchCode] = useState<string | null>(null);
   const [contact, setContact] = useState<string | null>(null);
   const [signature, setSignature] = useState<string | null>(null);
 
   const updateUser = (
-    userId: string | null,
-    firstName: string | null,
-    lastName: string | null,
-    email: string | null,
-    role: string | null, // Include role parameter
-    branchCode: string | null,
-    contact: string | null,
-    signature: string | null
+    userId: string,
+    firstName: string,
+    lastName: string,
+    email: string,
+    role: string,
+    branchCode: string,
+    contact: string,
+    signature: string
   ) => {
     setUserId(userId);
     setFirstName(firstName);
     setLastName(lastName);
     setEmail(email);
-    setRole(role); // Update role state
+    setRole(role);
     setBranchCode(branchCode);
     setContact(contact);
     setSignature(signature);
   };
 
   return (
-    <UserContext.Provider
-      value={{
-        userId,
-        firstName,
-        lastName,
-        email,
-        role, // Include role in the context value
-        branchCode,
-        contact,
-        signature,
-        setUserId,
-        setFirstName,
-        setLastName,
-        setEmail,
-        setRole, // Include setRole in the context value
-        setBranchCode,
-        setContact,
-        setSignature,
-        updateUser,
-      }}
-    >
+    <UserContext.Provider value={{ userId, firstName, lastName, email, role, branchCode, contact, signature, updateUser }}>
       {children}
     </UserContext.Provider>
   );
 };
+
+export const useUser = (): UserContextType => {
+  const context = useContext(UserContext);
+  if (context === undefined) {
+    throw new Error('useUser must be used within a UserProvider');
+  }
+  return context;
+};
+
+export default UserContext; 
