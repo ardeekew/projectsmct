@@ -55,9 +55,7 @@ class RegisterController extends Controller
                 "signature" => "sometimes",
                 "branch" => "required|string|max:255",
                 "employee_id" => "required|string|max:255|unique:users,employee_id",
-           
-            
-
+          
             ]);
 
             if ($uservalidate->fails()) {

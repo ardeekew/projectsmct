@@ -23,19 +23,19 @@ class PreviousReturnRequestNotification extends Notification
     protected $approverFirstname;
     protected $approverLastname;
     protected $comment;
-    protected $requesterFirstname; 
+    protected $requesterFirstname;
     protected $requesterLastname;
 
-     public function __construct($requestForm,$status,$prevFirstName,$approverFirstname,$approverLastname,$comment,$requesterFirstname,$requesterLastname)
+    public function __construct($requestForm, $status, $prevFirstName, $approverFirstname, $approverLastname, $comment, $requesterFirstname, $requesterLastname)
     {
         $this->requestForm = $requestForm;
         $this->status = $status;
-        $this->prevFirstName =$prevFirstName;
-        $this->approverFirstname =$approverFirstname;
-        $this->approverLastname =$approverLastname;
-        $this->comment=$comment;
-        $this->requesterFirstname=$requesterFirstname;
-        $this->requesterLastname=$requesterLastname;
+        $this->prevFirstName = $prevFirstName;
+        $this->approverFirstname = $approverFirstname;
+        $this->approverLastname = $approverLastname;
+        $this->comment = $comment;
+        $this->requesterFirstname = $requesterFirstname;
+        $this->requesterLastname = $requesterLastname;
     }
 
     /**
@@ -45,7 +45,7 @@ class PreviousReturnRequestNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['mail','database','broadcast'];
+        return ['mail', 'database', 'broadcast'];
     }
 
     /**
@@ -54,22 +54,22 @@ class PreviousReturnRequestNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-                    ->view('emails.previous_return_request',[
-                        'requestForm' => $this->requestForm,
-                        'prevFirstName' =>$this->prevFirstName,
-                        'status' => $this->status,
-                        'approverFirstname' =>$this->approverFirstname,
-                        'approverLastname' =>$this->approverLastname,
-                        'comment' =>$this->comment,
-                        'requesterFirstname' =>$this->requesterFirstname,
-                        'requesterLastname' =>$this->requesterLastname
+            ->view('emails.previous_return_request', [
+                'requestForm' => $this->requestForm,
+                'prevFirstName' => $this->prevFirstName,
+                'status' => $this->status,
+                'approverFirstname' => $this->approverFirstname,
+                'approverLastname' => $this->approverLastname,
+                'comment' => $this->comment,
+                'requesterFirstname' => $this->requesterFirstname,
+                'requesterLastname' => $this->requesterLastname
 
-                        ])
-                    ->subject('Return Request Notification - '.$this->requestForm->form_type. ' '.now()->format('Y-m-d H:i:s'))
-                    ->line('The request' .$this->requestForm->form_type.' is ' .$this->status. '.It has now returned to the requester.')
-                    ->line('Request Type: '.$this->requestForm->form_type)
-                    ->line('Status:' . $this->status)
-                    ->action('Notification Action', url('/'));
+            ])
+            ->subject('Return Request Notification - ' . $this->requestForm->form_type . ' ' . now()->format('Y-m-d H:i:s'))
+            ->line('The request' . $this->requestForm->form_type . ' is ' . $this->status . '.It has now returned to the requester.')
+            ->line('Request Type: ' . $this->requestForm->form_type)
+            ->line('Status:' . $this->status)
+            ->action('Notification Action', url('/'));
 
     }
 
@@ -81,29 +81,29 @@ class PreviousReturnRequestNotification extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            'message' => 'This informs you that the request '. $this->requestForm->form_type.' requested by ' .$this->requesterFirstname .' ' .$this->requesterLastname.' has been'. $this->status. ' by ' .$this->approverFirstname. ' '.$this->approverLastname,
+            'message' => 'This informs you that the request ' . $this->requestForm->form_type . ' requested by ' . $this->requesterFirstname . ' ' . $this->requesterLastname . ' has been ' . $this->status . ' by ' . $this->approverFirstname . ' ' . $this->approverLastname,
             'requestForm' => $this->requestForm->form_type,
             'status' => $this->status,
-            'prevFirstName' =>$this->prevFirstName,
-            'approverFirstname' =>$this->approverFirstname,
-            'approverLastname' =>$this->approverLastname,
-            'comment' =>$this->comment,
-            'requesterFirstname' =>$this->requesterFirstname,
-            'requesterLastname' =>$this->requesterLastname,
+            'prevFirstName' => $this->prevFirstName,
+            'approverFirstname' => $this->approverFirstname,
+            'approverLastname' => $this->approverLastname,
+            'comment' => $this->comment,
+            'requesterFirstname' => $this->requesterFirstname,
+            'requesterLastname' => $this->requesterLastname,
             'created_at' => now()->toDateTimeString(),
 
         ];
     }
 
-   /*  public function toBroadcast($notifiable)
-    {
-        //broadcast(new NotificationEvent($this->toArray($notifiable)));
-        return new BroadcastMessage([
-            'message' => 'The request' .$this->requestForm->form_type.' is ' .$this->status. '.It has now returned to the requester.',
-            'form_type' => $this->requestForm->form_type,
-            'status' => $this->status,
-            'created_at' => now()->toDateTimeString(),
-        ]);
-    } */
+    /*  public function toBroadcast($notifiable)
+     {
+         //broadcast(new NotificationEvent($this->toArray($notifiable)));
+         return new BroadcastMessage([
+             'message' => 'The request' .$this->requestForm->form_type.' is ' .$this->status. '.It has now returned to the requester.',
+             'form_type' => $this->requestForm->form_type,
+             'status' => $this->status,
+             'created_at' => now()->toDateTimeString(),
+         ]);
+     } */
 
 }

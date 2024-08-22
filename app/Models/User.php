@@ -24,7 +24,7 @@ class User extends Authenticatable
         'branch_code',
         'email',
         'password',
-        'position', 
+        'position',
         'signature',
         'role',
         'employee_id',
@@ -73,6 +73,10 @@ class User extends Authenticatable
     {
         return $this->hasMany(ApprovalProcess::class);
     }
+    public function hasRole($role)
+    {
+        return $this->role === $role;
+    }
     // Approver model
     public function user()
     {
@@ -83,7 +87,7 @@ class User extends Authenticatable
      *
      * @var array<string, mixed>
      */
-  
+
 
     /**
      * The primary key for the model.

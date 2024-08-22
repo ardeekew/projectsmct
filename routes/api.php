@@ -26,7 +26,7 @@ Route::post("register", [RegisterController::class,"register"]);
 Route::post("login", [LoginController::class,"login"]);
 
 Route::get("view-user/{id}", [UserController::class,"viewUser"])->name('view.user');
-
+Route::get("get-role/{id}", [UserController::class,"getRole"])->name("get.user.role");
 //REQUEST FORM
 
 Route::middleware('auth:sanctum')->group(function () {

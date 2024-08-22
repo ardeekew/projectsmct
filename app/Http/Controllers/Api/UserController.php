@@ -221,7 +221,39 @@ class UserController extends Controller
     }
     //VIEW USER
 
-
+    public function getRole($id)
+    {
+    try {
+    
+    $user = User::findOrFail($id);
+    
+    return response()->json([
+    'message' => 'User role retrieved successfully',
+    'user_id' => $user->id,
+    'user_role' => $user->role,
+    
+    ], 200);
+    
+    } catch (\Exception $e) {
+    
+    return response()->json([
+    'message' => 'User not found',
+    ], 404);
+    
+    } catch (\Exception $e) {
+    
+    return response()->json([
+    'message' => 'An error occurred while retrieving the user role',
+    'error' => $e->getMessage()
+    ], 500);
+    }
+    }
+    
+    
+    
+    
+    
+    
     public function viewUser($id)
     {
         try {

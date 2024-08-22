@@ -404,17 +404,39 @@ class RequestFormController extends Controller
     public function index()
     {
         try {
-
             $currentUserId = auth()->user()->id; // Example of fetching current user's ID
-
+    
             // Fetch only request forms where user_id matches the current user's ID
             $requestForms = RequestForm::where('user_id', $currentUserId)
                 ->select('id', 'user_id', 'form_type', 'form_data', 'status', 'approvers_id', 'attachment')
+                ->with('approvalProcess') // Eager load the approvalProcess relationship
                 ->get();
-
+    
+            // Initialize an array to hold the response data
+            $response = $requestForms->map(function ($requestForm) {
+                // Get the pending approver
+                $pendingApprover = $requestForm->approvalProcess()
+                    ->where('status', 'Pending')
+                    ->orderBy('level')
+                    ->first()?->user;
+    
+                return [
+                    'id' => $requestForm->id,
+                    'user_id' => $requestForm->user_id,
+                    'form_type' =>$requestForm->form_type,
+                    'form_data' => $requestForm->form_data,
+                    'status' => $requestForm->status,
+                    'approvers_id' => $requestForm->approvers_id,
+                    'attachment' => $requestForm->attachment,
+                    'pending_approver' => $pendingApprover ? [
+                        'approver_name' => "{$pendingApprover->firstName} {$pendingApprover->lastName}",
+                    ] : "No Pending Approver",
+                ];
+            });
+    
             return response()->json([
                 'message' => 'Request forms retrieved successfully',
-                'data' => $requestForms
+                'data' => $response
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
