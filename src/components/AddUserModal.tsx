@@ -55,6 +55,7 @@ const roleOptions = [
   { label: "Audit Manager", value: "Audit Manager" },
   { label: "Audit Staff", value: "Audit Staff" },
   { label: "Audit Supervisor", value: "Audit Supervisor" },
+  { label: "Automation Staff", value: "Automation Staff" },
   { label: "AVP - Finance", value: "AVP - Finance" },
   { label: "AVP - Sales and Marketing", value: "AVP - Sales and Marketing" },
   { label: "Branch Supervisor/Manager", value: "Branch Supervisor/Manager" },

@@ -178,7 +178,7 @@ const AddApproverModal = ({
   return (
     <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 flex-col ">
   
-      <div className="p-4  w-10/12 sm:w-1/3  relative bg-primary flex justify-center mx-20  border-b rounded-t-[12px]">
+      <div className="p-4  w-10/12 md:w-1/2 lg:w-1/4 relative bg-primary flex justify-center mx-20  border-b rounded-t-[12px]">
         <h2 className="text-center  text-xl md:text-[32px] font-bold text-white">
           Add {entityType}
         </h2>
@@ -188,12 +188,12 @@ const AddApproverModal = ({
         />
       </div>
      
-      <div className="bg-white w-10/12 sm:w-1/3  x-20    overflow-y-auto  h-2/3 relative">
+      <div className="bg-white w-10/12 md:w-1/2 lg:w-1/4 x-20    overflow-y-auto  h-2/3 relative">
       <div className="sm:mx-0 md:mx-4 my-2 relative w-1/2">
             <div className="relative flex-grow">
               <input
                 type="text"
-                className="w-full border border-black rounded-md pl-10 pr-3 py-2"
+                className="w-full border bg-white border-black rounded-md pl-10 pr-3 py-2"
                 value={filterTerm}
                 onChange={(e) => setFilterTerm(e.target.value)}
                 placeholder="Search approvers"
@@ -236,7 +236,7 @@ const AddApproverModal = ({
         
       </div>
       {isButtonVisible && (
-          <div className="bg-white w-10/12 sm:w-1/3  rounded-b-[12px] shadow-lg p-2 bottom-4 right-4 flex space-x-2">
+          <div className="bg-white w-10/12 md:w-1/2 lg:w-1/4  rounded-b-[12px] shadow-lg p-2 bottom-4 right-4 flex space-x-2">
             <button
               onClick={handleConfirmSelection}
               className="bg-primary text-white  h-12 font-bold py-2 px-4 rounded cursor-pointer"

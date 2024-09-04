@@ -7,6 +7,8 @@ import { ClipLoader } from "react-spinners";
 import { PencilIcon } from "@heroicons/react/24/solid";
 import Avatar from "../assets/avatar.png";
 import PrintLiquidation from "../PrintLiquidation";
+import AddCustomModal from "../EditCustomModal";
+import { request } from "http";
 type Props = {
   closeModal: () => void;
   record: Record;
@@ -14,19 +16,16 @@ type Props = {
 };
 interface Approver {
   id: number;
-  firstname: string;
-  lastname: string;
   firstName: string;
   lastName: string;
-  name: string;
   comment: string;
   position: string;
   signature: string;
   status: string;
-  branch: string;
 }
 type Record = {
   id: number;
+  created_at: Date;
   status: string;
   approvers_id: number;
   form_data: FormData[];
@@ -37,6 +36,24 @@ type Record = {
   user_id: number;
   destination: string;
   attachment: string;
+  noted_by: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    comment: string;
+    position: string;
+    signature: string;
+    status: string;
+  }[];
+  approved_by: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    comment: string;
+    position: string;
+    signature: string;
+    status: string;
+  }[];
 };
 
 type FormData = {
@@ -57,6 +74,7 @@ type FormData = {
   short: string;
   name: string;
   signature: string;
+  employeeID: string;
 };
 
 type Item = {
@@ -72,6 +90,7 @@ type Item = {
   particularsAmount: string;
   grandTotal: string;
 };
+const tableStyle2 = "bg-white p-2";
 const tableStyle = "border-2 border-black p-2 w-full";
 const inputStyle = "  border-2 border-black rounded-[12px] pl-[10px]";
 const input2Style = "  border-2 border-black rounded-[12px] ";
@@ -112,6 +131,8 @@ const ViewLiquidationModal: React.FC<Props> = ({
   const [removedAttachments, setRemovedAttachments] = useState<
     (string | number)[]
   >([]);
+  const [showAddCustomModal, setShowAddCustomModal] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [branchList, setBranchList] = useState<any[]>([]);
   const [branchMap, setBranchMap] = useState<Map<number, string>>(new Map());
   const hasDisapprovedInNotedBy = notedBy.some(
@@ -139,8 +160,6 @@ const ViewLiquidationModal: React.FC<Props> = ({
 
         setBranchList(branches);
         setBranchMap(branchMapping);
-
-     
       } catch (error) {
         console.error("Error fetching branch data:", error);
       }
@@ -148,20 +167,24 @@ const ViewLiquidationModal: React.FC<Props> = ({
 
     fetchBranchData();
   }, []);
- 
+  // Get branch ID from record
+  const branchId = parseInt(record.form_data[0].branch, 10);
+  // Get branch name or default to "Unknown"
+  const branchName = branchMap.get(branchId) || "Unknown";
+
   useEffect(() => {
     const currentUserId = localStorage.getItem("id");
     const attachments = JSON.parse(record.attachment);
     // Ensure currentUserId and userId are converted to numbers if they exist
     const userId = currentUserId ? parseInt(currentUserId) : 0;
+    setNotedBy(editableRecord.noted_by);
+    setApprovedBy(editableRecord.approved_by);
     setNewData(record.form_data[0].items.map((item) => ({ ...item })));
     setEditableRecord(record);
     setNewCashAdvance(record.form_data[0].cashAdvance);
 
     if (currentUserId) {
       fetchUser(record.user_id);
-      fetchCustomApprovers(record.id);
-      fetchApprovers(userId); // Fetch approvers based on userId
     }
     try {
       if (typeof record.attachment === "string") {
@@ -181,8 +204,10 @@ const ViewLiquidationModal: React.FC<Props> = ({
       console.error("Error parsing attachment:", error);
     }
   }, [record]);
+
   const fetchUser = async (id: number) => {
     setisFetchingUser(true);
+    setisFetchingApprovers(true);
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -198,12 +223,12 @@ const ViewLiquidationModal: React.FC<Props> = ({
         }
       );
 
-
       setUser(response.data);
     } catch (error) {
       console.error("Failed to fetch approvers:", error);
     } finally {
       setisFetchingUser(false);
+      setisFetchingApprovers(false);
     }
   };
   const handleCancelEdit = () => {
@@ -259,8 +284,6 @@ const ViewLiquidationModal: React.FC<Props> = ({
       const { notedby, approvedby } = response.data;
       setNotedBy(notedby);
       setApprovedBy(approvedby);
-
-  
     } catch (error) {
       console.error("Failed to fetch approvers:", error);
     } finally {
@@ -291,7 +314,7 @@ const ViewLiquidationModal: React.FC<Props> = ({
     setIsEditing(true);
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: Date) => {
     const date = new Date(dateString);
     const options: Intl.DateTimeFormatOptions = {
       year: "numeric",
@@ -300,8 +323,16 @@ const ViewLiquidationModal: React.FC<Props> = ({
     };
     return date.toLocaleDateString("en-US", options);
   };
-
-
+  const formatDate2 = (dateString: string) => {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    };
+    return date.toLocaleDateString("en-US", options);
+  };
+  if (!record) return null;
 
   const handleSaveChanges = async () => {
     // Simple validation
@@ -336,8 +367,14 @@ const ViewLiquidationModal: React.FC<Props> = ({
 
       const formData = new FormData();
       formData.append("updated_at", new Date().toISOString());
-      formData.append("approvers_id", JSON.stringify(editedApprovers));
-
+      const notedByIds = Array.isArray(notedBy)
+        ? notedBy.map((person) => person.id)
+        : [];
+      const approvedByIds = Array.isArray(approvedBy)
+        ? approvedBy.map((person) => person.id)
+        : [];
+      formData.append("noted_by", JSON.stringify(notedByIds));
+      formData.append("approved_by", JSON.stringify(approvedByIds));
       formData.append(
         "form_data",
         JSON.stringify([
@@ -386,7 +423,6 @@ const ViewLiquidationModal: React.FC<Props> = ({
           },
         }
       );
-
 
       setLoading(false);
       setIsEditing(false);
@@ -452,7 +488,27 @@ const ViewLiquidationModal: React.FC<Props> = ({
       approvers_id: editedApprovers,
     }));
   };
+  const openAddCustomModal = () => {
+    setIsModalOpen(true);
+  };
+  const closeAddCustomModal = () => {
+    setIsModalOpen(false);
+  };
+  const closeModals = () => {
+    setIsModalOpen(false);
+  };
+  const handleOpenAddCustomModal = () => {
+    setShowAddCustomModal(true);
+  };
 
+  const handleCloseAddCustomModal = () => {
+    setShowAddCustomModal(false);
+  };
+
+  const handleAddCustomData = (notedBy: Approver[], approvedBy: Approver[]) => {
+    setNotedBy(notedBy);
+    setApprovedBy(approvedBy);
+  };
   const fetchApprovers = async (userId: number) => {
     setFetchingApprovers(true);
     try {
@@ -474,7 +530,6 @@ const ViewLiquidationModal: React.FC<Props> = ({
         ? response.data.data
         : [];
       setApprovers(approversData);
-    
     } catch (error) {
       console.error("Failed to fetch approvers:", error);
     } finally {
@@ -489,7 +544,6 @@ const ViewLiquidationModal: React.FC<Props> = ({
       notedBy: notedBy,
       user: user,
     };
-  
 
     localStorage.setItem("printData", JSON.stringify(data));
     // Open a new window with PrintRefund component
@@ -500,14 +554,18 @@ const ViewLiquidationModal: React.FC<Props> = ({
       newWindow.focus();
     }
   };
+
   return (
     <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 z-50">
       <div className="p-4 relative w-full px-10 md:mx-0 z-10 md:w-1/2 lg:w-2/3 space-y-auto h-4/5 overflow-scroll bg-white border-black rounded-t-lg shadow-lg">
-      <div className=" top-2 flex justify-end cursor-pointer sticky">
-          <XMarkIcon className="h-8 w-8 text-black  bg-white rounded-full p-1  " onClick={closeModal} />
+        <div className=" top-2 flex justify-end cursor-pointer sticky">
+          <XMarkIcon
+            className="h-8 w-8 text-black  bg-white rounded-full p-1  "
+            onClick={closeModal}
+          />
         </div>
         <div className="justify-start items-start flex flex-col space-y-2 w-full">
-          {!fetchingApprovers && !isFetchingApprovers  && (
+          {!fetchingApprovers && !isFetchingApprovers && (
             <>
               <button
                 className="bg-blue-600 p-1 px-2 rounded-md text-white"
@@ -527,9 +585,20 @@ const ViewLiquidationModal: React.FC<Props> = ({
               )}
             </>
           )}
-          <h1 className="font-semibold text-[18px]">
-            Liquidation of Actual Expense
-          </h1>
+          <div className="flex justify-between w-full items-center">
+            <div>
+              <h1 className="font-semibold text-[18px]">
+                Liquidation of Actual Expense
+              </h1>
+            </div>
+            <div className="w-auto flex ">
+              <p>Date: </p>
+              <p className="font-bold pl-1">
+                {formatDate(editableRecord.created_at)}
+              </p>
+            </div>
+          </div>
+
           <p className="font-medium text-[14px]">Request ID:#{record.id}</p>
           <div className="flex w-full md:w-1/2 items-center">
             <p>Status:</p>
@@ -550,46 +619,18 @@ const ViewLiquidationModal: React.FC<Props> = ({
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 w-full mb-2">
-            <div className="w-full">
-              <h1>Branch</h1>
-              <input
-                type="text"
-                className="border border-black rounded-md p-1 mt-2 w-full "
-                value={
-                  branchMap.get(parseInt(record.form_data[0].branch, 10)) ||
-                  "Unknown"
-                }
-                readOnly
-              />
-            </div>
-            <div className="w-full">
-              <h1>Date</h1>
-              {isEditing ? (
-                <input
-                  type="date"
-                  className="border border-black rounded-md p-1 mt-2 w-full"
-                  value={
-                    editedDate
-                      ? new Date(editedDate).toISOString().split("T")[0]
-                      : ""
-                  } // Convert to YYYY-MM-DD format
-                  onChange={(e) => setEditedDate(e.target.value)}
-                />
-              ) : (
-                <input
-                  type="text"
-                  className="border border-black rounded-md p-1 mt-2 w-full"
-                  value={formatDate(editableRecord.form_data[0].date)}
-                  readOnly
-                />
-              )}
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 w-full">
+            <div className="w-1/2  flex ">
+              <h1 className="flex items-center">Branch: </h1>
+              <p className=" bg-white rounded-md  w-full pl-1 font-bold">
+                {branchName}
+              </p>
             </div>
           </div>
           <div className="mt-6 w-full overflow-x-auto ">
             <div className="w-full border-collapse  ">
               <div className="table-container">
-                <table className="border-collapse  w-full border-black border-2 ">
+                <table className=" w-full border-black border-2 ">
                   <thead className="">
                     <tr>
                       <th className="border-2 w-10 border-black bg-[#8EC7F7]">
@@ -647,7 +688,7 @@ const ViewLiquidationModal: React.FC<Props> = ({
                                     e.target.value
                                   )
                                 }
-                                className="w-20"
+                                className={`${tableStyle2} w-20`}
                               />
                             </td>
                             <td className={tableCellStyle}>
@@ -661,6 +702,7 @@ const ViewLiquidationModal: React.FC<Props> = ({
                                     e.target.value
                                   )
                                 }
+                                className={`${tableStyle2}`}
                               />
                             </td>
                             <td className={tableCellStyle}>
@@ -674,6 +716,7 @@ const ViewLiquidationModal: React.FC<Props> = ({
                                     e.target.value
                                   )
                                 }
+                                className={`${tableStyle2}`}
                               />
                             </td>
                             <td className={tableCellStyle}>
@@ -687,7 +730,7 @@ const ViewLiquidationModal: React.FC<Props> = ({
                                     e.target.value
                                   )
                                 }
-                                className="w-10/12"
+                                className={`${tableStyle2} w-10/12`}
                               />
                             </td>
                             <td className={tableCellStyle}>
@@ -701,6 +744,7 @@ const ViewLiquidationModal: React.FC<Props> = ({
                                     e.target.value
                                   )
                                 }
+                                className={`${tableStyle2}`}
                               />
                             </td>
                             <td className={tableCellStyle}>
@@ -714,6 +758,7 @@ const ViewLiquidationModal: React.FC<Props> = ({
                                     e.target.value
                                   )
                                 }
+                                className={`${tableStyle2}`}
                               />
                             </td>
                             <td className={tableCellStyle}>
@@ -727,6 +772,7 @@ const ViewLiquidationModal: React.FC<Props> = ({
                                     e.target.value
                                   )
                                 }
+                                className={`${tableStyle2}`}
                               />
                             </td>
                             <td className={tableCellStyle}>
@@ -740,6 +786,7 @@ const ViewLiquidationModal: React.FC<Props> = ({
                                     e.target.value
                                   )
                                 }
+                                className={`${tableStyle2}`}
                               />
                             </td>
                             <td className={tableCellStyle}>
@@ -753,6 +800,7 @@ const ViewLiquidationModal: React.FC<Props> = ({
                                     e.target.value
                                   )
                                 }
+                                className={`${tableStyle2}`}
                               />
                             </td>
                             <td className={tableCellStyle}>
@@ -766,6 +814,7 @@ const ViewLiquidationModal: React.FC<Props> = ({
                                     e.target.value
                                   )
                                 }
+                                className={`${tableStyle2}`}
                               />
                             </td>
                             <td className={tableCellStyle}>
@@ -773,6 +822,7 @@ const ViewLiquidationModal: React.FC<Props> = ({
                                 type="text"
                                 value={item.grandTotal}
                                 readOnly
+                                className={`${tableStyle2}`}
                               />
                             </td>
                           </tr>
@@ -780,7 +830,7 @@ const ViewLiquidationModal: React.FC<Props> = ({
                       : editableRecord.form_data[0].items.map((item, index) => (
                           <tr key={index}>
                             <td className={tableCellStyle}>
-                              {formatDate(item.liquidationDate)}
+                              {formatDate2(item.liquidationDate)}
                             </td>
                             <td className={tableCellStyle}>
                               {item.destination}
@@ -815,7 +865,7 @@ const ViewLiquidationModal: React.FC<Props> = ({
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 w-full md:gap-2">
+          <div className="grid grid-cols-1 lg:grid-cols-2 w-full md:gap-2">
             <div>
               <table className="border border-black  mt-10 w-full">
                 <tr>
@@ -840,7 +890,7 @@ const ViewLiquidationModal: React.FC<Props> = ({
                         type="number"
                         value={newCashAdvance}
                         onChange={(e) => setNewCashAdvance(e.target.value)}
-                        className="w-full font-bold ml-2"
+                        className="w-full font-bold ml-2 bg-white"
                         readOnly={!isEditing}
                       />
                     ) : (
@@ -876,7 +926,7 @@ const ViewLiquidationModal: React.FC<Props> = ({
                       NAME OF EMPLOYEE
                     </p>
                   </td>
-                  <td className={`${tableStyle}`}>
+                  <td className={`${tableStyle} font-bold`}>
                     {record.form_data[0].name}
                   </td>
                 </tr>
@@ -889,16 +939,26 @@ const ViewLiquidationModal: React.FC<Props> = ({
                   </td>
                 </tr>
                 <tr>
-                  <td className={`${inputStyles} `}>
-                    <p className="font-semibold pl-2 ">EMPLOYEE NO.</p>
+                  <td className={`${input2Style} `}>
+                    <p className="font-semibold pl-2">EMPLOYEE NO.</p>
                   </td>
                   <td className={`${tableStyle}`}>
-                    {record.form_data[0].date}
+                    {record.form_data[0].employeeID}
                   </td>
                 </tr>
               </table>
             </div>
           </div>
+          {isEditing && (
+            <div className="my-2">
+              <button
+                onClick={openAddCustomModal}
+                className="bg-primary  text-white p-2 rounded"
+              >
+                Edit Approver
+              </button>
+            </div>
+          )}
           <div className="w-full flex-col justify-center items-center">
             {isFetchingApprovers ? (
               <div className="flex items-center justify-center w-full h-40">
@@ -906,70 +966,98 @@ const ViewLiquidationModal: React.FC<Props> = ({
               </div>
             ) : (
               <div className="flex flex-wrap">
-                <div className="ml-5 mb-4">
+                <div className="mb-4 ml-5">
                   <h3 className="font-bold mb-3">Requested By:</h3>
-                  <div className="flex flex-row justify-start space-x-2">
-                    <div className="flex flex-col items-center justify-center text-center">
-                      <p className="relative inline-block uppercase font-medium text-center pt-6">
-                        <img
-                          className="absolute top-2"
-                          src={user.data?.signature}
-                          alt="avatar"
-                          width={120}
-                        />
-
-                        <span className="relative z-10 px-2">
-                          {user.data?.firstName} {user.data?.lastName}
-                        </span>
-                        <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black -mx-4"></span>
-                      </p>
-                      <p className="font-bold text-[12px] text-center">
-                        {user.data?.position}
-                      </p>
-                     
-                    </div>
-                  </div>
+                  <ul className="flex flex-wrap gap-6">
+                    <li className="flex flex-col items-center justify-center text-center relative w-auto">
+                      <div className="relative flex flex-col items-center justify-center">
+                        {/* Signature */}
+                        {user.data?.signature && (
+                          <div className="absolute top-0">
+                            <img
+                              src={user.data?.signature}
+                              alt="avatar"
+                              width={120}
+                              className="relative z-20 pointer-events-none"
+                            />
+                          </div>
+                        )}
+                        {/* Name */}
+                        <p className="relative inline-block uppercase font-medium text-center mt-4 z-10">
+                          <span className="relative z-10">
+                            {user.data?.firstName} {user.data?.lastName}
+                          </span>
+                          <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black"></span>
+                        </p>
+                        {/* Position */}
+                        <p className="font-bold text-[12px] text-center mt-1">
+                          {user.data?.position}
+                        </p>
+                        {/* Status, if needed */}
+                        {user.data?.status && (
+                          <p
+                            className={`font-bold text-[12px] text-center mt-1 ${
+                              user.data?.status === "Approved"
+                                ? "text-green"
+                                : user.data?.status === "Pending"
+                                ? "text-yellow"
+                                : user.data?.status === "Rejected"
+                                ? "text-red"
+                                : ""
+                            }`}
+                          >
+                            {user.data?.status}
+                          </p>
+                        )}
+                      </div>
+                    </li>
+                  </ul>
                 </div>
 
                 <div className="mb-4 ml-5">
                   <h3 className="font-bold mb-3">Noted By:</h3>
-                  <ul className="flex flex-row space-x-6">
+                  <ul className="flex flex-wrap gap-6">
                     {notedBy.map((user, index) => (
                       <li
-                        className="flex flex-row justify-start space-x-2"
+                        className="flex flex-col items-center justify-center text-center relative"
                         key={index}
                       >
-                        <div className="flex flex-col items-center justify-center text-center">
-                          <p className="relative inline-block uppercase font-medium text-center pt-6">
-                          {(user.status === "Approved" || user.status.split(" ")[0] === "Rejected" ) && (
+                        <div className="relative flex flex-col items-center justify-center text-center">
+                          {/* Signature */}
+                          {(user.status === "Approved" ||
+                            (typeof user.status === "string" &&
+                              user.status.split(" ")[0] === "Rejected")) && (
+                            <div className="absolute top-0">
                               <img
-                                className="absolute top-2"
                                 src={user.signature}
                                 alt="avatar"
                                 width={120}
+                                className="relative z-20 pointer-events-none"
                               />
-                            )}
-                            <span className="relative z-10 px-2">
-                              {user.firstname} {user.lastname}
+                            </div>
+                          )}
+                          {/* Name */}
+                          <p className="relative inline-block uppercase font-medium text-center mt-4 z-10">
+                            <span className="relative z-10">
+                              {user.firstName} {user.lastName}
                             </span>
-                            <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black -mx-4"></span>
+                            <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black"></span>
                           </p>
-                          <p className="font-bold text-[12px] text-center">
+                          {/* Position */}
+                          <p className="font-bold text-[12px] text-center mt-1">
                             {user.position}
                           </p>
+                          {/* Status */}
                           {hasDisapprovedInApprovedBy ||
                           hasDisapprovedInNotedBy ? (
-                            // Show "Disapproved" if it is present in either list
                             user.status === "Disapproved" ? (
-                              <p className="font-bold text-[12px] text-center text-red-500">
+                              <p className="font-bold text-[12px] text-center text-red-500 mt-1">
                                 {user.status}
                               </p>
-                            ) : // Do not show any status if "Disapproved" is present
-                            null
+                            ) : null
                           ) : (
-                            // Show other statuses only if "Disapproved" is not present in either list
                             <p
-                              className={`font-bold text-[12px] text-center ${
+                              className={`font-bold text-[12px] text-center mt-1 ${
                                 user.status === "Approved"
                                   ? "text-green"
                                   : user.status === "Pending"
@@ -985,45 +1073,51 @@ const ViewLiquidationModal: React.FC<Props> = ({
                     ))}
                   </ul>
                 </div>
+
                 <div className="mb-4 ml-5">
                   <h3 className="font-bold mb-3">Approved By:</h3>
-                  <ul className="flex flex-row space-x-6">
+                  <ul className="flex flex-wrap gap-6">
                     {approvedBy.map((user, index) => (
                       <li
-                        className="flex flex-row justify-start space-x-2"
+                        className="flex flex-col items-center justify-center text-center relative"
                         key={index}
                       >
-                        <div className="flex flex-col items-center justify-center text-center">
-                          <p className="relative inline-block uppercase font-medium text-center pt-6">
-                          {(user.status === "Approved" || user.status.split(" ")[0] === "Rejected" ) && (
+                        <div className="relative flex flex-col items-center justify-center text-center">
+                          {/* Signature */}
+                          {(user.status === "Approved" ||
+                            (typeof user.status === "string" &&
+                              user.status.split(" ")[0] === "Rejected")) && (
+                            <div className="absolute top-0">
                               <img
-                                className="absolute top-2"
                                 src={user.signature}
                                 alt="avatar"
                                 width={120}
+                                className="relative z-20 pointer-events-none"
                               />
-                            )}
-                            <span className="relative z-10 px-2">
-                              {user.firstname} {user.lastname}
+                            </div>
+                          )}
+                          {/* Name */}
+                          <p className="relative inline-block uppercase font-medium text-center mt-4 z-10">
+                            <span className="relative z-10">
+                              {user.firstName} {user.lastName}
                             </span>
-                            <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black -mx-4"></span>
+                            <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black"></span>
                           </p>
-                          <p className="font-bold text-[12px] text-center">
+                          {/* Position */}
+                          <p className="font-bold text-[12px] text-center mt-1">
                             {user.position}
                           </p>
+                          {/* Status */}
                           {hasDisapprovedInApprovedBy ||
                           hasDisapprovedInNotedBy ? (
-                            // Show "Disapproved" if it is present in either list
                             user.status === "Disapproved" ? (
-                              <p className="font-bold text-[12px] text-center text-red-500">
+                              <p className="font-bold text-[12px] text-center text-red-500 mt-1">
                                 {user.status}
                               </p>
-                            ) : // Do not show any status if "Disapproved" is present
-                            null
+                            ) : null
                           ) : (
-                            // Show other statuses only if "Disapproved" is not present in either list
                             <p
-                              className={`font-bold text-[12px] text-center ${
+                              className={`font-bold text-[12px] text-center mt-1 ${
                                 user.status === "Approved"
                                   ? "text-green"
                                   : user.status === "Pending"
@@ -1068,7 +1162,15 @@ const ViewLiquidationModal: React.FC<Props> = ({
                     )}
                   </div>
                 ))}
+
+              {/* Check if there are no attachments */}
+              {attachmentUrl.filter(
+                (_, index) => !removedAttachments.includes(index)
+              ).length === 0 && (
+                <p className="text-gray-500">No attachments available.</p>
+              )}
             </div>
+
             {isEditing && (
               <div>
                 <input
@@ -1080,51 +1182,73 @@ const ViewLiquidationModal: React.FC<Props> = ({
               </div>
             )}
           </div>
+
           <div className="w-full">
             <h2 className="text-lg font-bold mb-2">Comments</h2>
-            <ul className="flex flex-col w-full mb-4 space-y-4">
-              {notedBy
-                .filter((user) => user.comment)
-                .map((user, index) => (
-                  <div className="flex flex-row w-full" key={index}>
-                    <img
-                      alt="logo"
-                      className="cursor-pointer hidden sm:block"
-                      src={Avatar}
-                      height={35}
-                      width={45}
-                    />
-                    <li className="flex flex-col justify-between pl-2">
-                      <h3 className="font-bold text-lg">
-                        {user.firstname} {user.lastname}
-                      </h3>
-                      <p>{user.comment}</p>
-                    </li>
-                  </div>
-                ))}
-            </ul>
-            <ul className="flex flex-col w-full mb-4 space-y-4">
-              {approvedBy
-                .filter((user) => user.comment)
-                .map((user, index) => (
-                  <div className="flex flex-row w-full" key={index}>
-                    <img
-                      alt="logo"
-                      className="cursor-pointer hidden sm:block"
-                      src={Avatar}
-                      height={35}
-                      width={45}
-                    />
-                    <li className="flex flex-col justify-between pl-2">
-                      <h3 className="font-bold text-lg">
-                        {user.firstname} {user.lastname}
-                      </h3>
-                      <p>{user.comment}</p>
-                    </li>
-                  </div>
-                ))}
-            </ul>
+
+            {/* Check if there are no comments in both notedBy and approvedBy */}
+            {notedBy.filter((user) => user.comment).length === 0 &&
+            approvedBy.filter((user) => user.comment).length === 0 ? (
+              <p className="text-gray-500">No comments yet.</p>
+            ) : (
+              <>
+                {/* Render Noted By comments */}
+                <ul className="flex flex-col w-full mb-4 space-y-4">
+                  {notedBy
+                    .filter((user) => user.comment)
+                    .map((user, index) => (
+                      <div className="flex" key={index}>
+                        <div>
+                          <img
+                            alt="avatar"
+                            className="cursor-pointer hidden sm:block"
+                            src={Avatar}
+                            height={35}
+                            width={45}
+                          />
+                        </div>
+                        <div className="flex flex-row w-full">
+                          <li className="flex flex-col justify-between pl-2">
+                            <h3 className="font-bold text-lg">
+                              {user.firstName} {user.lastName}
+                            </h3>
+                            <p>{user.comment}</p>
+                          </li>
+                        </div>
+                      </div>
+                    ))}
+                </ul>
+
+                {/* Render Approved By comments */}
+                <ul className="flex flex-col w-full mb-4 space-y-4">
+                  {approvedBy
+                    .filter((user) => user.comment)
+                    .map((user, index) => (
+                      <div className="flex" key={index}>
+                        <div>
+                          <img
+                            alt="avatar"
+                            className="cursor-pointer hidden sm:block"
+                            src={Avatar}
+                            height={35}
+                            width={45}
+                          />
+                        </div>
+                        <div className="flex flex-row w-full">
+                          <li className="flex flex-col justify-between pl-2">
+                            <h3 className="font-bold text-lg">
+                              {user.firstName} {user.lastName}
+                            </h3>
+                            <p>{user.comment}</p>
+                          </li>
+                        </div>
+                      </div>
+                    ))}
+                </ul>
+              </>
+            )}
           </div>
+
           <div className="md:absolute right-20 top-2 items-center">
             {isEditing ? (
               <div>
@@ -1167,6 +1291,16 @@ const ViewLiquidationModal: React.FC<Props> = ({
           refreshData={refreshData}
         />
       )}
+      <AddCustomModal
+        modalIsOpen={isModalOpen}
+        closeModal={closeModals}
+        openCompleteModal={() => {}}
+        entityType="Approver"
+        initialNotedBy={notedBy}
+        initialApprovedBy={approvedBy}
+        refreshData={() => {}}
+        handleAddCustomData={handleAddCustomData}
+      />
     </div>
   );
 };

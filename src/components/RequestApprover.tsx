@@ -17,9 +17,11 @@ import ApproverLiquidation from "./ApproverLiquidation";
 import ApproverRefund from "./ApproverRefund";
 import { QuestionMarkCircleIcon } from "@heroicons/react/24/outline";
 import { request } from "http";
+import { record } from "zod";
 type Props = {};
 
 type Record = {
+  employeeID:string;
   pending_approver: string;
   requested_by:string;
   id: number;
@@ -38,11 +40,24 @@ type Record = {
   grandTotal: string;
   approvers_id: number;
   attachment: string;
-  
+  noted_by:Approver[];
+  approved_by: Approver[];
 };
-
+interface Approver {
+  id: number;
+  firstname: string;
+  lastname: string;
+  firstName: string;
+  lastName: string;
+  name: string;
+  comment: string;
+  position: string;
+  signature: string;
+  status: string;
+  branch: string;
+}
 type MyFormData = {
-  
+  employeeID:string;
   requested_by:string;
   approvers_id: number;
   purpose: string;
@@ -51,6 +66,8 @@ type MyFormData = {
     noted_by: {
       firstName: string;
       lastName: string;
+      firstname:string;
+      lastname:string;
       position: string;
       signature: string;
       status: string;
@@ -189,7 +206,7 @@ const RequestApprover = (props: Props) => {
         )
         .then((response) => {
           setRequests(response.data.request_forms);
-          console.log("Requests:", response.data.request_forms);
+         
         })
         .catch((error) => {
           console.error("Error fetching requests data:", error);
@@ -248,13 +265,13 @@ const RequestApprover = (props: Props) => {
     },
     {
       name: "Date",
-      sortable: true,
       selector: (row: Record) =>
         new Date(row.created_at).toLocaleDateString(undefined, {
           year: "numeric",
           month: "long",
           day: "numeric",
         }),
+      sortable: true,
     },
     {
       name: "Branch",
@@ -345,7 +362,7 @@ const RequestApprover = (props: Props) => {
         )
         .then((response) => {
           setRequests(response.data.request_forms);
-          console.log("Requests refreshed:", requests);
+       
         })
         .catch((error) => {
           console.error("Error refreshing requests data:", error);
@@ -361,7 +378,7 @@ const RequestApprover = (props: Props) => {
   ];
 
   return (
-    <div className="bg-graybg dark:bg-blackbg w-full h-full pb-10 pt-4 px-10 md:px-10 lg:px-30">
+    <div className="bg-graybg dark:bg-blackbg w-full h-lvh pb-10 pt-4 px-10 md:px-10 lg:px-30">
       <Link to="/request/sr">
         <button className="bg-primary text-white rounded-[12px] mb-2 w-[120px] sm:w-[151px] h-[34px] z-10">
           Send Request

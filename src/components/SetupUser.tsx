@@ -277,8 +277,7 @@ const SetupUser = (props: Props) => {
         })
       );
 
-      setUserList(transformedData);
-      console.log("Users:", transformedData);
+      setUserList(transformedData);   
     } catch (error) {
       console.error("Error fetching users data:", error);
     }
@@ -354,7 +353,7 @@ const SetupUser = (props: Props) => {
             <div className="relative flex-grow">
               <input
                 type="text"
-                className="w-full border border-black rounded-md pl-10 pr-3 py-2"
+                className="w-full bg-white border border-black rounded-md pl-10 pr-3 py-2"
                 value={filterTerm}
                 onChange={(e) => setFilterTerm(e.target.value)}
                 placeholder="Search user"

@@ -288,10 +288,8 @@ const SetupApprover = (props: Props) => {
           headers,
         }
       );  
-      console.log(response.data)
 
-      if (response.data.status) {
-        console.log("User deleted successfully");
+      if (response.data.status) {   
         closeDeleteModal();
         openDeleteSuccessModal();
         refreshData();
@@ -354,7 +352,7 @@ const SetupApprover = (props: Props) => {
             <div className="relative flex-grow">
               <input
                 type="text"
-                className="w-full border border-black rounded-md pl-10 pr-3 py-2"
+                className="w-full border bg-white border-black rounded-md pl-10 pr-3 py-2"
                 value={filterTerm}
                 onChange={(e) => setFilterTerm(e.target.value)}
                 placeholder="Search approvers"

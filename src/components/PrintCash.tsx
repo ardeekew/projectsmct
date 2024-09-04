@@ -62,9 +62,14 @@ const PrintCash: React.FC<PrintRefundProps> = ({ data }) => {
   useEffect(() => {
     if (printData !== null) {
       window.print();
-      localStorage.removeItem('printData'); // Clean up after printing
+  
+      window.onafterprint = () => {
+        localStorage.removeItem('printData'); // Clean up after printing
+        window.close(); // Close the tab after printing or canceling
+      };
     }
   }, [printData]);
+  
  
   const tableStyle = " border-black border py-4 font-bold";
   return (
@@ -120,7 +125,7 @@ const PrintCash: React.FC<PrintRefundProps> = ({ data }) => {
           }
         `}
       </style>
-      <div className="border-2 border-black px-10">
+      <div className="border-2 border-black h-lvh bg-white text-black">
         <div className="flex flex-col justify-center items-center">
         <div className="justify-center w-1/2 mt-10">{logo}</div>
           <h1 className="font-bold text-lg uppercase">Application for Cash Advance</h1>
@@ -251,9 +256,9 @@ const PrintCash: React.FC<PrintRefundProps> = ({ data }) => {
             {/* Requested By Section */}
             <div className="mb-4 flex-grow">
               <h3 className="font-bold mb-3">Requested By:</h3>
-              <div className="flex flex-col items-start justify-start text-center relative pt-8">
+              <div className="flex flex-col items-center justify-center relative pt-8">
                 <img
-                  className="absolute top-2"
+                  className="absolute top-4 left-1/2 transform -translate-x-1/2 pointer-events-none"
                   src={printData?.user.data.signature}
                   alt="avatar"
                   width={120}
@@ -271,22 +276,22 @@ const PrintCash: React.FC<PrintRefundProps> = ({ data }) => {
             {/* Noted By Section */}
             <div className="mb-4 flex-grow">
               <h3 className="font-bold mb-3">Noted By:</h3>
-              <div className="flex flex-wrap justify-start  ">
+              <div className="flex flex-wrap justify-start">
                 {printData?.notedBy.map((approver: any, index: number) => (
                   <div
                     key={index}
-                    className="flex flex-col  relative pt-8 mr-10"
+                    className="flex flex-col items-center justify-center relative pt-8 mr-10"
                   >
                     {approver.status === "Approved" && (
                       <img
-                        className="absolute top-2"
+                        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none"
                         src={approver.signature}
                         alt=""
                         width={120}
                       />
                     )}
-                    <p className="underline text-center font-bold">
-                      {approver.firstname} {approver.lastname}
+                    <p className="relative z-10 underline text-center font-bold">
+                      {approver.firstName} {approver.lastName}
                     </p>
                     <p className="font-bold text-xs text-center">
                       {approver.position}
@@ -299,22 +304,22 @@ const PrintCash: React.FC<PrintRefundProps> = ({ data }) => {
             {/* Approved By Section */}
             <div className="mb-4 flex-grow">
               <h3 className="font-bold mb-3">Approved By:</h3>
-              <div className="flex flex-wrap justify-start ">
+              <div className="flex flex-wrap justify-start">
                 {printData?.approvedBy.map((approver: any, index: number) => (
                   <div
                     key={index}
-                    className="flex flex-col justify-start items-start mr-10 relative pt-8"
+                    className="flex flex-col justify-start items-center mr-10 relative pt-8"
                   >
                     {approver.status === "Approved" && (
                       <img
-                        className="absolute top-2"
+                        className="absolute top-4 left-1/2 transform -translate-x-1/2 pointer-events-none"
                         src={approver.signature}
                         alt=""
                         width={120}
                       />
                     )}
-                    <p className="underline text-center font-bold">
-                      {approver.firstname} {approver.lastname}
+                    <p className="relative z-10 underline text-center font-bold">
+                      {approver.firstName} {approver.lastName}
                     </p>
                     <p className="font-bold text-xs text-center">
                       {approver.position}

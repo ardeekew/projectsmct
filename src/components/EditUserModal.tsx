@@ -360,7 +360,7 @@ useEffect(() => {
 
   const fields = fieldsConfig[entityType] || [];
   const pStyle = "font-medium w-full";
-  const inputStyle = "border border-black rounded-md p-1 w-full";
+  const inputStyle = "border border-black bg-white rounded-md p-1 w-full";
   const roleOptions = [
     { label: "", value: "" },
     { label: "Accounting Clerk", value: "Accounting Clerk" },
@@ -374,6 +374,7 @@ useEffect(() => {
     { label: "Audit Manager", value: "Audit Manager" },
     { label: "Audit Staff", value: "Audit Staff" },
     { label: "Audit Supervisor", value: "Audit Supervisor" },
+    { label: "Automation Staff", value: "Automation Staff" },
     { label: "AVP - Finance", value: "AVP - Finance" },
     { label: "AVP - Sales and Marketing", value: "AVP - Sales and Marketing" },
     { label: "Branch Supervisor/Manager", value: "Branch Supervisor/Manager" },
@@ -547,7 +548,7 @@ useEffect(() => {
                   <p className={`${pStyle}`}>Name</p>
                   <input
                     type="text"
-                    className="w-full border border-black rounded-md p-1"
+                    className="w-full border bg-white border-black rounded-md p-1"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                   />
@@ -572,7 +573,7 @@ useEffect(() => {
                       id={`noted_by_${person.id}`}
                       checked={notedBy.includes(person.id)}
                       onChange={() => toggleNotedBy(person.id)}
-                      className="mr-2 size-6"
+                      className="mr-2 size-6 bg-white"
                     />
                     <label
                       htmlFor={`noted_by_${person.id}`}
@@ -594,7 +595,7 @@ useEffect(() => {
                       id={`approved_by_${person.id}`}
                       checked={approvedBy.includes(person.id)}
                       onChange={() => toggleApprovedBy(person.id)}
-                      className="mr-2 size-6"
+                      className="mr-2 size-6 bg-white"
                     />
                     <label
                       htmlFor={`approved_by_${person.id}`}

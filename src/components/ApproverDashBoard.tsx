@@ -120,9 +120,10 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
     number | null
   >(null);
 
-  const { userId, email, role, branchCode, contact, signature } = useUser();
+  const { email, role, branchCode, contact, signature } = useUser();
   const firstName = localStorage.getItem("firstName")
   const lastName = localStorage.getItem("lastName")
+  const userId = localStorage.getItem("id")
   useEffect(() => {
     if (userId) {
       setLoading(true);
@@ -142,6 +143,7 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
         .get(`http://122.53.61.91:6002/api/total-request-sent/${userId}`, {
           headers,
         })
+      
         .then((response) => {
          
           setTotalRequestsSent(response.data.totalRequestSent);
@@ -149,7 +151,9 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
           setTotalApprovedRequests(response.data.totalApprovedRequest);
           setTotalDisapprovedRequests(response.data.totalDisapprovedRequest);
           setLoading(false);
+          
         })
+        
         .catch((error) => {
           console.error("Error fetching total requests sent:", error);
           setLoading(false);
@@ -160,85 +164,79 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
     try {
       const token = localStorage.getItem("token");
       const userId = localStorage.getItem("id");
+  
       if (!token || !userId) {
         console.error("Token or userId is missing");
         return;
       }
-
+  
       const headers = {
         Authorization: `Bearer ${token}`,
       };
-
+  
       const response = await axios.get(
         `http://122.53.61.91:6002/api/request-forms/for-approval/${userId}`,
-        {
-          headers,
-        }
+        { headers }
       );
-     
-      setRecords(response.data.request_forms);
-      const data = response.data;
-      const requests: Request[] = data.request_forms;
-
+  
+      const requests: Request[] = response.data.request_forms || []; // Use the defined type
+  
+      setRecords(requests);
       setTotalRequests(requests.length);
-
+  
       let approvedCount = 0;
       let pendingCount = 0;
       let unsuccessfulCount = 0;
+  
+      requests.forEach((request: Request) => {
+        const status = request.status.toLowerCase();      
+        if (status.includes("approved")) {
+          approvedCount++;
+        } else if (status.includes("pending")) {
+          pendingCount++;
+        } else if (status.includes("rejected") || status.includes("disapproved")) {
 
-      requests.forEach((request) => {
-        request.form_data.forEach((form) => {
-          if (form.status === "approved" || form.status === "Approved") {
-            approvedCount++;
-          } else if (form.status === "Pending" || form.status === "pending") {
-            pendingCount++;
-          } else if (
-            form.status === "Disapproved" ||
-            form.status === "disapproved"
-          ) {
-            unsuccessfulCount++;
-          }
-        });
+          unsuccessfulCount++;
+    
+        }
       });
-
+  
       setApprovedRequests(approvedCount);
       setPendingRequests(pendingCount);
       setUnsuccessfulRequests(unsuccessfulCount);
-     
       processAreaChartData(requests);
       processBarChartData(requests);
+  
     } catch (error) {
       console.error("Error fetching requests data:", error);
     }
   };
- 
+  
+  
+
   const processAreaChartData = (requests: Request[]) => {
     const today = new Date();
     let startDate: Date;
     let endDate: Date;
-
-    switch (selectedFilter) {
-      case "thisMonth":
-        startDate = startOfMonth(today);
-        endDate = endOfMonth(today);
-        break;
-      case "thisYear":
-        startDate = startOfYear(today);
-        endDate = endOfYear(today);
-        break;
-      default:
-        return; // No action for other filters
-    }
-
+  
+    // Set startDate to January 1 of the current year
+    startDate = new Date(today.getFullYear(), 0, 1); // January 1 of the current year
+    
+    // Set endDate to the last day of the current month
+    endDate = endOfMonth(today);
+  
+    console.log(`Start Date: ${startDate}, End Date: ${endDate}`);
+  
     const aggregatedData: {
       [key: string]: {
         total: number;
         approved: number;
         pending: number;
         disapproved: number;
+        rejected: number;
       };
     } = {};
-
+  
     requests.forEach((record) => {
       const recordDate = new Date(record.created_at);
       if (recordDate >= startDate && recordDate <= endDate) {
@@ -249,6 +247,7 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
             approved: 0,
             pending: 0,
             disapproved: 0,
+            rejected: 0,
           };
         }
         aggregatedData[monthName].total += 1;
@@ -256,12 +255,14 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
           aggregatedData[monthName].approved += 1;
         } else if (record.status === "Pending") {
           aggregatedData[monthName].pending += 1;
-        } else if (record.status === "Disapproved") {
+        } else if (record.status.includes("Disapproved")) {
           aggregatedData[monthName].disapproved += 1;
+        } else if (record.status.includes("Rejected")) {
+          aggregatedData[monthName].rejected += 1;
         }
       }
     });
-
+  
     const allMonths = [
       "Jan",
       "Feb",
@@ -276,17 +277,20 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
       "Nov",
       "Dec",
     ];
-
+  
     const areaChartData = allMonths.map((month) => ({
       name: month,
       Total: Math.floor(aggregatedData[month]?.total || 0),
       Approved: Math.floor(aggregatedData[month]?.approved || 0),
       Pending: Math.floor(aggregatedData[month]?.pending || 0),
       Disapproved: Math.floor(aggregatedData[month]?.disapproved || 0),
+      Rejected: Math.floor(aggregatedData[month]?.rejected || 0),
     }));
-
+  
     setAreaChartData(areaChartData);
   };
+  
+  
 
   const processBarChartData = (requests: Request[]) => {
     const today = new Date();
@@ -465,6 +469,13 @@ const ApproverDashboard: React.FC<Props> = ({}) => {
                 stroke="#E73774" // Red for unapproved requests
                 fillOpacity={0.3}
                 fill="#E73774"
+              />
+                <Area
+                type="monotone"
+                dataKey="Rejected"
+                stroke="#Ff0000" // Red for unapproved requests
+                fillOpacity={0.3}
+                fill="#FF4122"
               />
             </AreaChart>
           </ResponsiveContainer>

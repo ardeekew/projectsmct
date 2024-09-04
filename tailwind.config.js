@@ -28,5 +28,19 @@ module.exports = {
   },
   plugins: [
     require('daisyui'),
+    function ({ addUtilities }) {
+      addUtilities(
+        {
+          '.autofill-input:-webkit-autofill': {
+            backgroundColor: 'white !important',
+            color: 'black !important',
+          },
+          '.autofill-input:-webkit-autofill::first-line': {
+            color: 'black !important',
+          },
+        },
+        ['responsive', 'hover']
+      );
+    },
   ],
 }

@@ -10,6 +10,7 @@ import { z, ZodError } from "zod";
 import axios from "axios";
 import RequestSuccessModal from "./Modals/RequestSuccessModal";
 import ClipLoader from "react-spinners/ClipLoader";
+import AddCustomModal from "./AddCustomModal";
 import { table } from "console";
 type CustomApprover = {
   id: number;
@@ -19,6 +20,12 @@ type CustomApprover = {
     approved_by: { name: string }[];
   };
 };
+interface Approver {
+  id: number;
+  firstName: string;
+  lastName: string;
+  position: string;
+}
 type Props = {};
 const requestType = [
   { title: "Stock Requisition", path: "/request/sr" },
@@ -29,7 +36,6 @@ const requestType = [
   { title: "Request for Refund", path: "/request/rfr" },
 ];
 const schema = z.object({
-  date: z.string(),
   department: z.string(),
   cashAmount: z.string(),
   liquidationDate: z.string(),
@@ -90,8 +96,9 @@ const initialTableData: TableDataItem[] = Array.from({ length: 1 }, () => ({
 }));
 
 const tableStyle = "border border-black p-2";
-const inputStyle = "w-full  border-2 border-black rounded-[12px] pl-[10px]";
-const tableInput = "w-full h-full bg-white px-2 py-1";
+const inputStyle = "w-full  border-2 rounded-[12px] pl-[10px] bg-white  autofill-input focus:outline-0";
+const inputStyle2 = "w-full   rounded-[12px] pl-[10px] bg-white  autofill-input focus:outline-0";
+const tableInput = "w-full h-full bg-white px-2 py-1 bg-white  autofill-input focus:outline-0";
 const itemDiv = "flex flex-col ";
 const buttonStyle = "h-[45px] w-[150px] rounded-[12px] text-white";
 const CreateApplicationCash = (props: Props) => {
@@ -120,6 +127,12 @@ const CreateApplicationCash = (props: Props) => {
   const [loading, setLoading] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [formSubmitted, setFormSubmitted] = useState(false);
+  const [notedBy, setNotedBy] = useState<Approver[]>([]);
+  const [approvedBy, setApprovedBy] = useState<Approver[]>([]);
+  const [initialNotedBy, setInitialNotedBy] =useState<Approver[]>([]);
+  const [initialApprovedBy, setInitialApprovedBy] =useState<Approver[]>([]);
+  const [showAddCustomModal, setShowAddCustomModal] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const {
     formState: { errors: formErrors },
   } = useForm<FormData>();
@@ -153,11 +166,12 @@ const CreateApplicationCash = (props: Props) => {
     },
   ]);
 
+ 
   useEffect(() => {
-    fetchCustomApprovers();
-  }, []);
-
-  const fetchCustomApprovers = async () => {
+    setInitialNotedBy(notedBy);
+    setInitialApprovedBy(approvedBy);
+  }, [notedBy, approvedBy]);
+ /*  const fetchCustomApprovers = async () => {
     try {
       const id = localStorage.getItem("id");
       const token = localStorage.getItem("token");
@@ -185,7 +199,7 @@ const CreateApplicationCash = (props: Props) => {
       console.error("Error fetching custom approvers:", error);
       setCustomApprovers([]); // Ensure that customApprovers is always an array
     }
-  };
+  }; */
 
   const handleOpenConfirmationModal = () => {
     setShowConfirmationModal(true);
@@ -215,7 +229,7 @@ const CreateApplicationCash = (props: Props) => {
   } = useForm<FormData>();
 
   const inputStyle =
-    "w-full max-w-[300px] border-2 border-black rounded-[12px] pl-[10px]";
+    "w-full max-w-[300px] border-2 border-black rounded-[12px] pl-[10px] bg-white";
   const [tableData, setTableData] = useState<TableDataItem[]>(initialTableData);
   const [selectedRequestType, setSelectedRequestType] =
     useState("/request/afca");
@@ -293,21 +307,20 @@ const CreateApplicationCash = (props: Props) => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      const userId = localStorage.getItem("id");
+      const  userId = localStorage.getItem("id");
       const branch_code = localStorage.getItem("branch_code");
 
       if (!token || !userId) {
         console.error("Token or userId not found");
         return;
       }
-
-      const selectedList = customApprovers.find(
-        (approver) => approver.id === selectedApproverList
-      );
-      if (!selectedList) {
-        console.error("Selected approver list not found");
-        return;
+      if (notedBy.length === 0 || approvedBy.length === 0) {
+      
+        alert("Please select an approver.");
+        setLoading(false); // Stop loading state
+        return; // Prevent form submission
       }
+     
 
       const missingFields: number[] = [];
       items.forEach((item, index) => {
@@ -358,8 +371,11 @@ const CreateApplicationCash = (props: Props) => {
       file.forEach((file) => {
         formData.append("attachment[]", file); // Use "attachment[]" to handle multiple files
       });
+      const notedByIds = Array.isArray(notedBy) ? notedBy.map(person => person.id) : [];
+      const approvedByIds = Array.isArray(approvedBy) ? approvedBy.map(person => person.id) : [];
+      formData.append("noted_by", JSON.stringify(notedByIds));
+      formData.append("approved_by", JSON.stringify(approvedByIds));
       formData.append("form_type", "Application For Cash Advance");
-      formData.append("approvers_id", String(selectedApproverList));
       formData.append("user_id", userId);
 
       formData.append(
@@ -367,10 +383,8 @@ const CreateApplicationCash = (props: Props) => {
         JSON.stringify([
           {
             branch: branch_code,
-            grand_total: grand_total,
-            date: data.date,
-            department: data.department,
-            liquidationDate: data.liquidationDate,
+            grand_total: grand_total,           
+            department: data.department,          
             remarks: data.remarks,
             totalBoatFare: data.totalBoatFare,
             totalHotel: data.totalHotel,
@@ -405,13 +419,33 @@ const CreateApplicationCash = (props: Props) => {
       setLoading(false);
     }
   };
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+  const openAddCustomModal = () => {
+    setIsModalOpen(true);
+  };
+  const closeAddCustomModal = () => {
+    setIsModalOpen(false);
+  };
+ const handleOpenAddCustomModal = () => {
+    setShowAddCustomModal(true);
+  };
 
+  const handleCloseAddCustomModal = () => {
+    setShowAddCustomModal(false);
+  };
+
+  const handleAddCustomData = (notedBy: Approver[], approvedBy: Approver[]) => {
+    setNotedBy(notedBy);
+    setApprovedBy(approvedBy);
+  };
   const handleConfirmSubmit = async () => {
     // Close the confirmation modal
     setShowConfirmationModal(false);
     const token = localStorage.getItem("token");
 
-    if (!selectedApproverList) {
+    if (!notedBy && !approvedBy) {
       alert("Please select an approver.");
       return; // Prevent form submission
     }
@@ -525,48 +559,18 @@ const CreateApplicationCash = (props: Props) => {
             </h1>
           </div>
           <div className="my-2  ">
-            <label className="block font-semibold mb-2">Approver List:</label>
-            <select
-              {...register("approver_list_id", { required: true })}
-              value={
-                selectedApproverList !== null
-                  ? selectedApproverList.toString()
-                  : ""
-              }
-              onChange={(e) =>
-                setSelectedApproverList(parseInt(e.target.value))
-              }
-              className="border-2 border-black  p-2 rounded-md w-full"
-            >
-              <option value="">Select Approver List</option>
-              {customApprovers.map((approverList) => (
-                <option
-                  key={approverList.id}
-                  value={approverList.id.toString()}
-                >
-                  {approverList.name}
-                </option>
-              ))}
-            </select>
-            {errors.approver_list_id && formSubmitted && (
-              <p className="text-red-500">Please select an approver list.</p>
-            )}
+          <button
+          onClick={openAddCustomModal}
+          className="bg-primary text-white p-2 rounded"
+        >
+          Add Approver
+        </button>
           </div>
         </div>
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="px-[35px] mt-4 ">
             <div className="grid xl:grid-cols-4 md:grid-cols-2 gap-8 justify-between ">
-              <div className={`${itemDiv}`}>
-                <p className="font-semibold ">Date:</p>
-                <input
-                  type="date"
-                  {...register("date", { required: true })}
-                  className={`${inputStyle} h-[44px]`}
-                />
-                {errors.date && formSubmitted && (
-                  <p className="text-red-500">Date is required</p>
-                )}
-              </div>
+             
               <div className={`${itemDiv}`}>
                 <p className="font-semibold">Department</p>
                 <input
@@ -579,17 +583,7 @@ const CreateApplicationCash = (props: Props) => {
                 )}
               </div>
 
-              <div className={`${itemDiv}`}>
-                <p className="font-semibold">Liquidation Date</p>
-                <input
-                  type="date"
-                  {...register("liquidationDate", { required: true })}
-                  className={`${inputStyle} h-[44px]`}
-                />
-                {errors.liquidationDate && formSubmitted && (
-                  <p className="text-red-500">Date is required</p>
-                )}
-              </div>
+           
               <div className={`${itemDiv}`}>
                 <p>Usage/Remarks</p>
                 <textarea
@@ -622,7 +616,7 @@ const CreateApplicationCash = (props: Props) => {
                     <tbody>
                       {tableData.map((item, index) => (
                         <tr key={index} className="border border-black">
-                          <td className="p-1 border border-black">
+                          <td className="p-1 border border-black ">
                             <input
                               type="date"
                               value={item.cashDate}
@@ -640,7 +634,7 @@ const CreateApplicationCash = (props: Props) => {
                                 handleChange(index, "cashDate", value);
                                 handleChange(index, "day", day);
                               }}
-                              className={`${tableInput}`}
+                              className={`${tableInput} bg-[#F9f9f9]`}
                             />
                             {validationErrors[`items.${index}.date`] &&
                               formSubmitted && (
@@ -654,7 +648,7 @@ const CreateApplicationCash = (props: Props) => {
                                 <p className="text-red-500">Date Required</p>
                               )}
                           </td>
-                          <td className="p-1 border border-black ">
+                          <td className="p-1 border border-black  ">
                             <input
                               type="text"
                               value={item.day}
@@ -662,14 +656,14 @@ const CreateApplicationCash = (props: Props) => {
                               className={`${tableInput}`}
                             />
                           </td>
-                          <td className="p-1 border border-black">
+                          <td className="p-1 border border-black ">
                             <textarea
                               id={`itinerary-${index}`}
                               value={item.itinerary}
                               onChange={(e) =>
                                 handleChange(index, "itinerary", e.target.value)
                               }
-                              className={`${inputStyle}`}
+                              className={`${inputStyle2}  focus:outline-0 border-1 `}
                               style={{ minHeight: "50px", maxHeight: "400px" }}
                               onFocus={() =>
                                 handleTextareaHeight(index, "itinerary")
@@ -702,7 +696,7 @@ const CreateApplicationCash = (props: Props) => {
                               onChange={(e) =>
                                 handleChange(index, "activity", e.target.value)
                               }
-                              className={`${inputStyle}`}
+                              className={`${inputStyle2}`}
                               style={{ minHeight: "50px", maxHeight: "400px" }} // Minimum height 100px, maximum height 400px (optional)
                               onFocus={() =>
                                 handleTextareaHeight(index, "activity")
@@ -716,13 +710,23 @@ const CreateApplicationCash = (props: Props) => {
                             />
                           </td>
                           <td className="p-1 border border-black">
-                            <input
-                              type="text"
+                            <textarea
+                       
                               value={item.hotel}
                               onChange={(e) =>
                                 handleChange(index, "hotel", e.target.value)
                               }
                               className={`${tableInput}`}
+                              style={{ minHeight: "50px", maxHeight: "400px" }} // Minimum height 100px, maximum height 400px (optional)
+                              onFocus={() =>
+                                handleTextareaHeight(index, "activity")
+                              } // Adjust height on focus
+                              onBlur={() =>
+                                handleTextareaHeight(index, "activity")
+                              } // Adjust height on blur
+                              onInput={() =>
+                                handleTextareaHeight(index, "activity")
+                              } // Adjust height on input change
                             />
                           </td>
                           <td className="p-1 border border-black">
@@ -745,7 +749,7 @@ const CreateApplicationCash = (props: Props) => {
                               className={`${tableInput}`}
                             />
                           </td>
-                          <td className="p-1 border border-black">
+                          <td className="p-1  border border-black">
                             <input
                               type="number"
                               value={item.perDiem}
@@ -762,7 +766,7 @@ const CreateApplicationCash = (props: Props) => {
                               onChange={(e) =>
                                 handleChange(index, "remarks", e.target.value)
                               }
-                              className={`${inputStyle}`}
+                              className={`${inputStyle2} `}
                               style={{ minHeight: "50px", maxHeight: "400px" }} // Minimum height 100px, maximum height 400px (optional)
                               onFocus={() =>
                                 handleTextareaHeight(index, "remarks")
@@ -896,6 +900,60 @@ const CreateApplicationCash = (props: Props) => {
 
          
             </div>
+            <div className="mb-4 ml-5 mt-10">
+                  <h3 className="font-bold mb-3">Noted By:</h3>
+                  <ul className="flex flex-wrap gap-6">
+                    {" "}
+                    {/* Use gap instead of space-x */}
+                    {notedBy.map((user, index) => (
+                      <li
+                        className="flex flex-col items-center justify-center text-center relative w-auto"
+                        key={index}
+                      >
+                        {" "}
+                        {/* Adjust width as needed */}
+                        <div className="relative flex flex-col items-center justify-center">
+                          <p className="relative inline-block uppercase font-medium text-center pt-6">
+                            <span className="relative z-10 px-2">
+                              {user.firstName} {user.lastName}
+                            </span>
+                            <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black"></span>
+                          </p>
+                          <p className="font-bold text-[12px] text-center">
+                            {user.position}
+                          </p>
+                         
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="mb-4 ml-5">
+                  <h3 className="font-bold mb-3">Approved By:</h3>
+                  <ul className="flex flex-wrap gap-6">
+                    {" "}
+                    {/* Use gap instead of space-x */}
+                    {approvedBy.map((user, index) => (
+                      <li
+                        className="flex flex-col items-center justify-center text-center relative"
+                        key={index}
+                      >
+                        <div className="relative flex flex-col items-center justify-center">
+                          <p className="relative inline-block uppercase font-medium text-center pt-6">
+                            <span className="relative z-10 px-2">
+                              {user.firstName} {user.lastName}
+                            </span>
+                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-black"></span>
+                          </p>
+                          <p className="font-bold text-[12px] text-center">
+                            {user.position}
+                          </p>
+                        
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
             <div className="space-x-3 flex justify-end mt-20 pb-10">
               <button
                 type="button"
@@ -950,6 +1008,16 @@ const CreateApplicationCash = (props: Props) => {
       {showSuccessModal && (
         <RequestSuccessModal onClose={handleCloseSuccessModal} />
       )}
+       <AddCustomModal
+        modalIsOpen={isModalOpen}
+        closeModal={closeModal}
+        openCompleteModal={() => {}}
+        entityType="Approver"
+        initialNotedBy={notedBy}
+        initialApprovedBy={approvedBy}
+        refreshData={() => {}}
+        handleAddCustomData = {handleAddCustomData}
+      />
     </div>
   );
 };

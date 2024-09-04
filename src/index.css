@@ -8,3 +8,26 @@ body {
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer utilities {
+  .autofill-input:-webkit-autofill {
+    background-color: white !important;
+    color: black !important;
+  }
+
+  .autofill-input:-webkit-autofill::first-line {
+    color: black !important;
+  }
+}
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0);
+}
+
+input[type="date"] {
+  color: black;
+  background-color: white;
+}
+
+input[type="date"] {
+  color-scheme: light;
+}

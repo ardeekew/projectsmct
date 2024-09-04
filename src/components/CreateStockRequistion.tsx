@@ -10,6 +10,7 @@ import { custom, z, ZodError } from "zod";
 import axios from "axios";
 import RequestSuccessModal from "./Modals/RequestSuccessModal";
 import ClipLoader from "react-spinners/ClipLoader";
+import AddCustomModal from "./AddCustomModal";
 type CustomApprover = {
   id: number;
   name: string;
@@ -18,9 +19,15 @@ type CustomApprover = {
     approved_by: { name: string }[];
   };
 };
+interface Approver {
+  id: number;
+  firstName: string;
+  lastName: string;
+  position: string;
+}
 const schema = z.object({
   purpose: z.string(),
-  date: z.string(),
+
   approver_list_id: z.number(),
   approver: z.string(),
   attachment: z.array(z.instanceof(File)).optional(),
@@ -47,7 +54,7 @@ const requestType = [
   { title: "Request for Refund", path: "/request/rfr" },
 ];
 
-const inputStyle = "w-full   border-2 border-black rounded-[12px] pl-[10px]";
+const inputStyle = "w-full   border-2 border-black rounded-[12px] pl-[10px] bg-white  autofill-input";
 const itemDiv = "flex flex-col ";
 const buttonStyle = "h-[45px] w-[150px] rounded-[12px] text-white";
 const CreateStockRequistion = (props: Props) => {
@@ -55,13 +62,19 @@ const CreateStockRequistion = (props: Props) => {
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [formData, setFormData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] =useState("");
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const userId = localStorage.getItem("id");
   const [file, setFile] = useState<File[]>([]);
-
+  const [showAddCustomModal, setShowAddCustomModal] = useState(false);
+  const [notedBy, setNotedBy] = useState<Approver[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [approvedBy, setApprovedBy] = useState<Approver[]>([]);
   const [filebase64, setFileBase64] = useState<string>("");
   const [customApprovers, setCustomApprovers] = useState<CustomApprover[]>([]);
+  const [initialNotedBy, setInitialNotedBy] =useState<Approver[]>([]);
+  const [initialApprovedBy, setInitialApprovedBy] =useState<Approver[]>([]);
   const [selectedApproverList, setSelectedApproverList] = useState<
     number | null
   >(null);
@@ -74,6 +87,11 @@ const CreateStockRequistion = (props: Props) => {
       setFile(Array.from(e.target.files));
     }
   };
+  useEffect(() => {
+    setInitialNotedBy(notedBy);
+    setInitialApprovedBy(approvedBy);
+  }, [notedBy, approvedBy]);
+
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({});
@@ -101,11 +119,9 @@ const CreateStockRequistion = (props: Props) => {
       remarks: "",
     },
   ]);
-  useEffect(() => {
-    fetchCustomApprovers();
-  }, []);
-
-  const fetchCustomApprovers = async () => {
+ 
+  
+  /* const fetchCustomApprovers = async () => {
     try {
       const id = localStorage.getItem("id");
       const token = localStorage.getItem("token");
@@ -134,19 +150,13 @@ const CreateStockRequistion = (props: Props) => {
       setCustomApprovers([]); // Ensure that customApprovers is always an array
     }
   };
-
+ */
   const handleOpenConfirmationModal = () => {
     setShowConfirmationModal(true);
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const options: Intl.DateTimeFormatOptions = {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    };
-    return date.toLocaleDateString("en-US", options);
+  const closeModal = () => {
+    setIsModalOpen(false);
   };
   // Function to close the confirmation modal
   const handleCloseConfirmationModal = () => {
@@ -156,26 +166,25 @@ const CreateStockRequistion = (props: Props) => {
   // Function to handle form submission with confirmation
 
   const onSubmit = async (data: any) => {
+    
     try {
       setLoading(true);
-
+  
       const token = localStorage.getItem("token");
       const userId = localStorage.getItem("id");
       const branch_code = localStorage.getItem("branch_code");
-
+  
       if (!token || !userId) {
         console.error("Token or userId not found");
         return;
       }
-
-      const selectedList = customApprovers.find(
-        (approver) => approver.id === selectedApproverList
-      );
-      if (!selectedList) {
-        console.error("Selected approver list not found");
-        return;
+      if (notedBy.length === 0 || approvedBy.length === 0) {
+      
+        alert("Please select an approver.");
+        setLoading(false); // Stop loading state
+        return; // Prevent form submission
       }
-
+  
       if (
         items.some((item) =>
           Object.entries(item)
@@ -184,33 +193,35 @@ const CreateStockRequistion = (props: Props) => {
         )
       ) {
         console.error("Item fields cannot be empty");
+        setLoading(false); // Stop loading state
         return;
       }
-
+  
       let grandTotal = 0;
       items.forEach((item) => {
         if (item.totalAmount) {
           grandTotal += parseFloat(item.totalAmount);
         }
       });
-
+  
       const formData = new FormData();
-
+  
       // Append each file to FormData
       file.forEach((file) => {
         formData.append("attachment[]", file);
       });
-
-      formData.append("form_type", "Stock Requisition Slip");
-      formData.append("approvers_id", String(selectedApproverList));
+  
+      const notedByIds = Array.isArray(notedBy) ? notedBy.map(person => person.id) : [];
+      const approvedByIds = Array.isArray(approvedBy) ? approvedBy.map(person => person.id) : [];
+      formData.append("noted_by", JSON.stringify(notedByIds));
+      formData.append("approved_by", JSON.stringify(approvedByIds));
       formData.append("user_id", userId);
-
+      formData.append("form_type", "Stock Requisition Slip");
       formData.append(
         "form_data",
         JSON.stringify([
           {
             purpose: data.purpose,
-            date: data.date,
             branch: branch_code,
             grand_total: grandTotal.toFixed(2),
             items: items.map((item) => ({
@@ -223,10 +234,9 @@ const CreateStockRequistion = (props: Props) => {
           },
         ])
       );
-
-      // Log formData content
-      logFormData(formData);
-
+  
+  
+  
       // Display confirmation modal
       setShowConfirmationModal(true);
       setFormData(formData);
@@ -236,23 +246,38 @@ const CreateStockRequistion = (props: Props) => {
       setLoading(false);
     }
   };
+  
+  const openAddCustomModal = () => {
+    setIsModalOpen(true);
+  };
+  const closeAddCustomModal = () => {
+    setIsModalOpen(false);
+  };
+ const handleOpenAddCustomModal = () => {
+    setShowAddCustomModal(true);
+  };
+
+  const handleCloseAddCustomModal = () => {
+    setShowAddCustomModal(false);
+  };
+
+  const handleAddCustomData = (notedBy: Approver[], approvedBy: Approver[]) => {
+    setNotedBy(notedBy);
+    setApprovedBy(approvedBy);
+  };
 
   const handleConfirmSubmit = async () => {
     setShowConfirmationModal(false);
     const token = localStorage.getItem("token");
 
-    if (!selectedApproverList) {
+    if (!notedBy || !approvedBy) {
       alert("Please select an approver.");
-      return;
+      return; // Prevent form submission
     }
 
     try {
       setLoading(true);
-
-      // Log formData content
-      logFormData(formData);
-
-      const response = await axios.post(
+       const response = await axios.post(
         "http://122.53.61.91:6002/api/create-request",
         formData,
         {
@@ -262,7 +287,7 @@ const CreateStockRequistion = (props: Props) => {
           },
         }
       );
-
+    
       setShowSuccessModal(true);
       setFormSubmitted(true);
       setLoading(false);
@@ -273,11 +298,6 @@ const CreateStockRequistion = (props: Props) => {
     }
   };
 
-  const logFormData = (formData: any) => {
-    for (let [key, value] of formData.entries()) {
-      console.log(key, value);
-    }
-  };
 
   const handleCancelSubmit = () => {
     // Close the confirmation modal
@@ -373,6 +393,7 @@ const CreateStockRequistion = (props: Props) => {
         </option>
         {requestType.map((item) => (
           <option key={item.title} value={item.path}>
+
             {item.title}
           </option>
         ))}
@@ -388,34 +409,14 @@ const CreateStockRequistion = (props: Props) => {
               Requisition
             </h1>
           </div>
-          <div className="my-2  ">
-            <label className="block font-semibold mb-2">Approver List:</label>
-            <select
-              {...register("approver_list_id", { required: true })}
-              value={
-                selectedApproverList !== null
-                  ? selectedApproverList.toString()
-                  : ""
-              }
-              onChange={(e) =>
-                setSelectedApproverList(parseInt(e.target.value))
-              }
-              className="border-2 border-black  p-2 rounded-md w-full"
-            >
-              <option value="">Select Approver List</option>
-              {customApprovers.map((approverList) => (
-                <option
-                  key={approverList.id}
-                  value={approverList.id.toString()}
-                >
-                  {approverList.name}
-                </option>
-              ))}
-            </select>
-            {errors.approver_list_id && formSubmitted && (
-              <p className="text-red-500">Please select an approver list.</p>
-            )}
-          </div>
+          <div className="my-2">
+        <button
+          onClick={openAddCustomModal}
+          className="bg-primary text-white p-2 rounded"
+        >
+          Add Approver
+        </button>
+      </div>
         </div>
         <div className="px-[35px] mt-4">
           <form onSubmit={handleSubmit(onSubmit)}>
@@ -468,19 +469,7 @@ const CreateStockRequistion = (props: Props) => {
                 )}
               </div>
 
-              <div className="flex flex-col   ">
-                <p className="font-bold mr-64">Date:</p>
-                <div className=" h-[44px] ">
-                  <input
-                    type="date"
-                    {...register("date", { required: true })}
-                    className=" w-full rounded-[12px] wfu border-2 border-black h-[44px]"
-                  />
-                </div>
-                {errors.date && formSubmitted && (
-                  <p className="text-red-500 mr-44">Date is required</p>
-                )}
-              </div>
+          
             </div>
 
             {items.map((item, index) => (
@@ -600,7 +589,7 @@ const CreateStockRequistion = (props: Props) => {
                 </div>
               </div>
             ))}
-
+   {errorMessage && <p className="text-red-600">{errorMessage}</p>}
             <div className="flex justify-between flex-col md:flex-row">
               <div className="w-full max-w-md  p-4">
                 <p className="font-semibold">Attachments:</p>
@@ -619,6 +608,60 @@ const CreateStockRequistion = (props: Props) => {
                 </p>
               </div>
             </div>
+            <div className="mb-4 ml-5 mt-10">
+                  <h3 className="font-bold mb-3">Noted By:</h3>
+                  <ul className="flex flex-wrap gap-6">
+                    {" "}
+                    {/* Use gap instead of space-x */}
+                    {notedBy.map((user, index) => (
+                      <li
+                        className="flex flex-col items-center justify-center text-center relative w-auto"
+                        key={index}
+                      >
+                        {" "}
+                        {/* Adjust width as needed */}
+                        <div className="relative flex flex-col items-center justify-center">
+                          <p className="relative inline-block uppercase font-medium text-center pt-6">
+                            <span className="relative z-10 px-2">
+                              {user.firstName} {user.lastName}
+                            </span>
+                            <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black"></span>
+                          </p>
+                          <p className="font-bold text-[12px] text-center">
+                            {user.position}
+                          </p>
+                         
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="mb-4 ml-5">
+                  <h3 className="font-bold mb-3">Approved By:</h3>
+                  <ul className="flex flex-wrap gap-6">
+                    {" "}
+                    {/* Use gap instead of space-x */}
+                    {approvedBy.map((user, index) => (
+                      <li
+                        className="flex flex-col items-center justify-center text-center relative"
+                        key={index}
+                      >
+                        <div className="relative flex flex-col items-center justify-center">
+                          <p className="relative inline-block uppercase font-medium text-center pt-6">
+                            <span className="relative z-10 px-2">
+                              {user.firstName} {user.lastName}
+                            </span>
+                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-black"></span>
+                          </p>
+                          <p className="font-bold text-[12px] text-center">
+                            {user.position}
+                          </p>
+                        
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
             <div className="space-x-3 flex justify-end mt-20 pb-10">
               <button
                 className={`bg-yellow ${buttonStyle}`}
@@ -671,6 +714,16 @@ const CreateStockRequistion = (props: Props) => {
       {showSuccessModal && (
         <RequestSuccessModal onClose={handleCloseSuccessModal} />
       )}
+       <AddCustomModal
+        modalIsOpen={isModalOpen}
+        closeModal={closeModal}
+        openCompleteModal={() => {}}
+        entityType="Approver"
+        initialNotedBy={notedBy}
+        initialApprovedBy={approvedBy}
+        refreshData={() => {}}
+         handleAddCustomData = {handleAddCustomData}
+      />
     </div>
   );
 };

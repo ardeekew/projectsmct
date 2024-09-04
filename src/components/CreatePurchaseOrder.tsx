@@ -9,7 +9,7 @@ import { z, ZodError } from "zod";
 import axios from "axios";
 import RequestSuccessModal from "./Modals/RequestSuccessModal";
 import ClipLoader from "react-spinners/ClipLoader";
-
+import AddCustomModal from "./AddCustomModal";
 type Props = {};
 const requestType = [
   { title: "Stock Requisition", path: "/request/sr" },
@@ -27,9 +27,13 @@ type CustomApprover = {
     approved_by: { name: string }[];
   };
 };
-const schema = z.object({
-  date: z.string(),
-  branch: z.string(),
+interface Approver {
+  id: number;
+  firstName: string;
+  lastName: string;
+  position: string;
+}
+const schema = z.object({ 
   approver_list_id: z.number(),
   approver: z.string(),
   supplier: z.string(),
@@ -46,7 +50,7 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-const inputStyle = "w-full   border-2 border-black rounded-[12px] ";
+const inputStyle = "w-full   border-2 border-black rounded-[12px] bg-white  autofill-input";
 const itemDiv = "flex flex-col  ";
 const buttonStyle = "h-[45px] w-[150px] rounded-[12px] text-white";
 
@@ -68,6 +72,12 @@ const CreatePurchaseOrder = (props: Props) => {
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({});
+  const [notedBy, setNotedBy] = useState<Approver[]>([]);
+  const [approvedBy, setApprovedBy] = useState<Approver[]>([]);
+  const [initialNotedBy, setInitialNotedBy] =useState<Approver[]>([]);
+  const [initialApprovedBy, setInitialApprovedBy] =useState<Approver[]>([]);
+  const [showAddCustomModal, setShowAddCustomModal] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const {
     formState: { errors: formErrors },
   } = useForm<FormData>();
@@ -80,6 +90,10 @@ const CreatePurchaseOrder = (props: Props) => {
           setFile(Array.from(e.target.files));
       }
   };
+  useEffect(() => {
+    setInitialNotedBy(notedBy);
+    setInitialApprovedBy(approvedBy);
+  }, [notedBy, approvedBy]);
   const [items, setItems] = useState<
     {
       quantity: string;
@@ -104,7 +118,7 @@ const CreatePurchaseOrder = (props: Props) => {
     formState: { errors },
   } = useForm<FormData>();
 
-  useEffect(() => {
+ /*  useEffect(() => {
     fetchCustomApprovers();
   }, []);
 
@@ -136,7 +150,7 @@ const CreatePurchaseOrder = (props: Props) => {
         setCustomApprovers([]); // Ensure that customApprovers is always an array
     }
 };
-
+ */
 const onSubmit = async (data: any) => {
     try {
       const token = localStorage.getItem("token");
@@ -147,13 +161,11 @@ const onSubmit = async (data: any) => {
         console.error("Token or userId not found");
         return;
       }
-
-      const selectedList = customApprovers.find(
-        (approver) => approver.id === selectedApproverList
-      );
-      if (!selectedList) {
-        console.error("Selected approver list not found");
-        return;
+      if (notedBy.length === 0 || approvedBy.length === 0) {
+      
+        alert("Please select an approver.");
+        setLoading(false); // Stop loading state
+        return; // Prevent form submission
       }
       // Check if any item fields are empty
       if (
@@ -183,18 +195,18 @@ const onSubmit = async (data: any) => {
     file.forEach((file) => {
         formData.append("attachment[]", file); // Use "attachment[]" to handle multiple files
     });
-
-    formData.append("form_type", "Purchase Order Requisition Slip");
-    formData.append("approvers_id", String(selectedApproverList));
+    const notedByIds = Array.isArray(notedBy) ? notedBy.map(person => person.id) : [];
+    const approvedByIds = Array.isArray(approvedBy) ? approvedBy.map(person => person.id) : [];
+    formData.append("noted_by", JSON.stringify(notedByIds));
+    formData.append("approved_by", JSON.stringify(approvedByIds));
+    formData.append("form_type", "Purchase Order Requisition Slip");  
     formData.append("user_id", userId);
 
     formData.append(
       "form_data",
       JSON.stringify([
           {
-            date: data.date,
             branch: branch_code,
-            approvers: selectedList.approvers,
             supplier: data.supplier,
             address: data.address,
             grand_total: grandTotal.toFixed(2),
@@ -212,19 +224,16 @@ const onSubmit = async (data: any) => {
       setShowConfirmationModal(true);
       setLoading(false);
         // Log formData content
-        logFormData(formData);
+      
         setFormData(formData);
     } catch (error) {
       console.error("An error occurred while submitting the request:", error);
       setLoading(false);
+    
     } finally {
     }
   };
-  const logFormData = (formData: any) => {
-    for (let [key, value] of formData.entries()) {
-      console.log(key, value);
-    }
-  };
+
   const calculateGrandTotal = () => {
     let grandTotal = 0;
     items.forEach((item) => {
@@ -234,21 +243,39 @@ const onSubmit = async (data: any) => {
     });
     return grandTotal.toLocaleString("en-US", { minimumFractionDigits: 2 });
   };
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+  const openAddCustomModal = () => {
+    setIsModalOpen(true);
+  };
+  const closeAddCustomModal = () => {
+    setIsModalOpen(false);
+  };
+ const handleOpenAddCustomModal = () => {
+    setShowAddCustomModal(true);
+  };
+
+  const handleCloseAddCustomModal = () => {
+    setShowAddCustomModal(false);
+  };
+
+  const handleAddCustomData = (notedBy: Approver[], approvedBy: Approver[]) => {
+    setNotedBy(notedBy);
+    setApprovedBy(approvedBy);
+  };
 
   const handleConfirmSubmit = async () => {
     // Close the confirmation modal
     setShowConfirmationModal(false);
     const token = localStorage.getItem("token");
-
-    if (!selectedApproverList) {
+    if (!notedBy && !approvedBy) {
       alert("Please select an approver.");
-      return;
+      return; // Prevent form submission
     }
   
     try {
-      setLoading(true);
-      logFormData(formData);
-
+      setLoading(true);  
       // Perform the actual form submission
       const response = await axios.post(
         "http://122.53.61.91:6002/api/create-request",
@@ -262,9 +289,10 @@ const onSubmit = async (data: any) => {
       );
       setLoading(false);
       setShowSuccessModal(true);
-    
+      setValidationErrors(response.data.message)
       setFormSubmitted(true);
     } catch (error) {
+   
       console.error("An error occurred while submitting the request:", error);
     } finally {
       setLoading(false);
@@ -391,55 +419,24 @@ const onSubmit = async (data: any) => {
             </h1>
           </div>
           <div className="my-2  ">
-            <label className="block font-semibold mb-2">Approver List:</label>
-            <select
-              {...register("approver_list_id", { required: true })}
-              value={
-                selectedApproverList !== null
-                  ? selectedApproverList.toString()
-                  : ""
-              }
-              onChange={(e) =>
-                setSelectedApproverList(parseInt(e.target.value))
-              }
-              className="border-2 border-black  p-2 rounded-md w-full"
-            >
-              <option value="">Select Approver List</option>
-              {customApprovers.map((approverList) => (
-                <option
-                  key={approverList.id}
-                  value={approverList.id.toString()}
-                >
-                  {approverList.name}
-                </option>
-              ))}
-            </select>
-            {errors.approver_list_id && formSubmitted && (
-              <p className="text-red-500">Please select an approver list.</p>
-            )}
+          <button
+          onClick={openAddCustomModal}
+          className="bg-primary text-white p-2 rounded"
+        >
+          Add Approver
+        </button>
           </div>
         </div>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="px-[35px] mt-4 ">
-            <p className="font-semibold text-start">Date:</p>
-            <div className="flex flex-col justify-start mb-4 w-1/4">
-              <input
-                type="date"
-                {...register("date", { required: true })}
-                className="w-full rounded-[12px] border-2 border-black h-[44px]"
-              />
-              {errors.date && formSubmitted && (
-                <p className="text-red-500">Date is required</p>
-              )}
-            </div>
+          <div className="px-[35px] mt-4 ">                 
             <div>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4  mt-2 sm:mt-0 flex-row  justify-start space-y-2 sm:space-y-0 sm:gap-4 lg:gap-0 lg:space-x-4">
                 <div className={`${itemDiv}`}>
                   <p className="font-semibold">Supplier</p>
-                  <input
-                    type="text"
+                  <textarea
+               
                     {...register("supplier", { required: true })}
-                    className={`${inputStyle} h-[44px]`}
+                    className={`${inputStyle} h-[44px] p-1`}
                   />
 
                   {errors.supplier && formSubmitted && (
@@ -448,10 +445,10 @@ const onSubmit = async (data: any) => {
                 </div>
                 <div className={`${itemDiv}`}>
                   <p className="font-semibold">Address</p>
-                  <input
-                    type="text"
+                  <textarea
+               
                     {...register("address", { required: true })}
-                    className={`${inputStyle} h-[44px]`}
+                    className={`${inputStyle} h-[44px] p-1`}
                   />
                   {errors.address && formSubmitted && (
                     <p className="text-red-500">Address is required</p>
@@ -572,6 +569,7 @@ const onSubmit = async (data: any) => {
                 </div>
               </div>
             ))}
+            
                 <div className="flex justify-between flex-col md:flex-row">
               <div className="w-full max-w-md  p-4">
                 <p className="font-semibold">Attachments:</p>
@@ -590,6 +588,60 @@ const onSubmit = async (data: any) => {
                 </p>
               </div>
             </div>
+            <div className="mb-4 ml-5 mt-10">
+                  <h3 className="font-bold mb-3">Noted By:</h3>
+                  <ul className="flex flex-wrap gap-6">
+                    {" "}
+                    {/* Use gap instead of space-x */}
+                    {notedBy.map((user, index) => (
+                      <li
+                        className="flex flex-col items-center justify-center text-center relative w-auto"
+                        key={index}
+                      >
+                        {" "}
+                        {/* Adjust width as needed */}
+                        <div className="relative flex flex-col items-center justify-center">
+                          <p className="relative inline-block uppercase font-medium text-center pt-6">
+                            <span className="relative z-10 px-2">
+                              {user.firstName} {user.lastName}
+                            </span>
+                            <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black"></span>
+                          </p>
+                          <p className="font-bold text-[12px] text-center">
+                            {user.position}
+                          </p>
+                         
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="mb-4 ml-5">
+                  <h3 className="font-bold mb-3">Approved By:</h3>
+                  <ul className="flex flex-wrap gap-6">
+                    {" "}
+                    {/* Use gap instead of space-x */}
+                    {approvedBy.map((user, index) => (
+                      <li
+                        className="flex flex-col items-center justify-center text-center relative"
+                        key={index}
+                      >
+                        <div className="relative flex flex-col items-center justify-center">
+                          <p className="relative inline-block uppercase font-medium text-center pt-6">
+                            <span className="relative z-10 px-2">
+                              {user.firstName} {user.lastName}
+                            </span>
+                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-black"></span>
+                          </p>
+                          <p className="font-bold text-[12px] text-center">
+                            {user.position}
+                          </p>
+                        
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
             <div className="space-x-3 flex justify-end mt-20 pb-10">
               <button
                 className={`bg-yellow ${buttonStyle}`}
@@ -641,6 +693,16 @@ const onSubmit = async (data: any) => {
       {showSuccessModal && (
         <RequestSuccessModal onClose={handleCloseSuccessModal} />
       )}
+         <AddCustomModal
+        modalIsOpen={isModalOpen}
+        closeModal={closeModal}
+        openCompleteModal={() => {}}
+        entityType="Approver"
+        initialNotedBy={notedBy}
+        initialApprovedBy={approvedBy}
+        refreshData={() => {}}
+        handleAddCustomData = {handleAddCustomData}
+      />
     </div>
   );
 };

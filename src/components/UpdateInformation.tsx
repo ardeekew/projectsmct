@@ -58,6 +58,7 @@ const roleOptions = [
   { label: "Audit Manager", value: "Audit Manager" },
   { label: "Audit Staff", value: "Audit Staff" },
   { label: "Audit Supervisor", value: "Audit Supervisor" },
+  { label: "Automation Staff", value: "Automation Staff" },
   { label: "AVP - Finance", value: "AVP - Finance" },
   { label: "AVP - Sales and Marketing", value: "AVP - Sales and Marketing" },
   { label: "Branch Supervisor/Manager", value: "Branch Supervisor/Manager" },
@@ -275,13 +276,8 @@ const UpdateInformation = () => {
       if (newProfilePic) {
         formData.append("profile_picture", newProfilePic);
       }
-
     
-      for (let [key, value] of formData.entries()) {
-        console.log(`${key}: ${value}`);
-      }
-
-      const response = await axios.post(
+        const response = await axios.post(
         `http://122.53.61.91:6002/api/update-profile/${id}`,
         formData,
         {

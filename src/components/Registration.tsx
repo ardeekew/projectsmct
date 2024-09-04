@@ -34,6 +34,7 @@ const roleOptions = [
   { label: "Audit Manager", value: "Audit Manager" },
   { label: "Audit Staff", value: "Audit Staff" },
   { label: "Audit Supervisor", value: "Audit Supervisor" },
+  { label: "Automation Staff", value: "Automation Staff" },
   { label: "AVP - Finance", value: "AVP - Finance" },
   { label: "AVP - Sales and Marketing", value: "AVP - Sales and Marketing" },
   { label: "Branch Supervisor/Manager", value: "Branch Supervisor/Manager" },
@@ -74,9 +75,9 @@ const schema = z
     path: ["confirmPassword"],
   });
 
-const fieldStyle = "flex flex-row gap-4";
+const fieldStyle = "flex flex-col md:flex-row gap-4";
 const headerStyle = "lg:text-lg text-base mb-2";
-const inputStyle = "w-full  lg:h-[56px] md:h-10  p-2 bg-gray-300 rounded-lg";
+const inputStyle = "w-full  lg:h-[56px] md:h-10  p-2 bg-gray-300 rounded-lg  autofill-input text-black";
 
 const Registration: React.FC = () => {
   const navigate = useNavigate();
@@ -124,7 +125,7 @@ const Registration: React.FC = () => {
   useEffect(() => {
     if (signature) {
       signature.toDataURL("image/png");
-      console.log(signature.toDataURL("image/png"));
+   
     }
   }, [signature]);
   const {
@@ -155,7 +156,7 @@ const Registration: React.FC = () => {
 
       // Check if signature is empty
       if (signatureIsEmpty()) {
-        console.log("Signature is empty");
+   
         setSignatureEmpty(true);
         setLoading(false);
         return; // Exit function early if signature is empty
@@ -176,13 +177,12 @@ const Registration: React.FC = () => {
           position: data.position,
           confirmPassword: data.password,
           signature: signatureDataURL,
-          role: "User",
+          role: "approver",
           branch: data.branch,
           employee_id: data.employee_id,
         }
       );
-
-      console.log("response", response.data);
+    
       setErrorMessage(response.data.errors);
       if (response.data.status) {
         setLoading(false);
@@ -228,20 +228,21 @@ const Registration: React.FC = () => {
     }
   };
   return (
-    <div className="flex flex-col lg:flex-row items-center justify-center">
+    <div className="flex flex-col lg:flex-row items-center justify-center text-black bg-[#FFFFFF]" >
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
         <img
-          className="absolute inset-0 object-cover w-full h-screen lg:hidden z-0"
+          className="hidden md:block absolute inset-0 object-cover w-full h-screen lg:hidden z-0"
           src={building}
           alt="photo"
         />
         <div className="w-full  bg-white   lg:p-8 p-4  lg:mt-0  mt-20 rounded-lg z-10 lg:m-0 m-10">
+          
           <h1 className="text-primary font-bold lg:text-[32px] md:text-2xl mb-6 text-left">
             ACCOUNT REGISTRATION
           </h1>
           <form onSubmit={handleSubmit(submitData, () => setLoading(false))}>
             <div className={`${fieldStyle}`}>
-              <div className="w-1/2 mb-4">
+              <div className="w-full md:w-1/2 mb-4 ">
                 <h1 className={`${headerStyle}`}>First Name</h1>
                 <input
                   type="text"
@@ -258,7 +259,7 @@ const Registration: React.FC = () => {
                   )}
                 </div>
               </div>
-              <div className="w-1/2 mb-4">
+              <div className="w-full md:w-1/2 mb-4">
                 <h1 className={`${headerStyle}`}>Last Name</h1>
                 <input
                   type="text"
@@ -275,7 +276,7 @@ const Registration: React.FC = () => {
               </div>
             </div>
             <div className={`${fieldStyle}`}>
-              <div className="w-1/2 mb-4">
+              <div className="w-full md:w-1/2 mb-4">
                 <h1 className={`${headerStyle}`}>Username</h1>
                 <input
                   type="text"
@@ -293,7 +294,7 @@ const Registration: React.FC = () => {
                 </div>
               </div>
 
-              <div className="w-1/2 mb-4">
+              <div className="w-full md:w-1/2 mb-4">
                 <h1 className={`${headerStyle}`}>Email</h1>
                 <input
                   type="text"
@@ -312,7 +313,7 @@ const Registration: React.FC = () => {
               </div>
             </div>
             <div className={`${fieldStyle}`}>
-              <div className="w-1/2 mb-4">
+              <div className="w-full md:w-1/2 mb-4">
                 <h1 className={`${headerStyle}`}>Password</h1>
                 <div className=" flex justify-center items-center relative w-full ">
                   <input
@@ -342,7 +343,7 @@ const Registration: React.FC = () => {
                   )}
                 </div>
               </div>
-              <div className="w-1/2 mb-4">
+              <div className="w-full md:w-1/2 mb-4">
                 <h1 className={`${headerStyle}`}>Confirm Password</h1>
                 <div className=" flex justify-center items-center relative w-full ">
                   <input
@@ -378,7 +379,7 @@ const Registration: React.FC = () => {
               </div>
             </div>
             <div className={`${fieldStyle}`}>
-              <div className="w-1/2 mb-4">
+              <div className="w-full md:w-1/2 mb-4">
                 <h1 className={`${headerStyle}`}>Contact</h1>
                 <input
                   type="text"
@@ -395,7 +396,7 @@ const Registration: React.FC = () => {
                   )}
                 </div>
               </div>
-              <div className="w-1/2 mb-4">
+              <div className="w-full md:w-1/2 mb-4">
                 <h1 className={`${headerStyle}`}>Position</h1>
                 <div className="relative">
                   <Controller
@@ -426,7 +427,7 @@ const Registration: React.FC = () => {
               </div>
             </div>
             <div className={`${fieldStyle}`}>
-              <div className="w-1/2 mb-4">
+              <div className="w-full md:w-1/2 mb-4">
                 <h1 className={`${headerStyle}`}>Branch Code</h1>
                 <div className="relative">
                   <Controller
@@ -463,7 +464,7 @@ const Registration: React.FC = () => {
                   )}
                 </div>
               </div>
-              <div className="w-1/2 mb-4">
+              <div className="w-full md:w-1/2 mb-4">
                 <h1 className={`${headerStyle}`}>Branch</h1>
                 <Controller
                   name="branch"
@@ -485,13 +486,13 @@ const Registration: React.FC = () => {
             </div>
 
             <div className={`${fieldStyle}`}>
-              <div className="w-1/2 mb-4 flex flex-col">
+              <div className="w-full md:w-1/2 mb-4 flex flex-col">
                 <h1 className={`${headerStyle}`}>Signature</h1>
                 <SignatureCanvas
                   penColor="black"
                   ref={(ref) => setSignature(ref)}
                   canvasProps={{
-                    className: "sigCanvas border border-black h-20 w-full",
+                    className: "sigCanvas border border-black h-36 w-full",
                   }}
                 />
                 {signatureEmpty && (
@@ -506,7 +507,7 @@ const Registration: React.FC = () => {
                   Clear
                 </button>
               </div>
-              <div className="w-1/2 mb-4">
+              <div className="w-full md:w-1/2 mb-4">
                 <h1 className={`${headerStyle}`}>Employee ID</h1>
                 <input
                   type="text"
@@ -525,7 +526,7 @@ const Registration: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center justify-center">
-              {errorMessage.length > 0 && (
+              {Array.isArray(errorMessage) && errorMessage.length > 0 && (
                 <div className="text-red-500 text-xs">
                   {errorMessage.map((message, index) => (
                     <p key={index}>{message}</p>
@@ -533,6 +534,7 @@ const Registration: React.FC = () => {
                 </div>
               )}
             </div>
+
             <div className="relative flex items-center justify-center">
               <button
                 className="bg-primary text-white px-4 rounded-lg w-full lg:h-[56px] h-10"

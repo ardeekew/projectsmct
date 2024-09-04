@@ -7,6 +7,7 @@ import EditStockModalSuccess from "./EditStockModalSuccess";
 import BeatLoader from "react-spinners/BeatLoader";
 import Avatar from "../assets/avatar.png";
 import PrintCash from "../PrintCash";
+import AddCustomModal from "../EditCustomModal";
 type Props = {
   closeModal: () => void;
   record: Record;
@@ -14,19 +15,16 @@ type Props = {
 };
 interface Approver {
   id: number;
-  firstname: string;
-  lastname: string;
   firstName: string;
   lastName: string;
-  name: string;
   comment: string;
   position: string;
   signature: string;
   status: string;
-  branch: string;
 }
 type Record = {
   id: number;
+  created_at: Date;
   status: string;
   approvers_id: number;
   form_data: FormData[];
@@ -36,15 +34,29 @@ type Record = {
   date: string;
   user_id: number;
   attachment: string;
+  noted_by: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    comment: string;
+    position: string;
+    signature: string;
+    status: string;
+  }[];
+  approved_by: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    comment: string;
+    position: string;
+    signature: string;
+    status: string;
+  }[];
 };
 
 type FormData = {
   approvers_id: number;
   attachment: string;
-  approvers: {
-    noted_by: { firstName: string; lastName: string }[];
-    approved_by: { firstName: string; lastName: string }[];
-  };
   purpose: string;
   items: Item[];
   branch: string;
@@ -81,7 +93,8 @@ type Item = {
 
 const inputStyle = "border border-black text-[12px] font-bold p-2 h-14";
 const tableStyle = "border border-black p-2";
-const tableCellStyle = `${inputStyle}  w-10`;
+const tableStyle2 = "bg-white p-2";
+const tableCellStyle = `${inputStyle}  w-10 wrap-text  break-words`;
 const ViewCashAdvanceModal: React.FC<Props> = ({
   closeModal,
   record,
@@ -105,6 +118,8 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
   const [errorMessage, setErrorMessage] = useState("");
   const [notedBy, setNotedBy] = useState<Approver[]>([]);
   const [approvedBy, setApprovedBy] = useState<Approver[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showAddCustomModal, setShowAddCustomModal] = useState(false);
   const [customApprovers, setCustomApprovers] = useState<any>(null);
   const [isFetchingApprovers, setisFetchingApprovers] = useState(false);
   const [isFetchingUser, setisFetchingUser] = useState(false);
@@ -113,7 +128,9 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
   const [printWindow, setPrintWindow] = useState<Window | null>(null);
   const [newAttachments, setNewAttachments] = useState<File[]>([]);
   const [originalAttachments, setOriginalAttachments] = useState<string[]>([]);
-  const [removedAttachments, setRemovedAttachments] = useState<Array<string | number>>([]);
+  const [removedAttachments, setRemovedAttachments] = useState<
+    Array<string | number>
+  >([]);
   const [branchList, setBranchList] = useState<any[]>([]);
   const [branchMap, setBranchMap] = useState<Map<number, string>>(new Map());
   const hasDisapprovedInNotedBy = notedBy.some(
@@ -122,7 +139,6 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
   const hasDisapprovedInApprovedBy = approvedBy.some(
     (user) => user.status === "Disapproved"
   );
-
 
   useEffect(() => {
     const fetchBranchData = async () => {
@@ -142,8 +158,6 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
 
         setBranchList(branches);
         setBranchMap(branchMapping);
-
-   
       } catch (error) {
         console.error("Error fetching branch data:", error);
       }
@@ -151,12 +165,17 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
 
     fetchBranchData();
   }, []);
+  // Get branch ID from record
+  const branchId = parseInt(record.form_data[0].branch, 10);
+  // Get branch name or default to "Unknown"
+  const branchName = branchMap.get(branchId) || "Unknown";
 
   useEffect(() => {
     const currentUserId = localStorage.getItem("id");
     const attachments = JSON.parse(record.attachment);
     const userId = currentUserId ? parseInt(currentUserId) : 0;
-
+    setNotedBy(editableRecord.noted_by);
+    setApprovedBy(editableRecord.approved_by);
     setNewData(record.form_data[0].items.map((item) => ({ ...item })));
     setEditableRecord(record);
     setNewTotalBoatFare(record.form_data[0].totalBoatFare);
@@ -166,8 +185,6 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
     setEditedApprovers(record.approvers_id);
     if (currentUserId) {
       fetchUser(record.user_id);
-      fetchApprovers(userId);
-      fetchCustomApprovers(record.id);
     }
     try {
       if (typeof record.attachment === "string") {
@@ -189,6 +206,7 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
   }, [record]);
   const fetchUser = async (id: number) => {
     setisFetchingUser(true);
+    setisFetchingApprovers(true);
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -204,12 +222,12 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
         }
       );
 
-    
       setUser(response.data);
     } catch (error) {
       console.error("Failed to fetch approvers:", error);
     } finally {
       setisFetchingUser(false);
+      setisFetchingApprovers(false);
     }
   };
 
@@ -277,7 +295,7 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
     return days[date.getDay()];
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: Date) => {
     const date = new Date(dateString);
     const options: Intl.DateTimeFormatOptions = {
       year: "numeric",
@@ -286,7 +304,15 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
     };
     return date.toLocaleDateString("en-US", options);
   };
-
+  const formatDate2 = (dateString: string) => {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    };
+    return date.toLocaleDateString("en-US", options);
+  };
   if (!record) return null;
 
   const handleSaveChanges = async () => {
@@ -314,15 +340,21 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
 
       const formData = new FormData();
       formData.append("updated_at", new Date().toISOString());
-      formData.append("approvers_id", JSON.stringify(editedApprovers));
+      const notedByIds = Array.isArray(notedBy)
+        ? notedBy.map((person) => person.id)
+        : [];
+      const approvedByIds = Array.isArray(approvedBy)
+        ? approvedBy.map((person) => person.id)
+        : [];
+      formData.append("noted_by", JSON.stringify(notedByIds));
+      formData.append("approved_by", JSON.stringify(approvedByIds));
 
       formData.append(
         "form_data",
         JSON.stringify([
           {
             branch: editableRecord.form_data[0].branch,
-            date:
-              editedDate !== "" ? editedDate : editableRecord.form_data[0].date,
+            date: editedDate !== "" ? editedDate : editableRecord.created_at,
             status: editableRecord.status,
             grand_total: calculateGrandTotal(),
             items: newData,
@@ -361,7 +393,6 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
         }
       );
 
-    
       setLoading(false);
       setIsEditing(false);
       setSavedSuccessfully(true);
@@ -422,8 +453,6 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
     }));
   };
 
- 
-
   const fetchCustomApprovers = async (id: number) => {
     setisFetchingApprovers(true);
     try {
@@ -444,15 +473,33 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
       const { notedby, approvedby } = response.data;
       setNotedBy(notedby);
       setApprovedBy(approvedby);
-
-    
     } catch (error) {
       console.error("Failed to fetch approvers:", error);
     } finally {
       setisFetchingApprovers(false);
     }
   };
+  const openAddCustomModal = () => {
+    setIsModalOpen(true);
+  };
+  const closeAddCustomModal = () => {
+    setIsModalOpen(false);
+  };
+  const closeModals = () => {
+    setIsModalOpen(false);
+  };
+  const handleOpenAddCustomModal = () => {
+    setShowAddCustomModal(true);
+  };
 
+  const handleCloseAddCustomModal = () => {
+    setShowAddCustomModal(false);
+  };
+
+  const handleAddCustomData = (notedBy: Approver[], approvedBy: Approver[]) => {
+    setNotedBy(notedBy);
+    setApprovedBy(approvedBy);
+  };
   const fetchApprovers = async (userId: number) => {
     setFetchingApprovers(true);
     try {
@@ -474,7 +521,6 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
         ? response.data.data
         : [];
       setApprovers(approversData);
-    
     } catch (error) {
       console.error("Failed to fetch approvers:", error);
     } finally {
@@ -489,7 +535,6 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
       notedBy: notedBy,
       user: user,
     };
-   
 
     localStorage.setItem("printData", JSON.stringify(data));
     // Open a new window with PrintRefund component
@@ -500,15 +545,18 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
       newWindow.focus();
     }
   };
- 
+
   return (
     <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 z-50">
       <div className="p-4 relative w-full mx-10 md:mx-0 z-10 md:w-1/2 lg:w-2/3 space-y-auto h-4/5 overflow-scroll bg-white border-black shadow-lg">
-      <div className=" top-2 flex justify-end cursor-pointer sticky">
-          <XMarkIcon className="h-8 w-8 text-black  bg-white rounded-full p-1  " onClick={closeModal} />
+        <div className=" top-2 flex justify-end cursor-pointer sticky">
+          <XMarkIcon
+            className="h-8 w-8 text-black  bg-white rounded-full p-1  "
+            onClick={closeModal}
+          />
         </div>
         <div className="justify-start items-start flex flex-col space-y-4 w-full">
-          {!fetchingApprovers && !isFetchingApprovers  && (
+          {!fetchingApprovers && !isFetchingApprovers && (
             <>
               <button
                 className="bg-blue-600 p-1 px-2 rounded-md text-white"
@@ -528,10 +576,20 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
               )}
             </>
           )}
+          <div className="flex justify-between w-full items-center">
+            <div>
+              <h1 className="font-semibold text-[18px]">
+                Application for Cash Advance
+              </h1>
+            </div>
+            <div className="w-auto flex ">
+              <p>Date: </p>
+              <p className="font-bold pl-1">
+                {formatDate(editableRecord.created_at)}
+              </p>
+            </div>
+          </div>
 
-          <h1 className="font-semibold text-[18px]">
-            Application for Cash Advance
-          </h1>
           <p className="font-medium text-[14px]">Request ID:#{record.id}</p>
           <div className="flex w-full md:w-1/2 items-center">
             <p>Status:</p>
@@ -543,7 +601,7 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
                   ? "bg-green"
                   : record.status.trim() === "Disapproved"
                   ? "bg-pink"
-                  : ""
+                  : "bg-primary"
               } rounded-lg  py-1 w-1/3
              font-medium text-[14px] text-center ml-2 text-white`}
             >
@@ -553,197 +611,187 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
           </div>
 
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2 w-full">
-            <div className="w-full">
-              <h1>Branch</h1>
-              <input
-                type="text"
-                className="border border-black rounded-md p-1 mt-2 w-full "
-               value={
-                  branchMap.get(parseInt(record.form_data[0].branch, 10)) ||
-                  "Unknown"
-                }
-                readOnly
-              />
-            </div>
-            <div className="w-full">
-              <h1>Date</h1>
-              {isEditing ? (
-                <input
-                  type="date"
-                  className="border border-black rounded-md p-1 mt-2 w-full"
-                  value={
-                    editedDate
-                      ? new Date(editedDate).toISOString().split("T")[0]
-                      : ""
-                  } // Convert to YYYY-MM-DD format
-                  onChange={(e) => setEditedDate(e.target.value)}
-                />
-              ) : (
-                <input
-                  type="text"
-                  className="border border-black rounded-md p-1 mt-2 w-full"
-                  value={formatDate(editableRecord.form_data[0].date)}
-                  readOnly
-                />
-              )}
+            <div className="w-1/2  flex ">
+              <h1 className="flex items-center">Branch: </h1>
+              <p className=" bg-white rounded-md  w-full pl-1 font-bold">
+                {branchName}
+              </p>
             </div>
           </div>
           <div className="mt-4 w-full overflow-x-auto">
-            <div className="w-full border-collapse ">
-              <div className="table-container">
-                <table className="border w-full space-x-auto ">
-                  <thead className="border border-black h-1/3  bg-[#8EC7F7]">
-                    <tr>
-                      <th className={`${tableStyle}`}>Date</th>
-                      <th className={`${tableStyle}`}>Day</th>
-                      <th className={`${tableStyle}`}>Itinerary</th>
-                      <th className={`${tableStyle}`}>Activity</th>
-                      <th className={`${tableStyle}`}>Hotel</th>
-                      <th className={`${tableStyle}`}>Rate</th>
-                      <th className={`${tableStyle}`}>Amount</th>
-                      <th className={`${tableStyle}`}>Per Diem</th>
-                      <th className={`${tableStyle}`}>Remarks</th>
-                    </tr>
-                  </thead>
-                  <tbody className={`${tableCellStyle}`}>
-                    {isEditing
-                      ? newData.map((item, index) => (
-                          <tr key={index}>
-                            <td className={tableCellStyle}>
-                              <input
-                                type="date"
-                                value={item.cashDate}
-                                onChange={(e) =>
-                                  handleItemChange(
-                                    index,
-                                    "cashDate",
-                                    e.target.value
-                                  )
-                                }
-                              />
-                            </td>
-                            <td className={tableCellStyle}>
-                              <input
-                                type="text"
-                                value={item.day}
-                                onChange={(e) =>
-                                  handleItemChange(index, "day", e.target.value)
-                                }
-                              />
-                            </td>
-                            <td className={tableCellStyle}>
-                              <input
-                                type="text"
-                                value={item.itinerary}
-                                onChange={(e) =>
-                                  handleItemChange(
-                                    index,
-                                    "itinerary",
-                                    e.target.value
-                                  )
-                                }
-                              />
-                            </td>
-                            <td className={tableCellStyle}>
-                              <input
-                                type="text"
-                                value={item.activity}
-                                onChange={(e) =>
-                                  handleItemChange(
-                                    index,
-                                    "activity",
-                                    e.target.value
-                                  )
-                                }
-                              />
-                            </td>
-                            <td className={tableCellStyle}>
-                              <input
-                                type="text"
-                                value={item.hotel}
-                                onChange={(e) =>
-                                  handleItemChange(
-                                    index,
-                                    "hotel",
-                                    e.target.value
-                                  )
-                                }
-                              />
-                            </td>
-                            <td className={tableCellStyle}>
-                              <input
-                                type="text"
-                                value={item.rate}
-                                onChange={(e) =>
-                                  handleItemChange(
-                                    index,
-                                    "rate",
-                                    e.target.value
-                                  )
-                                }
-                              />
-                            </td>
-                            <td className={tableCellStyle}>
-                              <input
-                                type="text"
-                                value={item.amount}
-                                onChange={(e) =>
-                                  handleItemChange(
-                                    index,
-                                    "amount",
-                                    e.target.value
-                                  )
-                                }
-                              />
-                            </td>
-                            <td className={tableCellStyle}>
-                              <input
-                                type="text"
-                                value={item.perDiem}
-                                onChange={(e) =>
-                                  handleItemChange(
-                                    index,
-                                    "perDiem",
-                                    e.target.value
-                                  )
-                                }
-                              />
-                            </td>
-                            <td className={tableCellStyle}>
-                              <input
-                                type="text"
-                                value={item.remarks}
-                                onChange={(e) =>
-                                  handleItemChange(
-                                    index,
-                                    "remarks",
-                                    e.target.value
-                                  )
-                                }
-                              />
-                            </td>
-                          </tr>
-                        ))
-                      : editableRecord.form_data[0].items.map((item, index) => (
-                          <tr key={index}>
-                            <td className={tableCellStyle}>
-                              {formatDate(item.cashDate)}
-                            </td>
-                            <td className={tableCellStyle}>{item.day}</td>
-                            <td className={tableCellStyle}>{item.itinerary}</td>
-                            <td className={tableCellStyle}>{item.activity}</td>
-                            <td className={tableCellStyle}>{item.hotel}</td>
-                            <td className={tableCellStyle}>{item.rate}</td>
-                            <td className={tableCellStyle}>{item.amount}</td>
-                            <td className={tableCellStyle}>{item.perDiem}</td>
-                            <td className={tableCellStyle}>{item.remarks}</td>
-                          </tr>
-                        ))}
-                  </tbody>
-                </table>
-              </div>
+            <div className="w-full border-collapse">
+              <table className="border-collapse w-full border-black border-2 table-fixed">
+                <thead>
+                  <tr>
+                    <th className="border-2 border-black bg-[#8EC7F7] w-1/12">
+                      Date
+                    </th>
+                    <th className="border-2 border-black bg-[#8EC7F7] w-1/12">
+                      Day
+                    </th>
+                    <th className="border-2 border-black bg-[#8EC7F7] w-2/12">
+                      Itinerary
+                    </th>
+                    <th className="border-2 border-black bg-[#8EC7F7] w-2/12">
+                      Activity
+                    </th>
+                    <th className="border-2 border-black bg-[#8EC7F7] w-2/12">
+                      Hotel
+                    </th>
+                    <th className="border-2 border-black bg-[#8EC7F7] w-1/12">
+                      Rate
+                    </th>
+                    <th className="border-2 border-black bg-[#8EC7F7] w-1/12">
+                      Amount
+                    </th>
+                    <th className="border-2 border-black bg-[#8EC7F7] w-1/12">
+                      Per Diem
+                    </th>
+                    <th className="border-2 border-black bg-[#8EC7F7] w-2/12">
+                      Remarks
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {isEditing
+                    ? newData.map((item, index) => (
+                        <tr key={index}>
+                          <td className="tableCellStyle break-words">
+                            <input
+                              type="date"
+                              value={item.cashDate}
+                              onChange={(e) =>
+                                handleItemChange(
+                                  index,
+                                  "cashDate",
+                                  e.target.value
+                                )
+                              }
+                              className="w-full bg-white"
+                            />
+                          </td>
+                          <td className="tableCellStyle break-words border-2 border-black">
+                            <input
+                              type="text"
+                              value={item.day}
+                              onChange={(e) =>
+                                handleItemChange(index, "day", e.target.value)
+                              }
+                              className="w-full bg-white"
+                            />
+                          </td>
+                          <td className="tableCellStyle break-words border-2 border-black">
+                            <input
+                              type="text"
+                              value={item.itinerary}
+                              onChange={(e) =>
+                                handleItemChange(
+                                  index,
+                                  "itinerary",
+                                  e.target.value
+                                )
+                              }
+                              className="w-full bg-white"
+                            />
+                          </td>
+                          <td className="tableCellStyle break-words border-2 border-black">
+                            <input
+                              type="text"
+                              value={item.activity}
+                              onChange={(e) =>
+                                handleItemChange(
+                                  index,
+                                  "activity",
+                                  e.target.value
+                                )
+                              }
+                              className="w-full bg-white"
+                            />
+                          </td>
+                          <td className="tableCellStyle break-words border-2 border-black">
+                            <input
+                              type="text"
+                              value={item.hotel}
+                              onChange={(e) =>
+                                handleItemChange(index, "hotel", e.target.value)
+                              }
+                              className="w-full bg-white"
+                            />
+                          </td>
+                          <td className="tableCellStyle break-words border-2 border-black">
+                            <input
+                              type="text"
+                              value={item.rate}
+                              onChange={(e) =>
+                                handleItemChange(index, "rate", e.target.value)
+                              }
+                              className="w-full bg-white"
+                            />
+                          </td>
+                          <td className="tableCellStyle break-words border-2 border-black">
+                            <input
+                              type="text"
+                              value={item.amount}
+                              onChange={(e) =>
+                                handleItemChange(
+                                  index,
+                                  "amount",
+                                  e.target.value
+                                )
+                              }
+                              className="w-full bg-white"
+                            />
+                          </td>
+                          <td className="tableCellStyle break-words border-2 border-black">
+                            <input
+                              type="text"
+                              value={item.perDiem}
+                              onChange={(e) =>
+                                handleItemChange(
+                                  index,
+                                  "perDiem",
+                                  e.target.value
+                                )
+                              }
+                              className="w-full bg-white"
+                            />
+                          </td>
+                          <td className="tableCellStyle break-words border-2 border-black">
+                            <input
+                              type="text"
+                              value={item.remarks}
+                              onChange={(e) =>
+                                handleItemChange(
+                                  index,
+                                  "remarks",
+                                  e.target.value
+                                )
+                              }
+                              className="w-full bg-white"
+                            />
+                          </td>
+                        </tr>
+                      ))
+                    : editableRecord.form_data[0].items.map((item, index) => (
+                        <tr key={index}>
+                          <td className={tableCellStyle}>
+                            {formatDate2(item.cashDate)}
+                          </td>
+                          <td className={tableCellStyle}>{item.day}</td>
+                          <td className={tableCellStyle}>{item.itinerary}</td>
+                          <td className={tableCellStyle}>{item.activity}</td>
+                          <td className={tableCellStyle}>{item.hotel}</td>
+                          <td className={tableCellStyle}>{item.rate}</td>
+                          <td className={tableCellStyle}>{item.amount}</td>
+                          <td className={tableCellStyle}>{item.perDiem}</td>
+                          <td className={tableCellStyle}>{item.remarks}</td>
+                        </tr>
+                      ))}
+                </tbody>
+              </table>
             </div>
           </div>
+
           {errorMessage && <p className="text-red-500">{errorMessage}</p>}
           <div className="inline-block w-full">
             <table className="border border-black">
@@ -767,7 +815,7 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
                         type="number"
                         value={newTotalBoatFare}
                         onChange={(e) => setNewTotalBoatFare(e.target.value)}
-                        className="w-full bg-white"
+                        className="w-full bg-white p-2"
                         readOnly={!isEditing}
                       />
                     ) : (
@@ -787,7 +835,7 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
                         type="number"
                         value={newTotalHotel}
                         onChange={(e) => setNewTotalHotel(e.target.value)}
-                        className="w-full bg-white"
+                        className="w-full bg-white p-2"
                         readOnly={!isEditing}
                       />
                     ) : (
@@ -798,10 +846,10 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
                   </td>
                 </tr>
                 <tr>
-                  <td className={`${tableStyle}`}>
+                  <td className={`${tableStyle} `}>
                     <p className="font-semibold">PER DIEM</p>
                   </td>
-                  <td className={`${inputStyle}`}>
+                  <td className={`${inputStyle} p-2`}>
                     {/* Display calculated total per diem */}
                     {newData.reduce(
                       (totalPerDiem, item) =>
@@ -820,7 +868,7 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
                         type="number"
                         value={newTotalFare}
                         onChange={(e) => setNewTotalFare(e.target.value)}
-                        className="w-full bg-white"
+                        className="w-full bg-white p-2"
                         readOnly={!isEditing}
                       />
                     ) : (
@@ -840,7 +888,7 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
                         type="number"
                         value={newTotalContingency}
                         onChange={(e) => setNewTotalContingency(e.target.value)}
-                        className="w-full"
+                        className="w-full bg-white p-2"
                         readOnly={!isEditing}
                       />
                     ) : (
@@ -866,33 +914,13 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
               </tbody>
             </table>
           </div>
-          <div className="w-full pr-12">
-            <h1>Approvers</h1>
-            {fetchingApprovers ? (
-              <p>Loading approvers...</p>
-            ) : (
-              <select
-                className="border w-1/2 mt-2 h-10 border-black rounded-lg"
-                value={
-                  isEditing ? editedApprovers : editableRecord.approvers_id
-                }
-                onChange={(e) => {
-                  const selectedApproverId = parseInt(e.target.value);
-                
-                  setEditedApprovers(selectedApproverId);
-                }}
-                disabled={!isEditing}
-              >
-                <option value="" disabled>
-                  Approver List
-                </option>
-                {approvers.map((approver) => (
-                  <option key={approver.id} value={approver.id}>
-                    {approver.name}
-                  </option>
-                ))}
-              </select>
-            )}
+          <div className="my-2">
+            <button
+              onClick={openAddCustomModal}
+              className="bg-primary text-white p-2 rounded"
+            >
+              Add Approver
+            </button>
           </div>
           <div className="w-full flex-col justify-center items-center">
             {isFetchingApprovers ? (
@@ -901,69 +929,98 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
               </div>
             ) : (
               <div className="flex flex-wrap">
-                <div className="ml-5 mb-4">
+                <div className="mb-4 ml-5">
                   <h3 className="font-bold mb-3">Requested By:</h3>
-                  <div className="flex flex-row justify-start space-x-2">
-                    <div className="flex flex-col items-center justify-center text-center">
-                      <p className="relative inline-block uppercase font-medium text-center pt-6">
-                        <img
-                          className="absolute top-2"
-                          src={user.data?.signature}
-                          alt="avatar"
-                          width={120}
-                        />
-
-                        <span className="relative z-10 px-2">
-                          {user.data?.firstName} {user.data?.lastName}
-                        </span>
-                        <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black -mx-4"></span>
-                      </p>
-                      <p className="font-bold text-[12px] text-center">
-                        {user.data?.position}
-                      </p>
-                    </div>
-                  </div>
+                  <ul className="flex flex-wrap gap-6">
+                    <li className="flex flex-col items-center justify-center text-center relative w-auto">
+                      <div className="relative flex flex-col items-center justify-center">
+                        {/* Signature */}
+                        {user.data?.signature && (
+                          <div className="absolute top-0">
+                            <img
+                              src={user.data?.signature}
+                              alt="avatar"
+                              width={120}
+                              className="relative z-20 pointer-events-none"
+                            />
+                          </div>
+                        )}
+                        {/* Name */}
+                        <p className="relative inline-block uppercase font-medium text-center mt-4 z-10">
+                          <span className="relative z-10">
+                            {user.data?.firstName} {user.data?.lastName}
+                          </span>
+                          <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black"></span>
+                        </p>
+                        {/* Position */}
+                        <p className="font-bold text-[12px] text-center mt-1">
+                          {user.data?.position}
+                        </p>
+                        {/* Status, if needed */}
+                        {user.data?.status && (
+                          <p
+                            className={`font-bold text-[12px] text-center mt-1 ${
+                              user.data?.status === "Approved"
+                                ? "text-green"
+                                : user.data?.status === "Pending"
+                                ? "text-yellow"
+                                : user.data?.status === "Rejected"
+                                ? "text-red"
+                                : ""
+                            }`}
+                          >
+                            {user.data?.status}
+                          </p>
+                        )}
+                      </div>
+                    </li>
+                  </ul>
                 </div>
 
                 <div className="mb-4 ml-5">
                   <h3 className="font-bold mb-3">Noted By:</h3>
-                  <ul className="flex flex-row space-x-6">
+                  <ul className="flex flex-wrap gap-6">
                     {notedBy.map((user, index) => (
                       <li
-                        className="flex flex-row justify-start space-x-2"
+                        className="flex flex-col items-center justify-center text-center relative"
                         key={index}
                       >
-                        <div className="flex flex-col items-center justify-center text-center">
-                          <p className="relative inline-block uppercase font-medium text-center pt-6">
-                          {(user.status === "Approved" || user.status.split(" ")[0] === "Rejected" ) && (
+                        <div className="relative flex flex-col items-center justify-center text-center">
+                          {/* Signature */}
+                          {(user.status === "Approved" ||
+                            (typeof user.status === "string" &&
+                              user.status.split(" ")[0] === "Rejected")) && (
+                            <div className="absolute top-0">
                               <img
-                                className="absolute top-2"
                                 src={user.signature}
                                 alt="avatar"
                                 width={120}
+                                className="relative z-20 pointer-events-none"
                               />
-                            )}
-                            <span className="relative z-10 px-2">
-                              {user.firstname} {user.lastname}
+                            </div>
+                          )}
+                          {/* Name */}
+                          <p className="relative inline-block uppercase font-medium text-center mt-4 z-10">
+                            <span className="relative z-10">
+                              {user.firstName} {user.lastName}
                             </span>
-                            <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black -mx-4"></span>
+                            <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black"></span>
                           </p>
-                          <p className="font-bold text-[12px] text-center">
+                          {/* Position */}
+                          <p className="font-bold text-[12px] text-center mt-1">
                             {user.position}
                           </p>
+                          {/* Status */}
                           {hasDisapprovedInApprovedBy ||
                           hasDisapprovedInNotedBy ? (
-                            // Show "Disapproved" if it is present in either list
                             user.status === "Disapproved" ? (
-                              <p className="font-bold text-[12px] text-center text-red-500">
+                              <p className="font-bold text-[12px] text-center text-red-500 mt-1">
                                 {user.status}
                               </p>
-                            ) : // Do not show any status if "Disapproved" is present
-                            null
+                            ) : null
                           ) : (
-                            // Show other statuses only if "Disapproved" is not present in either list
                             <p
-                              className={`font-bold text-[12px] text-center ${
+                              className={`font-bold text-[12px] text-center mt-1 ${
                                 user.status === "Approved"
                                   ? "text-green"
                                   : user.status === "Pending"
@@ -979,45 +1036,51 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
                     ))}
                   </ul>
                 </div>
+
                 <div className="mb-4 ml-5">
                   <h3 className="font-bold mb-3">Approved By:</h3>
-                  <ul className="flex flex-row space-x-6">
+                  <ul className="flex flex-wrap gap-6">
                     {approvedBy.map((user, index) => (
                       <li
-                        className="flex flex-row justify-start space-x-2"
+                        className="flex flex-col items-center justify-center text-center relative"
                         key={index}
                       >
-                        <div className="flex flex-col items-center justify-center text-center">
-                          <p className="relative inline-block uppercase font-medium text-center pt-6">
-                          {(user.status === "Approved" || user.status.split(" ")[0] === "Rejected" ) && (
+                        <div className="relative flex flex-col items-center justify-center text-center">
+                          {/* Signature */}
+                          {(user.status === "Approved" ||
+                            (typeof user.status === "string" &&
+                              user.status.split(" ")[0] === "Rejected")) && (
+                            <div className="absolute top-0">
                               <img
-                                className="absolute top-2"
                                 src={user.signature}
                                 alt="avatar"
                                 width={120}
+                                className="relative z-20 pointer-events-none"
                               />
-                            )}
-                            <span className="relative z-10 px-2">
-                              {user.firstname} {user.lastname}
+                            </div>
+                          )}
+                          {/* Name */}
+                          <p className="relative inline-block uppercase font-medium text-center mt-4 z-10">
+                            <span className="relative z-10">
+                              {user.firstName} {user.lastName}
                             </span>
-                            <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black -mx-4"></span>
+                            <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black"></span>
                           </p>
-                          <p className="font-bold text-[12px] text-center">
+                          {/* Position */}
+                          <p className="font-bold text-[12px] text-center mt-1">
                             {user.position}
                           </p>
-                           {hasDisapprovedInApprovedBy ||
+                          {/* Status */}
+                          {hasDisapprovedInApprovedBy ||
                           hasDisapprovedInNotedBy ? (
-                            // Show "Disapproved" if it is present in either list
                             user.status === "Disapproved" ? (
-                              <p className="font-bold text-[12px] text-center text-red-500">
+                              <p className="font-bold text-[12px] text-center text-red-500 mt-1">
                                 {user.status}
                               </p>
-                            ) : // Do not show any status if "Disapproved" is present
-                            null
+                            ) : null
                           ) : (
-                            // Show other statuses only if "Disapproved" is not present in either list
                             <p
-                              className={`font-bold text-[12px] text-center ${
+                              className={`font-bold text-[12px] text-center mt-1 ${
                                 user.status === "Approved"
                                   ? "text-green"
                                   : user.status === "Pending"
@@ -1062,7 +1125,15 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
                     )}
                   </div>
                 ))}
+
+              {/* Check if there are no attachments */}
+              {attachmentUrl.filter(
+                (_, index) => !removedAttachments.includes(index)
+              ).length === 0 && (
+                <p className="text-gray-500">No attachments available.</p>
+              )}
             </div>
+
             {isEditing && (
               <div>
                 <input
@@ -1074,51 +1145,73 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
               </div>
             )}
           </div>
+
           <div className="w-full">
             <h2 className="text-lg font-bold mb-2">Comments</h2>
-            <ul className="flex flex-col w-full mb-4 space-y-4">
-              {notedBy
-                .filter((user) => user.comment)
-                .map((user, index) => (
-                  <div className="flex flex-row w-full" key={index}>
-                    <img
-                      alt="logo"
-                      className="cursor-pointer hidden sm:block"
-                      src={Avatar}
-                      height={35}
-                      width={45}
-                    />
-                    <li className="flex flex-col justify-between pl-2">
-                      <h3 className="font-bold text-lg">
-                        {user.firstname} {user.lastname}
-                      </h3>
-                      <p>{user.comment}</p>
-                    </li>
-                  </div>
-                ))}
-            </ul>
-            <ul className="flex flex-col w-full mb-4 space-y-4">
-              {approvedBy
-                .filter((user) => user.comment)
-                .map((user, index) => (
-                  <div className="flex flex-row w-full" key={index}>
-                    <img
-                      alt="logo"
-                      className="cursor-pointer hidden sm:block"
-                      src={Avatar}
-                      height={35}
-                      width={45}
-                    />
-                    <li className="flex flex-col justify-between pl-2">
-                      <h3 className="font-bold text-lg">
-                        {user.firstname} {user.lastname}
-                      </h3>
-                      <p>{user.comment}</p>
-                    </li>
-                  </div>
-                ))}
-            </ul>
+
+            {/* Check if there are no comments in both notedBy and approvedBy */}
+            {notedBy.filter((user) => user.comment).length === 0 &&
+            approvedBy.filter((user) => user.comment).length === 0 ? (
+              <p className="text-gray-500">No comments yet.</p>
+            ) : (
+              <>
+                {/* Render Noted By comments */}
+                <ul className="flex flex-col w-full mb-4 space-y-4">
+                  {notedBy
+                    .filter((user) => user.comment)
+                    .map((user, index) => (
+                      <div className="flex" key={index}>
+                        <div>
+                          <img
+                            alt="avatar"
+                            className="cursor-pointer hidden sm:block"
+                            src={Avatar}
+                            height={35}
+                            width={45}
+                          />
+                        </div>
+                        <div className="flex flex-row w-full">
+                          <li className="flex flex-col justify-between pl-2">
+                            <h3 className="font-bold text-lg">
+                              {user.firstName} {user.lastName}
+                            </h3>
+                            <p>{user.comment}</p>
+                          </li>
+                        </div>
+                      </div>
+                    ))}
+                </ul>
+
+                {/* Render Approved By comments */}
+                <ul className="flex flex-col w-full mb-4 space-y-4">
+                  {approvedBy
+                    .filter((user) => user.comment)
+                    .map((user, index) => (
+                      <div className="flex" key={index}>
+                        <div>
+                          <img
+                            alt="avatar"
+                            className="cursor-pointer hidden sm:block"
+                            src={Avatar}
+                            height={35}
+                            width={45}
+                          />
+                        </div>
+                        <div className="flex flex-row w-full">
+                          <li className="flex flex-col justify-between pl-2">
+                            <h3 className="font-bold text-lg">
+                              {user.firstName} {user.lastName}
+                            </h3>
+                            <p>{user.comment}</p>
+                          </li>
+                        </div>
+                      </div>
+                    ))}
+                </ul>
+              </>
+            )}
           </div>
+
           <div className="md:absolute  right-20 top-2 items-center">
             {isEditing ? (
               <div>
@@ -1161,6 +1254,16 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
           refreshData={refreshData}
         />
       )}
+      <AddCustomModal
+        modalIsOpen={isModalOpen}
+        closeModal={closeModals}
+        openCompleteModal={() => {}}
+        entityType="Approver"
+        initialNotedBy={notedBy}
+        initialApprovedBy={approvedBy}
+        refreshData={() => {}}
+        handleAddCustomData={handleAddCustomData}
+      />
     </div>
   );
 };

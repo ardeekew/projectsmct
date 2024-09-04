@@ -106,9 +106,9 @@ const Login: React.FC = () => {
   
   
   const inputStyle =
-    "w-full lg:max-w-[417px] lg:h-[56px] md:h-10  p-2 bg-gray-300 rounded-lg";
+    "w-full lg:max-w-[417px] lg:h-[56px] md:h-10  p-2 bg-gray-300 rounded-lg text-black";
   return (
-    <div className="flex flex-row">
+    <div className="flex flex-row bg-[#FFFFFF] text-black">
       <div className="w-full  lg:w-1/2 flex items-center justify-center p-8 bg-cover bg-center relative">
         <img
           className="absolute inset-0 object-cover w-full h-screen lg:hidden z-0"
@@ -133,7 +133,7 @@ const Login: React.FC = () => {
                   },
                 })}
                 placeholder="Enter Email"
-                className={`${inputStyle}`}
+                className={`${inputStyle} autofill-input`}
               />
               {errors.email && (
                 <p className="text-red-500 text-xs mt-1"> {errors.email.message}</p>
@@ -146,7 +146,7 @@ const Login: React.FC = () => {
                   type={showPassword ? "text" : "password"}
                   {...register("password")}
                   placeholder="Enter password"
-                  className={`${inputStyle}`}
+                  className={`${inputStyle}  autofill-input`}
                 />
 
                 {showPassword ? (

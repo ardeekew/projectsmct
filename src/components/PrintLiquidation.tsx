@@ -64,9 +64,14 @@ const PrintLiquidation: React.FC<PrintRefundProps> = ({ data }) => {
   useEffect(() => {
     if (printData !== null) {
       window.print();
-      localStorage.removeItem('printData'); // Clean up after printing
+  
+      window.onafterprint = () => {
+        localStorage.removeItem('printData'); // Clean up after printing
+        window.close(); // Close the tab after printing or canceling
+      };
     }
   }, [printData]);
+  
   return (
     <div className="print-container  ">
     <style>
@@ -85,10 +90,11 @@ const PrintLiquidation: React.FC<PrintRefundProps> = ({ data }) => {
       }
 
       th, td {
+      
         padding: 6px; /* Reduced padding to fit content better */
         border: 1px solid black;
         vertical-align: top;
-        font-size: 10px; /* Adjust font size to fit content */
+        font-size: 5px; /* Adjust font size to fit content */
       }
 
       .summary-table {
@@ -146,7 +152,7 @@ const PrintLiquidation: React.FC<PrintRefundProps> = ({ data }) => {
     }
   `}
 </style>
-      <div className="border-2 border-black px-4">
+      <div className="border-2 border-black px-4 bg-white text-black h-lvh">
       <div className="flex flex-col justify-center items-center">
       <div className="justify-center w-1/2 mt-10">{logo}</div>
           <h1 className="font-bold text-lg uppercase">liquidation of actual expense</h1>
@@ -157,76 +163,76 @@ const PrintLiquidation: React.FC<PrintRefundProps> = ({ data }) => {
             <h1 className="text-lg">BRANCH</h1>
           </div>
         </div>
-        <div className="table-container">
-        <table className="border-collapse w-full border-black border mt-10 px-5">
-          <thead>
-            <tr>
-              <th className="border w-10 border-black bg-[#8EC7F7]">Date</th>
-              <th colSpan={3} className="border border-black bg-[#8EC7F7]">
-                Transportation
-              </th>
-              <th colSpan={3} className="border border-black bg-[#8EC7F7] h-14">
-                Hotel
-              </th>
-              <th colSpan={3} className="border border-black bg-[#8EC7F7]">
-                PER DIEM OTHER RELATED EXPENSES
-              </th>
-              <th className="bg-[#8EC7F7]"></th>
+        <div className="mt-10 w-full overflow-x-auto px-5">
+  <table className="border-collapse w-full border-black border table-fixed">
+    <thead>
+      <tr>
+        <th className="border w-10 border-black bg-[#8EC7F7]">Date</th>
+        <th colSpan={3} className="border border-black bg-[#8EC7F7]">
+          Transportation
+        </th>
+        <th colSpan={3} className="border border-black bg-[#8EC7F7] h-14">
+          Hotel
+        </th>
+        <th colSpan={3} className="border border-black bg-[#8EC7F7]">
+          PER DIEM OTHER RELATED EXPENSES
+        </th>
+        <th className="border border-black bg-[#8EC7F7]"></th>
+      </tr>
+      <tr className="text-[14 px]">
+        <th className="border w-10 border-black whitespace-normal">Date</th>
+        <th className="border w-32 border-black whitespace-normal break-words">Destination</th>
+        <th className="border w-32 border-black whitespace-normal text-[8px] break-words">Transportation</th>
+        <th className="border w-24 border-black whitespace-normal">Amount</th>
+        <th className="border w-32 border-black whitespace-normal">Hotel</th>
+        <th className="border w-32 border-black whitespace-normal">Place</th>
+        <th className="border w-24 border-black whitespace-normal">Amount</th>
+        <th className="border w-32 border-black whitespace-normal">Per Diem</th>
+        <th className="border w-32 border-black whitespace-normal">Particulars</th>
+        <th className="border w-24 border-black whitespace-normal">Amount</th>
+        <th className="border w-24 border-black whitespace-normal">Grand Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {printData?.id.form_data.map((formData: any, index: number) => (
+        <React.Fragment key={index}>
+          {formData.items.map((item: any, itemIndex: number) => (
+            <tr key={itemIndex}>
+              <td className="border border-black w-10 whitespace-normal break-words text-center" >{formatDate(item.liquidationDate)}</td>
+              <td className="border border-black w-32 whitespace-normal break-words text-center">{item.destination}</td>
+              <td className="border border-black w-32 whitespace-normal break-words text-center">{item.transportation}</td>
+              <td className="border border-black w-24 whitespace-normal break-words text-center">{item.transportationAmount}</td>
+              <td className="border border-black w-32 whitespace-normal break-words text-center">{item.hotel}</td>
+              <td className="border border-black w-32 whitespace-normal break-words text-center">{item.hotelAddress}</td>
+              <td className="border border-black w-24 whitespace-normal break-words text-center">{item.hotelAmount}</td>
+              <td className="border border-black w-32 whitespace-normal break-words text-center">{item.perDiem}</td>
+              <td className="border border-black w-32 whitespace-normal break-words text-center">{item.particulars}</td>
+              <td className="border border-black w-24 whitespace-normal break-words text-center">{item.particularsAmount}</td>
+              <td className="border border-black w-24 whitespace-normal break-words text-center">{item.grandTotal}</td>
             </tr>
-            <tr>
-              <th className="border w-1/12 border-black">Date</th>
-              <th className="border w-2/12 border-black">Destination</th>
-              <th className="border w-2/12 border-black">
-                Type of Transportation
-              </th>
-              <th className="border w-10 border-black">Amount</th>
-              <th className="border w-10 border-black">Hotel</th>
-              <th className="border w-2/12 border-black">Place</th>
-              <th className="border w-10 border-black">Amount</th>
-              <th className="border w-10 border-black">Per Diem</th>
-              <th className="border w-10 border-black">Particulars</th>
-              <th className="border w-10 border-black">Amount</th>
-              <th className="border w-10 border-black">Grand Total</th>
+          ))}
+          {[...Array(Math.max(2 - formData.items.length, 0))].map((_, emptyIndex) => (
+            <tr key={`empty-${index}-${emptyIndex} border-black`}>
+              <td className="border border-black w-10 py-6"></td>
+              <td className="border border-black w-32"></td>
+              <td className="border border-black w-32"></td>
+              <td className="border border-black w-24"></td>
+              <td className="border border-black w-32"></td>
+              <td className="border border-black w-32"></td>
+              <td className="border border-black w-24"></td>
+              <td className="border border-black w-32"></td>
+              <td className="border border-black w-32"></td>
+              <td className="border border-black w-24"></td>
+              <td className="border border-black w-24"></td>
             </tr>
-          </thead>
-          <tbody>
-            {printData?.id.form_data.map((formData: any, index: number) => (
-              <React.Fragment key={index}>
-                {formData.items.map((item: any, itemIndex: number) => (
-                  <tr key={itemIndex}>
-                    <td className={`${tableStyle}`}>{formatDate(item.liquidationDate)}</td>
-                    <td className={`${tableStyle}`}>{item.destination}</td>
-                    <td className={`${tableStyle}`}>{item.transportation}</td>
-                    <td className={`${tableStyle}`}>{item.transportationAmount}</td>
-                    <td className={`${tableStyle}`}>{item.hotel}</td>
-                    <td className={`${tableStyle}`}>{item.hotelAddress}</td>
-                    <td className={`${tableStyle}`}>{item.hotelAmount}</td>
-                    <td className={`${tableStyle}`}>{item.perDiem}</td>
-                    <td className={`${tableStyle}`}>{item.particulars}</td>
-                    <td className={`${tableStyle}`}>{item.particularsAmount}</td>
-                    <td className={`${tableStyle}`}>{item.grandTotal}</td>
-                  </tr>
-                ))}
-                {[...Array(Math.max(5 - formData.items.length, 0))].map((_, emptyIndex) => (
-                  <tr key={`empty-${index}-${emptyIndex}`}>
-                    <td className={`${tableStyle}`}></td>
-                    <td className={`${tableStyle}`}></td>
-                    <td className={`${tableStyle}`}></td>
-                    <td className={`${tableStyle}`}></td>
-                    <td className={`${tableStyle}`}></td>
-                    <td className={`${tableStyle}`}></td>
-                    <td className={`${tableStyle}`}></td>
-                    <td className={`${tableStyle}`}></td>
-                    <td className={`${tableStyle}`}></td>
-                    <td className={`${tableStyle}`}></td>
-                    <td className={`${tableStyle}`}></td>
-                  </tr>
-                ))}
-              </React.Fragment>
-            ))}
-          </tbody>
-        </table>
-        </div>
+          ))}
+        </React.Fragment>
+      ))}
+    </tbody>
+  </table>
+</div>
+
+
         <div className="two-column grid grid-cols-2 gap-6 mt-10">
         <div>
           <table className="border border-black w-full">
@@ -297,9 +303,9 @@ const PrintLiquidation: React.FC<PrintRefundProps> = ({ data }) => {
             {/* Requested By Section */}
             <div className="mb-4 flex-grow">
               <h3 className="font-bold mb-3">Requested By:</h3>
-              <div className="flex flex-col items-start justify-start text-center relative pt-8">
+              <div className="flex flex-col items-center justify-center relative pt-8">
                 <img
-                  className="absolute top-2"
+                  className="absolute top-4 left-1/2 transform -translate-x-1/2 pointer-events-none"
                   src={printData?.user.data.signature}
                   alt="avatar"
                   width={120}
@@ -317,22 +323,22 @@ const PrintLiquidation: React.FC<PrintRefundProps> = ({ data }) => {
             {/* Noted By Section */}
             <div className="mb-4 flex-grow">
               <h3 className="font-bold mb-3">Noted By:</h3>
-              <div className="flex flex-wrap justify-start  ">
+              <div className="flex flex-wrap justify-start">
                 {printData?.notedBy.map((approver: any, index: number) => (
                   <div
                     key={index}
-                    className="flex flex-col  relative pt-8 mr-10"
+                    className="flex flex-col items-center justify-center relative pt-8 mr-10"
                   >
                     {approver.status === "Approved" && (
                       <img
-                        className="absolute top-2"
+                        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none"
                         src={approver.signature}
                         alt=""
                         width={120}
                       />
                     )}
-                    <p className="underline text-center font-bold">
-                      {approver.firstname} {approver.lastname}
+                    <p className="relative z-10 underline text-center font-bold">
+                      {approver.firstName} {approver.lastName}
                     </p>
                     <p className="font-bold text-xs text-center">
                       {approver.position}
@@ -345,22 +351,22 @@ const PrintLiquidation: React.FC<PrintRefundProps> = ({ data }) => {
             {/* Approved By Section */}
             <div className="mb-4 flex-grow">
               <h3 className="font-bold mb-3">Approved By:</h3>
-              <div className="flex flex-wrap justify-start ">
+              <div className="flex flex-wrap justify-start">
                 {printData?.approvedBy.map((approver: any, index: number) => (
                   <div
                     key={index}
-                    className="flex flex-col justify-start items-start mr-10 relative pt-8"
+                    className="flex flex-col justify-start items-center mr-10 relative pt-8"
                   >
                     {approver.status === "Approved" && (
                       <img
-                        className="absolute top-2"
+                        className="absolute top-4 left-1/2 transform -translate-x-1/2 pointer-events-none"
                         src={approver.signature}
                         alt=""
                         width={120}
                       />
                     )}
-                    <p className="underline text-center font-bold">
-                      {approver.firstname} {approver.lastname}
+                    <p className="relative z-10 underline text-center font-bold">
+                      {approver.firstName} {approver.lastName}
                     </p>
                     <p className="font-bold text-xs text-center">
                       {approver.position}

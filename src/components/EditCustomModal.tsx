@@ -18,10 +18,10 @@ interface Approver {
   id: number;
   firstName: string;
   lastName: string;
-  comment?: string;
+  comment: string;
   position: string;
-  signature?: string;
-  status?: string;
+  signature: string;
+  status: string;
 }
 
 
@@ -74,7 +74,7 @@ const AddCustomModal: React.FC<AddCustomModalProps> = ({
             (approver) =>
               uniqueIds.has(approver.id) && uniqueIds.delete(approver.id)
           );
-
+         
           setApprovers(uniqueApprovers);
           setLoading(false);
         } catch (error) {

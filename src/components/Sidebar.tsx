@@ -38,7 +38,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ darkMode, role,  isSidebarVisible, toggleSidebar }) => {
   const [open, setOpen] = useState(false);
   const [submenuOpen, setSubMenuOpen] = useState<string | null>(null);
-console.log(submenuOpen)
+
 
 
 
@@ -177,7 +177,7 @@ console.log(submenuOpen)
       window.removeEventListener("resize", handleResize);
     };
   }, []);
-  console.log(open);
+
   const listStyle =
     "group flex ml-1 items-center text-[18px] text-gray-400 font-medium py-2 pr-2 px-2  gap-2  overflow-hidden cursor-pointer  rounded-lg";
   const pStyle = "group-hover:text-primary  font text-lg";

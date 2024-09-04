@@ -9,6 +9,9 @@ import { z, ZodError } from "zod";
 import axios from "axios";
 import RequestSuccessModal from "./Modals/RequestSuccessModal";
 import ClipLoader from "react-spinners/ClipLoader";
+import AddCustomModal from "./AddCustomModal";
+
+
 type Props = {};
 
 type CustomApprover = {
@@ -19,6 +22,12 @@ type CustomApprover = {
     approved_by: { name: string }[];
   };
 };
+interface Approver {
+  id: number;
+  firstName: string;
+  lastName: string;
+  position: string;
+}
 const requestType = [
   { title: "Stock Requisition", path: "/request/sr" },
   { title: "Purchase Order Requisition Slip", path: "/request/pors" },
@@ -27,9 +36,7 @@ const requestType = [
   { title: "Liquidation of Actual Expense", path: "/request/loae" },
   { title: "Request for Refund", path: "/request/rfr" },
 ];
-const schema = z.object({
-  date: z.string(),
-  branch: z.string(),
+const schema = z.object({ 
   approver_list_id: z.number(),
   items: z.array(
     z.object({
@@ -43,7 +50,7 @@ const schema = z.object({
 });
 
 type FormData = z.infer<typeof schema>;
-const inputStyle = "w-full  border-2 border-black rounded-[12px] pl-[10px]";
+const inputStyle = "w-full  border-2 border-black rounded-[12px] pl-[10px] bg-white  autofill-input";
 const itemDiv = "flex flex-col ";
 const buttonStyle = "h-[45px] w-[150px] rounded-[12px] text-white";
 const CreateCashDisbursement = (props: Props) => {
@@ -67,6 +74,12 @@ const CreateCashDisbursement = (props: Props) => {
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({});
+  const [notedBy, setNotedBy] = useState<Approver[]>([]);
+  const [approvedBy, setApprovedBy] = useState<Approver[]>([]);
+  const [initialNotedBy, setInitialNotedBy] =useState<Approver[]>([]);
+  const [initialApprovedBy, setInitialApprovedBy] =useState<Approver[]>([]);
+  const [showAddCustomModal, setShowAddCustomModal] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       // Convert FileList to array and set it
@@ -100,11 +113,12 @@ const CreateCashDisbursement = (props: Props) => {
   const handleOpenConfirmationModal = () => {
     setShowConfirmationModal(true);
   };
+ 
   useEffect(() => {
-    fetchCustomApprovers();
-  }, []);
-
-  const fetchCustomApprovers = async () => {
+    setInitialNotedBy(notedBy);
+    setInitialApprovedBy(approvedBy);
+  }, [notedBy, approvedBy]);
+ /*  const fetchCustomApprovers = async () => {
     try {
       const id = localStorage.getItem("id");
       const token = localStorage.getItem("token");
@@ -132,7 +146,7 @@ const CreateCashDisbursement = (props: Props) => {
       console.error("Error fetching custom approvers:", error);
       setCustomApprovers([]); // Ensure that customApprovers is always an array
     }
-  };
+  }; */
   // Function to close the confirmation modal
   const handleCloseConfirmationModal = () => {
     setShowConfirmationModal(false);
@@ -149,12 +163,11 @@ const CreateCashDisbursement = (props: Props) => {
         console.error("Token or userId not found");
         return;
       }
-      const selectedList = customApprovers.find(
-        (approver) => approver.id === selectedApproverList
-      );
-      if (!selectedList) {
-        console.error("Selected approver list not found");
-        return;
+      if (notedBy.length === 0 || approvedBy.length === 0) {
+      
+        alert("Please select an approver.");
+        setLoading(false); // Stop loading state
+        return; // Prevent form submission
       }
 
       if (
@@ -182,16 +195,17 @@ const CreateCashDisbursement = (props: Props) => {
       file.forEach((file) => {
         formData.append("attachment[]", file); // Use "attachment[]" to handle multiple files
       });
-
-      formData.append("form_type", "Cash Disbursement Requisition Slip");
-      formData.append("approvers_id", String(selectedApproverList));
+      const notedByIds = Array.isArray(notedBy) ? notedBy.map(person => person.id) : [];
+      const approvedByIds = Array.isArray(approvedBy) ? approvedBy.map(person => person.id) : [];
+      formData.append("noted_by", JSON.stringify(notedByIds));
+      formData.append("approved_by", JSON.stringify(approvedByIds));
+      formData.append("form_type", "Cash Disbursement Requisition Slip");    
       formData.append("user_id", userId);
 
       formData.append(
         "form_data",
         JSON.stringify([
           {
-            date: data.date,
             branch: branch_code,
             grand_total: grandTotal.toFixed(2),
             items: items.map((item) => ({
@@ -208,12 +222,33 @@ const CreateCashDisbursement = (props: Props) => {
       setShowConfirmationModal(true);
       setFormData(formData);
       // Set form data to be submitted after confirmation
-      logFormData(formData);
+     
     } catch (error) {
       console.error("An error occurred while submitting the request:", error);
     } finally {
       setLoading(false);
     }
+  };
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+  const openAddCustomModal = () => {
+    setIsModalOpen(true);
+  };
+  const closeAddCustomModal = () => {
+    setIsModalOpen(false);
+  };
+ const handleOpenAddCustomModal = () => {
+    setShowAddCustomModal(true);
+  };
+
+  const handleCloseAddCustomModal = () => {
+    setShowAddCustomModal(false);
+  };
+
+  const handleAddCustomData = (notedBy: Approver[], approvedBy: Approver[]) => {
+    setNotedBy(notedBy);
+    setApprovedBy(approvedBy);
   };
 
   const handleConfirmSubmit = async () => {
@@ -221,15 +256,14 @@ const CreateCashDisbursement = (props: Props) => {
     setShowConfirmationModal(false);
     const token = localStorage.getItem("token");
 
-    if (!selectedApproverList) {
+    if (!notedBy && !approvedBy) {
       alert("Please select an approver.");
       return; // Prevent form submission
     }
-
     try {
       setLoading(true);
 
-      logFormData(formData);
+
 
       // Perform the actual form submission
       const response = await axios.post(
@@ -253,11 +287,7 @@ const CreateCashDisbursement = (props: Props) => {
     }
   };
 
-  const logFormData = (formData: any) => {
-    for (let [key, value] of formData.entries()) {
-      console.log(key, value);
-    }
-  };
+ 
 
   const handleCancelSubmit = () => {
     // Close the confirmation modal
@@ -369,48 +399,18 @@ const CreateCashDisbursement = (props: Props) => {
             </h1>
           </div>
           <div className="my-2  ">
-            <label className="block font-semibold mb-2">Approver List:</label>
-            <select
-              {...register("approver_list_id", { required: true })}
-              value={
-                selectedApproverList !== null
-                  ? selectedApproverList.toString()
-                  : ""
-              }
-              onChange={(e) =>
-                setSelectedApproverList(parseInt(e.target.value))
-              }
-              className="border-2 border-black  p-2 rounded-md w-full"
-            >
-              <option value="">Select Approver List</option>
-              {customApprovers.map((approverList) => (
-                <option
-                  key={approverList.id}
-                  value={approverList.id.toString()}
-                >
-                  {approverList.name}
-                </option>
-              ))}
-            </select>
-            {errors.approver_list_id && formSubmitted && (
-              <p className="text-red-500">Please select an approver list.</p>
-            )}
+          <button
+          onClick={openAddCustomModal}
+          className="bg-primary text-white p-2 rounded"
+        >
+          Add Approver
+        </button>
           </div>
         </div>
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="px-[35px] mt-4">
             <div className="grid grid-cols-1 gap-2 w-full md:grid-cols-2 md:flex md:justify-start md:gap-2">
-              <div className={`${itemDiv} w-1/5`}>
-                <p className="font-semibold text-start ">Date:</p>
-                <input
-                  type="date"
-                  {...register("date", { required: true })}
-                  className={`${inputStyle} h-[44px] w-full`}
-                />
-                {errors.date && formSubmitted && (
-                  <p className="text-red-500">Date is required</p>
-                )}
-              </div>
+             
             </div>
             {items.map((item, index) => (
               <div key={index} className="flex flex-col mt-5 mb-4">
@@ -547,6 +547,60 @@ const CreateCashDisbursement = (props: Props) => {
                 </p>
               </div>
             </div>
+            <div className="mb-4 ml-5 mt-10">
+                  <h3 className="font-bold mb-3">Noted By:</h3>
+                  <ul className="flex flex-wrap gap-6">
+                    {" "}
+                    {/* Use gap instead of space-x */}
+                    {notedBy.map((user, index) => (
+                      <li
+                        className="flex flex-col items-center justify-center text-center relative w-auto"
+                        key={index}
+                      >
+                        {" "}
+                        {/* Adjust width as needed */}
+                        <div className="relative flex flex-col items-center justify-center">
+                          <p className="relative inline-block uppercase font-medium text-center pt-6">
+                            <span className="relative z-10 px-2">
+                              {user.firstName} {user.lastName}
+                            </span>
+                            <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black"></span>
+                          </p>
+                          <p className="font-bold text-[12px] text-center">
+                            {user.position}
+                          </p>
+                         
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="mb-4 ml-5">
+                  <h3 className="font-bold mb-3">Approved By:</h3>
+                  <ul className="flex flex-wrap gap-6">
+                    {" "}
+                    {/* Use gap instead of space-x */}
+                    {approvedBy.map((user, index) => (
+                      <li
+                        className="flex flex-col items-center justify-center text-center relative"
+                        key={index}
+                      >
+                        <div className="relative flex flex-col items-center justify-center">
+                          <p className="relative inline-block uppercase font-medium text-center pt-6">
+                            <span className="relative z-10 px-2">
+                              {user.firstName} {user.lastName}
+                            </span>
+                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-black"></span>
+                          </p>
+                          <p className="font-bold text-[12px] text-center">
+                            {user.position}
+                          </p>
+                        
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
             <div className="space-x-3 flex justify-end mt-20 pb-10">
               <button
                 className={`bg-yellow ${buttonStyle}`}
@@ -598,6 +652,16 @@ const CreateCashDisbursement = (props: Props) => {
       {showSuccessModal && (
         <RequestSuccessModal onClose={handleCloseSuccessModal} />
       )}
+       <AddCustomModal
+        modalIsOpen={isModalOpen}
+        closeModal={closeModal}
+        openCompleteModal={() => {}}
+        entityType="Approver"
+        initialNotedBy={notedBy}
+        initialApprovedBy={approvedBy}
+        refreshData={() => {}}
+         handleAddCustomData = {handleAddCustomData}
+      />
     </div>
   );
 };

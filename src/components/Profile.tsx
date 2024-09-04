@@ -89,7 +89,7 @@ const Profile = ({ isdarkMode }: { isdarkMode: boolean }) => {
   useEffect(() => {
     if (signature) {
       signature.toDataURL("image/png");
-      console.log(signature.toDataURL("image/png"));
+      
     }
   }, [signature]);
  
@@ -186,7 +186,7 @@ const Profile = ({ isdarkMode }: { isdarkMode: boolean }) => {
 
   if (!user) {
     return (
-      <div className="flex justify-center items-center h-full">
+      <div className="flex bg-white justify-center items-center h-full">
         <SquareLoader color="#ADD8E6" />
       </div>
     );
@@ -277,10 +277,7 @@ const Profile = ({ isdarkMode }: { isdarkMode: boolean }) => {
         }
     
         
-        for (let [key, value] of formData.entries()) {
-          console.log(`${key}: ${value}`);
-        }
-    
+     
         const response = await axios.post(
           `http://122.53.61.91:6002/api/update-profilepic/${id}`,
           formData,
@@ -358,7 +355,7 @@ const Profile = ({ isdarkMode }: { isdarkMode: boolean }) => {
   };
     
   return (
-    <div className="bg-graybg dark:bg-blackbg w-full h-auto py-4 px-4 md:px-10 lg:px-30 ">
+    <div className="bg-graybg dark:bg-blackbg w-full h-full py-4 px-4 md:px-10 lg:px-30 ">
       <div className="bg-white rounded-[12px] flex flex-col w-full px-4 md:px-8 lg:px-10 xl:px-12 py-[50px]">
         <div className="rounded-[12px] flex flex-col lg:flex-row items-center justify-center">
           <div className="flex flex-col items-start text-left px-4 md:px-10 w-full">

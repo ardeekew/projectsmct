@@ -480,13 +480,7 @@ const CustomRequest = (props: Props) => {
       )}
         </div>
       </div>
-      <AddCustomModal
-        refreshData={refreshData}
-        modalIsOpen={modalIsOpen}
-        closeModal={closeModal}
-        openCompleteModal={openCompleteModal}
-        entityType="Custom"
-      />
+    
       <DeleteModal
         refreshData={refreshData}
         onDelete={deleteUser}

@@ -249,16 +249,13 @@ const SetupBranch = (props: Props) => {
       const response = await axios.get(`http://122.53.61.91:6002/api/view-branch`, {
         headers,
       });
-
-      console.log("Response:", response.data);
-
       // Assuming response.data.data is the array of branches
       setBranchList(response.data.data);
     } catch (error) {
       console.error("Error fetching branch data:", error);
     }
   };
-console.log('branchList', branchList);
+
   return (
     <div className="bg-graybg dark:bg-blackbg h-full w-full pt-4 px-4 sm:px-10 md:px-10 lg:px-30 xl:px-30">
       <div className=" h-auto drop-shadow-lg rounded-lg md:mr-4 w-full ">
@@ -281,7 +278,7 @@ console.log('branchList', branchList);
             <div className="relative flex-grow">
               <input
                 type="text"
-                className="w-full border border-black rounded-md pl-10 pr-3 py-2"
+                className="w-full border border-black rounded-md pl-10 pr-3 py-2 bg-white"
                 value={filterTerm}
                 onChange={(e) => setFilterTerm(e.target.value)}
                 placeholder="Search branch"

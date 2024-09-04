@@ -32,6 +32,7 @@ interface Approver {
 }
 type Record = {
   id: number;
+  created_at: Date;
   status: string;
   approvers_id: number;
   form_data: FormData[];
@@ -39,6 +40,8 @@ type Record = {
   date: string;
   user_id: number;
   attachment: string;
+  noted_by:Approver[];
+  approved_by:Approver[];
 };
 
 type FormData = {
@@ -163,12 +166,13 @@ const ApproverRefund: React.FC<Props> = ({
 
     // Ensure currentUserId and userId are converted to numbers if they exist
     const userId = currentUserId ? parseInt(currentUserId) : 0;
-
+    setNotedBy(record.noted_by)
+    setApprovedBy(record.approved_by);
     setNewData(record.form_data[0].items.map((item) => ({ ...item })));
     setEditableRecord(record);
 
     if (currentUserId) {
-      fetchCustomApprovers(record.id);
+ 
       fetchUser(record.user_id);
     }
     try {
@@ -326,6 +330,15 @@ const ApproverRefund: React.FC<Props> = ({
     };
     return date.toLocaleDateString("en-US", options);
   };
+  const formatDate2 = (dateString: Date) => {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    };
+    return date.toLocaleDateString("en-US", options);
+  };
 
   const handleItemChange = (
     index: number,
@@ -421,10 +434,19 @@ const ApproverRefund: React.FC<Props> = ({
           <h1 className="font-bold text-[18px] uppercase ">
             Request for Refund
           </h1>
-          <div className=" ">{user?.data?.branch}</div>
+          <div className="flex flex-col justify-center ">
+            <p className="underline ">{user?.data?.branch}</p>
+            <p className="text-center">Branch</p>
+          </div>
         </div>
         <div className="justify-start items-start flex flex-col space-y-4 w-full">
-          <p className="font-medium text-[14px]">Request ID:#{record.id}</p>
+          <div className="flex items-center justify-between w-full">
+            <p className="font-medium text-[14px]">Request ID: #{record.id}</p>
+            <div className="w-auto flex ">
+              <p>Date: </p>
+              <p className="font-bold pl-2">{formatDate2(record.created_at)}</p>
+            </div>
+          </div>
           <div className="flex w-full md:w-1/2 items-center">
             <p>Status:</p>
             <p
@@ -444,42 +466,6 @@ const ApproverRefund: React.FC<Props> = ({
             </p>
           </div>
 
-          <div className="flex flex-col md:flex-row justify-evenly w-full md:space-x-10">
-            <div className="w-full">
-              <h1>Branch</h1>
-              <input
-                type="text"
-                className="border border-black rounded-md p-1 mt-2 w-full"
-                value={
-                  branchMap.get(parseInt(record.form_data[0].branch, 10)) ||
-                  "Unknown"
-                }
-                readOnly
-              />
-            </div>
-            <div className="w-full">
-              <h1>Date</h1>
-              {isEditing ? (
-                <input
-                  type="date"
-                  className="border border-black rounded-md p-1 mt-2 w-full"
-                  value={
-                    editedDate
-                      ? new Date(editedDate).toISOString().split("T")[0]
-                      : ""
-                  } // Convert to YYYY-MM-DD format
-                  onChange={(e) => setEditedDate(e.target.value)}
-                />
-              ) : (
-                <input
-                  type="text"
-                  className="border border-black rounded-md p-1 mt-2 w-full"
-                  value={formatDate(editableRecord.form_data[0].date)}
-                  readOnly
-                />
-              )}
-            </div>
-          </div>
           <div className="mt-4 w-full overflow-x-auto">
             <div className="w-full border-collapse ">
               <div className="table-container">
@@ -582,82 +568,110 @@ const ApproverRefund: React.FC<Props> = ({
 
             <input
               type="text"
-              className="border border-black rounded-md p-1 mt-2 w-full font-bold "
+              className="border bg-white border-black rounded-md p-1 mt-2 w-full font-bold "
               value={`₱ ${editableRecord.form_data[0].grand_total}`}
             />
           </div>
 
-          <div className="w-full flex-col justify-center items-center">
+           <div className="w-full flex-col justify-center items-center">
             {isFetchingApprovers ? (
               <div className="flex items-center justify-center w-full h-40">
                 <h1>Fetching..</h1>
               </div>
             ) : (
               <div className="flex flex-wrap">
-                <div className="ml-5 mb-4">
+                <div className="mb-4 ml-5">
                   <h3 className="font-bold mb-3">Requested By:</h3>
-                  <div className="flex flex-row justify-start space-x-2">
-                    <div className="flex flex-col items-center justify-center text-center">
-                      <p className="relative inline-block uppercase font-medium text-center pt-6">
-                        <img
-                          className="absolute top-2"
-                          src={user.data?.signature}
-                          alt="avatar"
-                          width={120}
-                        />
-
-                        <span className="relative z-10 px-2">
-                          {user.data?.firstName} {user.data?.lastName}
-                        </span>
-                        <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black -mx-4"></span>
-                      </p>
-                      <p className="font-bold text-[12px] text-center">
-                        {user.data?.position}
-                      </p>
-                    </div>
-                  </div>
+                  <ul className="flex flex-wrap gap-6">
+                    <li className="flex flex-col items-center justify-center text-center relative w-auto">
+                      <div className="relative flex flex-col items-center justify-center">
+                        {/* Signature */}
+                        {user.data?.signature && (
+                          <div className="absolute top-0">
+                            <img
+                              src={user.data?.signature}
+                              alt="avatar"
+                              width={120}
+                              className="relative z-20 pointer-events-none"
+                            />
+                          </div>
+                        )}
+                        {/* Name */}
+                        <p className="relative inline-block uppercase font-medium text-center mt-4 z-10">
+                          <span className="relative z-10">
+                            {user.data?.firstName} {user.data?.lastName}
+                          </span>
+                          <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black"></span>
+                        </p>
+                        {/* Position */}
+                        <p className="font-bold text-[12px] text-center mt-1">
+                          {user.data?.position}
+                        </p>
+                        {/* Status, if needed */}
+                        {user.data?.status && (
+                          <p
+                            className={`font-bold text-[12px] text-center mt-1 ${
+                              user.data?.status === "Approved"
+                                ? "text-green"
+                                : user.data?.status === "Pending"
+                                ? "text-yellow"
+                                : user.data?.status === "Rejected"
+                                ? "text-red"
+                                : ""
+                            }`}
+                          >
+                            {user.data?.status}
+                          </p>
+                        )}
+                      </div>
+                    </li>
+                  </ul>
                 </div>
 
                 <div className="mb-4 ml-5">
                   <h3 className="font-bold mb-3">Noted By:</h3>
-                  <ul className="flex flex-row space-x-6">
+                  <ul className="flex flex-wrap gap-6">
                     {notedBy.map((user, index) => (
                       <li
-                        className="flex flex-row justify-start space-x-2"
+                        className="flex flex-col items-center justify-center text-center relative"
                         key={index}
                       >
-                        <div className="flex flex-col items-center justify-center text-center">
-                          <p className="relative inline-block uppercase font-medium text-center pt-6">
-                            {(user.status === "Approved" ||
-                              user.status.split(" ")[0] === "Rejected") && (
+                        <div className="relative flex flex-col items-center justify-center text-center">
+                          {/* Signature */}
+                          {(user.status === "Approved" ||
+                            (typeof user.status === "string" &&
+                              user.status.split(" ")[0] === "Rejected")) && (
+                            <div className="absolute top-0">
                               <img
-                                className="absolute top-2"
                                 src={user.signature}
                                 alt="avatar"
                                 width={120}
+                                className="relative z-20 pointer-events-none"
                               />
-                            )}
-                            <span className="relative z-10 px-2">
-                              {user.firstname} {user.lastname}
+                            </div>
+                          )}
+                          {/* Name */}
+                          <p className="relative inline-block uppercase font-medium text-center mt-4 z-10">
+                            <span className="relative z-10">
+                              {user.firstName} {user.lastName}
                             </span>
-                            <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black -mx-4"></span>
+                            <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black"></span>
                           </p>
-                          <p className="font-bold text-[12px] text-center">
+                          {/* Position */}
+                          <p className="font-bold text-[12px] text-center mt-1">
                             {user.position}
                           </p>
+                          {/* Status */}
                           {hasDisapprovedInApprovedBy ||
                           hasDisapprovedInNotedBy ? (
-                            // Show "Disapproved" if it is present in either list
                             user.status === "Disapproved" ? (
-                              <p className="font-bold text-[12px] text-center text-red-500">
+                              <p className="font-bold text-[12px] text-center text-red-500 mt-1">
                                 {user.status}
                               </p>
-                            ) : // Do not show any status if "Disapproved" is present
-                            null
+                            ) : null
                           ) : (
-                            // Show other statuses only if "Disapproved" is not present in either list
                             <p
-                              className={`font-bold text-[12px] text-center ${
+                              className={`font-bold text-[12px] text-center mt-1 ${
                                 user.status === "Approved"
                                   ? "text-green"
                                   : user.status === "Pending"
@@ -673,46 +687,51 @@ const ApproverRefund: React.FC<Props> = ({
                     ))}
                   </ul>
                 </div>
+
                 <div className="mb-4 ml-5">
                   <h3 className="font-bold mb-3">Approved By:</h3>
-                  <ul className="flex flex-row space-x-6">
+                  <ul className="flex flex-wrap gap-6">
                     {approvedBy.map((user, index) => (
                       <li
-                        className="flex flex-row justify-start space-x-2"
+                        className="flex flex-col items-center justify-center text-center relative"
                         key={index}
                       >
-                        <div className="flex flex-col items-center justify-center text-center">
-                          <p className="relative inline-block uppercase font-medium text-center pt-6">
-                            {(user.status === "Approved" ||
-                              user.status.split(" ")[0] === "Rejected") && (
+                        <div className="relative flex flex-col items-center justify-center text-center">
+                          {/* Signature */}
+                          {(user.status === "Approved" ||
+                            (typeof user.status === "string" &&
+                              user.status.split(" ")[0] === "Rejected")) && (
+                            <div className="absolute top-0">
                               <img
-                                className="absolute top-2"
                                 src={user.signature}
                                 alt="avatar"
                                 width={120}
+                                className="relative z-20 pointer-events-none"
                               />
-                            )}
-                            <span className="relative z-10 px-2">
-                              {user.firstname} {user.lastname}
+                            </div>
+                          )}
+                          {/* Name */}
+                          <p className="relative inline-block uppercase font-medium text-center mt-4 z-10">
+                            <span className="relative z-10">
+                              {user.firstName} {user.lastName}
                             </span>
-                            <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black -mx-4"></span>
+                            <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black"></span>
                           </p>
-                          <p className="font-bold text-[12px] text-center">
+                          {/* Position */}
+                          <p className="font-bold text-[12px] text-center mt-1">
                             {user.position}
                           </p>
+                          {/* Status */}
                           {hasDisapprovedInApprovedBy ||
                           hasDisapprovedInNotedBy ? (
-                            // Show "Disapproved" if it is present in either list
                             user.status === "Disapproved" ? (
-                              <p className="font-bold text-[12px] text-center text-red-500">
+                              <p className="font-bold text-[12px] text-center text-red-500 mt-1">
                                 {user.status}
                               </p>
-                            ) : // Do not show any status if "Disapproved" is present
-                            null
+                            ) : null
                           ) : (
-                            // Show other statuses only if "Disapproved" is not present in either list
                             <p
-                              className={`font-bold text-[12px] text-center ${
+                              className={`font-bold text-[12px] text-center mt-1 ${
                                 user.status === "Approved"
                                   ? "text-green"
                                   : user.status === "Pending"
@@ -755,10 +774,10 @@ const ApproverRefund: React.FC<Props> = ({
           <div className="w-full">
             <h2 className="text-lg font-bold mb-2">Comments:</h2>
 
-            {(record.status === "Pending") && (
+            {record.status === "Pending" && (
               <div>
                 <textarea
-                  className="border h-auto border-black rounded-md p-1 mt-2 w-full"
+                  className="border bg-white h-auto border-black rounded-md p-1 mt-2 w-full"
                   placeholder="Enter your comments here.."
                   value={comments}
                   onChange={(e) => setComments(e.target.value)}
@@ -774,40 +793,48 @@ const ApproverRefund: React.FC<Props> = ({
                   {notedBy
                     .filter((user) => user.comment)
                     .map((user, index) => (
-                      <div className="flex flex-row w-full" key={index}>
-                        <img
-                          alt="logo"
-                          className="cursor-pointer hidden sm:block"
-                          src={Avatar}
-                          height={35}
-                          width={45}
-                        />
-                        <li className="flex flex-col justify-between pl-2">
-                          <h3 className="font-bold text-lg">
-                            {user.firstname} {user.lastname}
-                          </h3>
-                          <p>{user.comment}</p>
-                        </li>
+                      <div className="flex">
+                        <div>
+                          <img
+                            alt="logo"
+                            className="cursor-pointer hidden sm:block"
+                            src={Avatar}
+                            height={35}
+                            width={45}
+                          />
+                        </div>
+                        <div className="flex flex-row w-full" key={index}>
+                          <li className="flex flex-col justify-between pl-2">
+                            <h3 className="font-bold text-lg">
+                              {user.firstName} {user.lastName}
+                            </h3>
+                            <p>{user.comment}</p>
+                          </li>
+                        </div>
                       </div>
                     ))}
 
                   {approvedBy
                     .filter((user) => user.comment)
                     .map((user, index) => (
-                      <div className="flex flex-row w-full" key={index}>
-                        <img
-                          alt="logo"
-                          className="cursor-pointer hidden sm:block"
-                          src={Avatar}
-                          height={35}
-                          width={45}
-                        />
-                        <li className="flex flex-col justify-between pl-2">
-                          <h3 className="font-bold text-lg">
-                            {user.firstname} {user.lastname}
-                          </h3>
-                          <p>{user.comment}</p>
-                        </li>
+                      <div className="flex">
+                        <div>
+                          <img
+                            alt="logo"
+                            className="cursor-pointer hidden sm:block"
+                            src={Avatar}
+                            height={35}
+                            width={45}
+                          />
+                        </div>
+                        <div className="flex flex-row w-full" key={index}>
+                          <li className="flex flex-col justify-between pl-2">
+                            <h3 className="font-bold text-lg">
+                              {user.firstName} {user.lastName}
+                            </h3>
+                            <p>{user.comment}</p>
+                          </li>
+                        </div>
                       </div>
                     ))}
                 </>
