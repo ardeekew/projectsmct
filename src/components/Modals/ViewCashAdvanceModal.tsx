@@ -83,14 +83,15 @@ type Item = {
   totalAmount: string;
   remarks: string;
   day: string;
-  itinerary: string;
+  from: string;
+  to: string;
   activity: string;
   hotel: string;
   rate: string;
   amount: string;
   perDiem: string;
 };
-
+const headerStyle ="border border-black bg-[#8EC7F7] w-2/12 text-sm p-4"
 const inputStyle = "border border-black text-[12px] font-bold p-2 h-14";
 const tableStyle = "border border-black p-2";
 const tableStyle2 = "bg-white p-2";
@@ -320,13 +321,15 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
     if (
       !newData.every(
         (item) =>
-          item.itinerary &&
-          item.itinerary.trim() !== "" &&
+          item.from &&
+          item.from.trim() !== "" &&
+          item.to &&
+          item.to.trim() !== "" &&
           item.cashDate &&
           item.cashDate.trim() !== ""
       )
     ) {
-      setErrorMessage("Itinerary and date cannot be empty.");
+      setErrorMessage("From, to and date cannot be empty.");
       return;
     }
 
@@ -545,7 +548,7 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
       newWindow.focus();
     }
   };
-
+console.log(editableRecord);
   return (
     <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 z-50">
       <div className="p-4 relative w-full mx-10 md:mx-0 z-10 md:w-1/2 lg:w-2/3 space-y-auto h-4/5 overflow-scroll bg-white border-black shadow-lg">
@@ -620,34 +623,37 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
           </div>
           <div className="mt-4 w-full overflow-x-auto">
             <div className="w-full border-collapse">
-              <table className="border-collapse w-full border-black border-2 table-fixed">
+              <table className="border-collapse w-full border-black border lg:overflow-auto xl:table-fixed">
                 <thead>
                   <tr>
-                    <th className="border-2 border-black bg-[#8EC7F7] w-1/12">
+                    <th className={`${headerStyle}`}>
                       Date
                     </th>
-                    <th className="border-2 border-black bg-[#8EC7F7] w-1/12">
+                    <th className={`${headerStyle}`}>
                       Day
                     </th>
-                    <th className="border-2 border-black bg-[#8EC7F7] w-2/12">
-                      Itinerary
+                    <th className={`${headerStyle}`}>
+                      From
                     </th>
-                    <th className="border-2 border-black bg-[#8EC7F7] w-2/12">
+                    <th className={`${headerStyle}`}>
+                      To
+                    </th>
+                    <th className={`${headerStyle}`}>
                       Activity
                     </th>
-                    <th className="border-2 border-black bg-[#8EC7F7] w-2/12">
+                    <th className={`${headerStyle}`}>
                       Hotel
                     </th>
-                    <th className="border-2 border-black bg-[#8EC7F7] w-1/12">
+                    <th className={`${headerStyle}`}>
                       Rate
                     </th>
-                    <th className="border-2 border-black bg-[#8EC7F7] w-1/12">
+                    <th className={`${headerStyle}`}>
                       Amount
                     </th>
-                    <th className="border-2 border-black bg-[#8EC7F7] w-1/12">
+                    <th className={`${headerStyle}`}>
                       Per Diem
                     </th>
-                    <th className="border-2 border-black bg-[#8EC7F7] w-2/12">
+                    <th className={`${headerStyle}`}>
                       Remarks
                     </th>
                   </tr>
@@ -683,11 +689,25 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
                           <td className="tableCellStyle break-words border-2 border-black">
                             <input
                               type="text"
-                              value={item.itinerary}
+                              value={item.from}
                               onChange={(e) =>
                                 handleItemChange(
                                   index,
-                                  "itinerary",
+                                  "from",
+                                  e.target.value
+                                )
+                              }
+                              className="w-full bg-white"
+                            />
+                          </td>
+                          <td className="tableCellStyle break-words border-2 border-black">
+                            <input
+                              type="text"
+                              value={item.to}
+                              onChange={(e) =>
+                                handleItemChange(
+                                  index,
+                                  "to",
                                   e.target.value
                                 )
                               }
@@ -778,7 +798,8 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
                             {formatDate2(item.cashDate)}
                           </td>
                           <td className={tableCellStyle}>{item.day}</td>
-                          <td className={tableCellStyle}>{item.itinerary}</td>
+                          <td className={tableCellStyle}>{item.from}</td>
+                          <td className={tableCellStyle}>{item.to}</td>
                           <td className={tableCellStyle}>{item.activity}</td>
                           <td className={tableCellStyle}>{item.hotel}</td>
                           <td className={tableCellStyle}>{item.rate}</td>
@@ -914,14 +935,16 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
               </tbody>
             </table>
           </div>
-          <div className="my-2">
-            <button
-              onClick={openAddCustomModal}
-              className="bg-primary text-white p-2 rounded"
-            >
-              Add Approver
-            </button>
-          </div>
+          {isEditing && (
+            <div className="my-2">
+              <button
+                onClick={openAddCustomModal}
+                className="bg-primary  text-white p-2 rounded"
+              >
+                Edit Approver
+              </button>
+            </div>
+          )}
           <div className="w-full flex-col justify-center items-center">
             {isFetchingApprovers ? (
               <div className="flex items-center justify-center w-full h-40">
@@ -936,7 +959,7 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
                       <div className="relative flex flex-col items-center justify-center">
                         {/* Signature */}
                         {user.data?.signature && (
-                          <div className="absolute top-0">
+                          <div className="absolute -top-4">
                             <img
                               src={user.data?.signature}
                               alt="avatar"
@@ -990,7 +1013,7 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
                           {(user.status === "Approved" ||
                             (typeof user.status === "string" &&
                               user.status.split(" ")[0] === "Rejected")) && (
-                            <div className="absolute top-0">
+                            <div className="absolute -top-4">
                               <img
                                 src={user.signature}
                                 alt="avatar"
@@ -1050,7 +1073,7 @@ const ViewCashAdvanceModal: React.FC<Props> = ({
                           {(user.status === "Approved" ||
                             (typeof user.status === "string" &&
                               user.status.split(" ")[0] === "Rejected")) && (
-                            <div className="absolute top-0">
+                            <div className="absolute -top-4">
                               <img
                                 src={user.signature}
                                 alt="avatar"

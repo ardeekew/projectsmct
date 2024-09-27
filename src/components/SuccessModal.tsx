@@ -17,7 +17,7 @@ return (
     <FontAwesomeIcon icon={faCircleCheck} className='size-20 text-primary absolute -top-6  '/>
     <div>
     <h1 className='mt-20 text-[28px] font-bold text-center'>Success</h1>
-    <p className='my-7  text-gray-400 font-semibold text-center'>User Edited!</p>
+    <p className='my-7  text-gray-400 font-semibold text-center'>{entityType} Edited!</p>
    
     </div>
     <div className='bg-graybg w-full rounded-b-lg flex justify-center items-center p-4'>

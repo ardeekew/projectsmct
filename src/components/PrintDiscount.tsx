@@ -9,8 +9,8 @@ import HDILogo from "./assets/HDI.jpg";
 type PrintRefundProps = {
   data?: any;
 };
-
-const PrintRefund: React.FC<PrintRefundProps> = ({ data }) => {
+const tableStyle = " border-black border py-4 font-bold";
+const PrintDiscount: React.FC<PrintRefundProps> = ({ data }) => {
   const location = useLocation();
   const [printData, setPrintData] = useState<any>(null); // State to hold print data
   const queryParams = new URLSearchParams(location.search);
@@ -69,17 +69,19 @@ const PrintRefund: React.FC<PrintRefundProps> = ({ data }) => {
     }
   }, [printData]);
 
-  const tableStyle = "border-b border-black";
+  const tableStyle = " border-black border py-4 font-bold text-xs text-center";
   return (
-    <div className="print-container bg-white h-lvh text-black">
+    <div className="print-container bg-white h-lvh text-black text-xs  ">
       <div className="border-2 border-black px-4 pt-2">
         <div className="flex flex-col justify-center items-center">
-          <div className="justify-center w-1/2">{logo}</div>
+          <div className="justify-center w-1/2 mt-10 ">{logo}</div>
 
-          <h1 className="font-bold text-lg uppercase">Refund Request</h1>
+          <h1 className="font-bold text-lg uppercase">
+            Discount Requisition Slip
+          </h1>
           <div className="flex flex-col items-center font-bold mt-2">
             <h1 className="font-medium text-[16px] uppercase underline">
-              {printData?.user.data.branch || ""}
+              {printData?.user.data.branch}
             </h1>
             <h1 className="text-lg">BRANCH</h1>
           </div>
@@ -88,52 +90,73 @@ const PrintRefund: React.FC<PrintRefundProps> = ({ data }) => {
           <p className=" mb-2 flex font-bold ">
             Date:{" "}
             <p className="underline ml-2 mb-2">
-            {formatDate(printData?.id.created_at)}
+              {formatDate(printData?.id.created_at)}
             </p>
           </p>
         </div>
-        {/*   
-      <p>Status: {printData.status}</p>
-      
-     <p>Date: {formatDate(data.date)}</p> */}
         <div className="flex justify-center w-full">
-          <table className="w-full border-separate border-spacing-x-4">
-            <thead className="">
+          <table className="border w-[70%] mr-2">
+            <thead className="border border-black ">
               <tr>
-                <th>Quantity</th>
-                <th>Description</th>
-                <th>Unit Cost</th>
-                <th>Total Amount</th>
-                <th>Remarks</th>
+                <th className={`${tableStyle} `}>Brand</th>
+                <th className={`${tableStyle} `}>Model</th>
+                <th className={`${tableStyle} `}>Unit/Part/Job Description</th>
+                <th className={`${tableStyle} `}>Part No./Job Order No.</th>
+                <th className={`${tableStyle} `}>Labor Charge</th>
+                <th className={`${tableStyle} `}>Net Spotcash</th>
+                <th className={`${tableStyle} `}>Discounted Price</th>
               </tr>
             </thead>
             <tbody>
-              {printData?.id?.form_data.map((formData: any, index: number) => (
+              {printData?.id.form_data.map((formData: any, index: number) => (
                 <React.Fragment key={index}>
                   {formData.items.map((item: any, itemIndex: number) => (
-                    <tr key={itemIndex} className="text-center">
-                      <td className={`${tableStyle}`}>{item.quantity}</td>
-                      <td className={`${tableStyle}`}>{item.description}</td>
-                      <td className={`${tableStyle}`}>{item.unitCost}</td>
-                      <td className={`${tableStyle}`}>{item.totalAmount}</td>
-                      <td className={`${tableStyle}`}>{item.remarks}</td>
+                    <tr key={itemIndex}>
+                      <td className={`${tableStyle} text-[9px] `}>{item.brand}</td>
+                      <td className={`${tableStyle} text-[9px] `}>{item.model}</td>
+                      <td className={`${tableStyle} text-[9px]`}>{item.unit}</td>
+                      <td className={`${tableStyle} text-[9px]`}>{item.partno}</td>
+                      <td className={`${tableStyle} text-[9px]`}>{item.labor}</td>
+                      <td className={`${tableStyle} text-[9px]`}>{item.spotcash}</td>
+                      <td className={`${tableStyle} text-[9px]`}>
+                        {item.discountedPrice}
+                      </td>
                     </tr>
                   ))}
-                  <tr key="empty-0-0">
-                    <td className={`${tableStyle} py-4`}></td>
-                    <td className={`${tableStyle}`}></td>
-                    <td className={`${tableStyle}`}></td>
-                    <td className={`${tableStyle}`}></td>
-                    <td className={`${tableStyle}`}></td>
-                  </tr>
+                  {[...Array(Math.max(5 - formData.items.length, 0))].map(
+                    (_, emptyIndex) => (
+                      <tr key={`empty-${index}-${emptyIndex}`}>
+                        <td className={`${tableStyle} `}></td>
+                        <td className={`${tableStyle} `}></td>
+                        <td className={`${tableStyle} `}></td>
+                        <td className={`${tableStyle} `}></td>
+                        <td className={`${tableStyle} `}></td>
+                        <td className={`${tableStyle} `}></td>
+                        <td className={`${tableStyle} `}></td>
+                      </tr>
+                    )
+                  )}
                 </React.Fragment>
               ))}
             </tbody>
+            <tfoot className={`${tableStyle} `}>
+              <tr>
+                <td colSpan={4} className="text-right font-bold p-2">
+                  Total:
+                </td>
+                <td className={`${tableStyle} text-center `}>
+                  {printData?.id.form_data[0].total_labor.toFixed(2)}
+                </td>
+                <td className={`${tableStyle} text-center `}>
+                  {printData?.id.form_data[0].total_spotcash.toFixed(2)}
+                </td>
+                <td className={`${tableStyle} text-center `}>
+                  {printData?.id.form_data[0].total_discount.toFixed(2)}
+                </td>
+              </tr>
+            </tfoot>
           </table>
         </div>
-        <p className="uppercase font-bold mt-2  ml-4">
-          Grand Total: ₱ {printData?.id.form_data[0].grand_total}
-        </p>
 
         <div className="mt-4 ">
           <div className="flex flex-wrap justify-start ">
@@ -219,4 +242,4 @@ const PrintRefund: React.FC<PrintRefundProps> = ({ data }) => {
   );
 };
 
-export default PrintRefund;
+export default PrintDiscount;

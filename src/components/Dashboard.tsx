@@ -55,6 +55,7 @@ interface Request {
   totalBoatFare?: string;
   destination?: string;
   approvers_id?: number;
+  created_at?: string;
 }
 
 const boxWhite = "bg-white w-full h-[190px] rounded-[15px] drop-shadow-lg relative";
@@ -174,11 +175,12 @@ const Dashboard: React.FC = () => {
     {
       name: "Date",
       selector: (row: Request) =>
-        new Date(row.form_data[0].date).toLocaleDateString(undefined, {
+        row.created_at ? new Date(row.created_at).toLocaleDateString(undefined, {
           year: "numeric",
           month: "long",
           day: "numeric",
-        }),
+        }) : '',
+      sortable: true,
     },
     {
       name: "Branch",

@@ -27,7 +27,6 @@ const roleOptions = [
   { label: "Accounting Manager", value: "Accounting Manager" },
   { label: "Accounting Staff", value: "Accounting Staff" },
   { label: "Accounting Supervisor", value: "Accounting Supervisor" },
-  { label: "Admin", value: "Admin" },
   { label: "Area Manager", value: "Area Manager" },
   { label: "Assistant Manager", value: "Assistant Manager" },
   { label: "Assistant Web Developer", value: "Assistant Web Developer" },
@@ -50,8 +49,8 @@ const roleOptions = [
   { label: "Payroll Staff", value: "Payroll Staff" },
   { label: "Sales Representative", value: "Sales Representative" },
   { label: "Senior Web Developer", value: "Senior Web Developer" },
-  { label: "Vice - President", value: "Vice - President" },
-  { label: "User", value: "User" },
+  { label: "Vice President", value: "Vice President" },
+
 ];
 
 const schema = z
@@ -177,7 +176,7 @@ const Registration: React.FC = () => {
           position: data.position,
           confirmPassword: data.password,
           signature: signatureDataURL,
-          role: "approver",
+          role: "User",
           branch: data.branch,
           employee_id: data.employee_id,
         }

@@ -35,6 +35,9 @@ import PrintLiquidation from '../components/PrintLiquidation';
 import ResetPassword from '../components/ResetPassword';
 import HelpUser from '../components/HelpUser';
 import HelpSetup from '../components/HelpSetup';
+import SetupAVP from '../components/SetupAVP';
+import CreateDiscount from '../components/CreateDiscount';
+import PrintDiscount from '../components/PrintDiscount';
 interface RouterProps {
   isdarkMode: boolean;
 }
@@ -77,6 +80,9 @@ const Router: React.FC<RouterProps> = ({isdarkMode}) => {
           <Route path='request/rfr' element={<App isdarkMode={isdarkMode} />}>
             <Route index element={<CreateRefund />} />
           </Route>
+          <Route path='request/dr' element={<App isdarkMode={isdarkMode} />}>
+            <Route index element={<CreateDiscount />} />
+          </Route>
           <Route path='/dashboard/approver' element={<App isdarkMode={isdarkMode} />}>
             <Route index element={<ApproverDashBoard />} />
           </Route>
@@ -100,6 +106,9 @@ const Router: React.FC<RouterProps> = ({isdarkMode}) => {
           </Route>
           <Route path='/setup/AreaManager' element={<App isdarkMode={isdarkMode} />}>
             <Route index element={<SetupAreaManager />} />
+          </Route>
+          <Route path='/setup/AVP' element={<App isdarkMode={isdarkMode} />}>
+            <Route index element={<SetupAVP />} />
           </Route>
           <Route path='/help' element={<App isdarkMode={isdarkMode} />}>
             <Route index element={<Help />} />
@@ -126,6 +135,7 @@ const Router: React.FC<RouterProps> = ({isdarkMode}) => {
         <Route path="/print-stock" element={<PrintStock />} />
         <Route path="/print-purchase" element={<PrintPurchase />} />
         <Route path="/print-cash" element={<PrintCash />} />
+        <Route path="/print-discount" element={<PrintDiscount />} />
         <Route path="/print-cashDisbursement" element={<PrintCashDisbursement />} />
         <Route path="/print-liquidation" element={<PrintLiquidation />} />
         <Route path="/reset-password" element={<ResetPassword />} />

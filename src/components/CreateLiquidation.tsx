@@ -34,6 +34,7 @@ const requestType = [
   { title: "Application For Cash Advance", path: "/request/afca" },
   { title: "Liquidation of Actual Expense", path: "/request/loae" },
   { title: "Request for Refund", path: "/request/rfr" },
+  { title: "Discount Request", path: "/request/dr" },
 ];
 
 const schema = z.object({
@@ -46,7 +47,8 @@ const schema = z.object({
   items: z.array(
     z.object({
       liquidationDate: z.string(),
-      destination: z.string(),
+      from: z.string(),
+      to: z.string(),
       transportation: z.string().optional(),
       transportationAmount: z.string().optional(),
       hotel: z.string().optional(),
@@ -62,7 +64,8 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 type TableDataItem = {
   liquidationDate: string;
-  destination: string;
+  from: string;
+  to: string;
   transportation: string;
   transportationAmount: string;
   hotel: string;
@@ -76,7 +79,8 @@ type TableDataItem = {
 
 const initialTableData: TableDataItem[] = Array.from({ length: 1 }, () => ({
   liquidationDate: "",
-  destination: "",
+  from: "",
+  to: "",
   transportation: "",
   transportationAmount: "",
   hotel: "",
@@ -141,7 +145,8 @@ const CreateLiquidation = (props: Props) => {
   const [items, setItems] = useState<
     {
       liquidationDate: string;
-      destination: string;
+      from: string;
+      to: string;
       transportation: string;
       transportationAmount: string;
       hotel: string;
@@ -156,7 +161,8 @@ const CreateLiquidation = (props: Props) => {
   >([
     {
       liquidationDate: "",
-      destination: "",
+      from: "",
+      to: "",
       transportation: "",
       transportationAmount: "",
       hotel: "",
@@ -270,7 +276,8 @@ const CreateLiquidation = (props: Props) => {
       ...tableData,
       {
         liquidationDate: "",
-        destination: "",
+        from: "",
+        to: "",
         transportation: "",
         transportationAmount: "",
         hotel: "",
@@ -307,16 +314,15 @@ const CreateLiquidation = (props: Props) => {
   const handleCloseConfirmationModal = () => {
     setShowConfirmationModal(false);
   };
-
+console.log(employeeID)
   const onSubmit = async (data: FormData) => {
     try {
       if (!cashAdvance && errors.cashAdvance) {
         setFormSubmitted(true);
         return;
       }
- 
+
       if (notedBy.length === 0 || approvedBy.length === 0) {
-      
         alert("Please select an approver.");
         setLoading(false); // Stop loading state
         return; // Prevent form submission
@@ -384,7 +390,8 @@ const CreateLiquidation = (props: Props) => {
             signature: signature,
             items: tableData.map((item) => ({
               liquidationDate: item.liquidationDate,
-              destination: item.destination,
+              from: item.from,
+              to: item.to,
               transportation: item.transportation,
               transportationAmount: item.transportationAmount,
               hotel: item.hotel,
@@ -398,7 +405,8 @@ const CreateLiquidation = (props: Props) => {
           },
         ])
       );
-
+      console.log('tableData:', tableData);
+      console.log('form_data:', JSON.stringify(formData.get('form_data')));
       // Display confirmation modal
       setShowConfirmationModal(true);
 
@@ -440,10 +448,9 @@ const CreateLiquidation = (props: Props) => {
       alert("Please select an approver.");
       return; // Prevent form submission
     }
-    
+
     try {
       setLoading(true);
-   
 
       // Perform the actual form submission
       const response = await axios.post(
@@ -466,8 +473,6 @@ const CreateLiquidation = (props: Props) => {
       setLoading(false);
     }
   };
-
-
 
   const handleCancelSubmit = () => {
     // Close the confirmation modal
@@ -568,14 +573,15 @@ const CreateLiquidation = (props: Props) => {
                         <th colSpan={3} className="border border-black">
                           Hotel
                         </th>
-                        <th colSpan={3} className="border border-black">
+                        <th colSpan={4} className="border border-black">
                           PER DIEM OTHER RELATED EXPENSES
                         </th>
                         <th></th>
                       </tr>
                       <tr>
                         <th className={`${tableStyle}`}>Day</th>
-                        <th className={`${tableStyle}`}>Destination</th>
+                        <th className={`${tableStyle}`}>From</th>
+                        <th className={`${tableStyle}`}>To</th>
                         <th className={`${tableStyle}`}>
                           Type of Transportation
                         </th>
@@ -627,33 +633,65 @@ const CreateLiquidation = (props: Props) => {
                           </td>
                           <td className="p-1 border border-black">
                             <textarea
-                              value={item.destination}
+                              value={item.from}
                               onChange={(e) =>
                                 handleChange(
                                   index,
-                                  "destination",
+                                  "from",
                                   e.target.value
                                 )
                               }
                               className={`${tableInput}`}
                             ></textarea>
-                            {validationErrors[`items.${index}.destination`] &&
+                            {validationErrors[`items.${index}.from`] &&
                               formSubmitted && (
                                 <p className="text-red-500">
                                   {
                                     validationErrors[
-                                      `items.${index}.destination`
+                                      `items.${index}.from`
                                     ]
                                   }
                                 </p>
                               )}
-                            {!item.destination &&
+                            {!item.from &&
                               formSubmitted &&
                               !validationErrors[
-                                `item.${index}.destination`
+                                `item.${index}.from`
                               ] && (
                                 <p className="text-red-500">
-                                  Destination Required
+                                  from Required
+                                </p>
+                              )}
+                          </td>
+                          <td className="p-1 border border-black">
+                            <textarea
+                              value={item.to}
+                              onChange={(e) =>
+                                handleChange(
+                                  index,
+                                  "to",
+                                  e.target.value
+                                )
+                              }
+                              className={`${tableInput}`}
+                            ></textarea>
+                            {validationErrors[`items.${index}.to`] &&
+                              formSubmitted && (
+                                <p className="text-red-500">
+                                  {
+                                    validationErrors[
+                                      `items.${index}.to`
+                                    ]
+                                  }
+                                </p>
+                              )}
+                            {!item.to &&
+                              formSubmitted &&
+                              !validationErrors[
+                                `item.${index}.to`
+                              ] && (
+                                <p className="text-red-500">
+                                  to Required
                                 </p>
                               )}
                           </td>
@@ -831,12 +869,12 @@ const CreateLiquidation = (props: Props) => {
                     </td>
                   </tr>
                   <tr>
-                    <td className={`${tableStyle}`}>
-                      <p className="font-semibold pl-2    ">SIGNATURE</p>
-                    </td>
-                    <td className={`${tableStyle}`}>
-                      <img src={signature} alt="" />
-                    </td>
+                <td className={`${tableStyle} h-20`}>
+                  <p className="font-semibold pl-2    ">SIGNATURE</p>
+                </td>
+                <td className={`${tableStyle} h-10`}>
+                  <img src={signature} className="h-32" alt="" />
+                </td>
                   </tr>
                   <tr>
                     <td className={`${tableStyle}`}>
@@ -861,59 +899,57 @@ const CreateLiquidation = (props: Props) => {
               />
             </div>
             <div className="mb-4 ml-5 mt-10">
-                  <h3 className="font-bold mb-3">Noted By:</h3>
-                  <ul className="flex flex-wrap gap-6">
+              <h3 className="font-bold mb-3">Noted By:</h3>
+              <ul className="flex flex-wrap gap-6">
+                {" "}
+                {/* Use gap instead of space-x */}
+                {notedBy.map((user, index) => (
+                  <li
+                    className="flex flex-col items-center justify-center text-center relative w-auto"
+                    key={index}
+                  >
                     {" "}
-                    {/* Use gap instead of space-x */}
-                    {notedBy.map((user, index) => (
-                      <li
-                        className="flex flex-col items-center justify-center text-center relative w-auto"
-                        key={index}
-                      >
-                        {" "}
-                        {/* Adjust width as needed */}
-                        <div className="relative flex flex-col items-center justify-center">
-                          <p className="relative inline-block uppercase font-medium text-center pt-6">
-                            <span className="relative z-10 px-2">
-                              {user.firstName} {user.lastName}
-                            </span>
-                            <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black"></span>
-                          </p>
-                          <p className="font-bold text-[12px] text-center">
-                            {user.position}
-                          </p>
-                         
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="mb-4 ml-5">
-                  <h3 className="font-bold mb-3">Approved By:</h3>
-                  <ul className="flex flex-wrap gap-6">
-                    {" "}
-                    {/* Use gap instead of space-x */}
-                    {approvedBy.map((user, index) => (
-                      <li
-                        className="flex flex-col items-center justify-center text-center relative"
-                        key={index}
-                      >
-                        <div className="relative flex flex-col items-center justify-center">
-                          <p className="relative inline-block uppercase font-medium text-center pt-6">
-                            <span className="relative z-10 px-2">
-                              {user.firstName} {user.lastName}
-                            </span>
-                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-black"></span>
-                          </p>
-                          <p className="font-bold text-[12px] text-center">
-                            {user.position}
-                          </p>
-                        
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                    {/* Adjust width as needed */}
+                    <div className="relative flex flex-col items-center justify-center">
+                      <p className="relative inline-block uppercase font-medium text-center pt-6">
+                        <span className="relative z-10 px-2">
+                          {user.firstName} {user.lastName}
+                        </span>
+                        <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-black"></span>
+                      </p>
+                      <p className="font-bold text-[12px] text-center">
+                        {user.position}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="mb-4 ml-5">
+              <h3 className="font-bold mb-3">Approved By:</h3>
+              <ul className="flex flex-wrap gap-6">
+                {" "}
+                {/* Use gap instead of space-x */}
+                {approvedBy.map((user, index) => (
+                  <li
+                    className="flex flex-col items-center justify-center text-center relative"
+                    key={index}
+                  >
+                    <div className="relative flex flex-col items-center justify-center">
+                      <p className="relative inline-block uppercase font-medium text-center pt-6">
+                        <span className="relative z-10 px-2">
+                          {user.firstName} {user.lastName}
+                        </span>
+                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-black"></span>
+                      </p>
+                      <p className="font-bold text-[12px] text-center">
+                        {user.position}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
             <div className="space-x-3 flex justify-end mt-20 pb-10">
               <button
                 type="button"
@@ -969,7 +1005,7 @@ const CreateLiquidation = (props: Props) => {
       {showSuccessModal && (
         <RequestSuccessModal onClose={handleCloseSuccessModal} />
       )}
-       <AddCustomModal
+      <AddCustomModal
         modalIsOpen={isModalOpen}
         closeModal={closeModal}
         openCompleteModal={() => {}}
@@ -977,7 +1013,7 @@ const CreateLiquidation = (props: Props) => {
         initialNotedBy={notedBy}
         initialApprovedBy={approvedBy}
         refreshData={() => {}}
-        handleAddCustomData = {handleAddCustomData}
+        handleAddCustomData={handleAddCustomData}
       />
     </div>
   );

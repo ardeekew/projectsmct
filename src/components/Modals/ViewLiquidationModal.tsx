@@ -9,6 +9,7 @@ import Avatar from "../assets/avatar.png";
 import PrintLiquidation from "../PrintLiquidation";
 import AddCustomModal from "../EditCustomModal";
 import { request } from "http";
+import { parse } from "path";
 type Props = {
   closeModal: () => void;
   record: Record;
@@ -79,7 +80,8 @@ type FormData = {
 
 type Item = {
   liquidationDate: string;
-  destination: string;
+  from: string;
+  to: string;
   transportation: string;
   transportationAmount: string;
   hotel: string;
@@ -90,13 +92,13 @@ type Item = {
   particularsAmount: string;
   grandTotal: string;
 };
-const tableStyle2 = "bg-white p-2";
-const tableStyle = "border-2 border-black p-2 w-full";
-const inputStyle = "  border-2 border-black rounded-[12px] pl-[10px]";
-const input2Style = "  border-2 border-black rounded-[12px] ";
+const tableStyle2 = "bg-white p-2 text-center";
+const tableStyle = "border-2 border-black p-2 ";
+const inputStyle = "  border-2 border-black rounded-[12px] pl-[10px] text-sm";
+const input2Style = "  border-2 border-black rounded-[12px] text-sm";
 const inputStyles =
-  "  border-2 border-black rounded-[12px] pl-[10px] text-end pr-10 font-bold";
-const tableCellStyle = `${inputStyle}  w-10 h-12`;
+  "  border-2 border-black rounded-[12px] pl-[10px] text-end pr-10 font-bold text-sm";
+const tableCellStyle = "border-2 border-black  text-center p-2 text-sm";
 const tableInput = "w-full h-full bg-white px-2 py-1";
 const itemDiv = "flex flex-col  w-3/4";
 const ViewLiquidationModal: React.FC<Props> = ({
@@ -339,8 +341,10 @@ const ViewLiquidationModal: React.FC<Props> = ({
     if (
       !newData.every(
         (item) =>
-          item.destination &&
-          item.destination.trim() !== "" &&
+          item.from &&
+          item.from.trim() !== "" &&
+          item.to &&
+          item.to.trim() !== "" &&
           item.liquidationDate &&
           item.liquidationDate.trim() !== ""
       )
@@ -554,7 +558,7 @@ const ViewLiquidationModal: React.FC<Props> = ({
       newWindow.focus();
     }
   };
-
+  console.log(record);
   return (
     <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 z-50">
       <div className="p-4 relative w-full px-10 md:mx-0 z-10 md:w-1/2 lg:w-2/3 space-y-auto h-4/5 overflow-scroll bg-white border-black rounded-t-lg shadow-lg">
@@ -649,7 +653,7 @@ const ViewLiquidationModal: React.FC<Props> = ({
                         Hotel
                       </th>
                       <th
-                        colSpan={3}
+                        colSpan={4}
                         className="border-2 border-black bg-[#8EC7F7]"
                       >
                         PER DIEM OTHER RELATED EXPENSES
@@ -659,12 +663,13 @@ const ViewLiquidationModal: React.FC<Props> = ({
                     <tr>
                       <th className="w-1/12">Date</th>
 
-                      <th className={`${tableStyle} w-2/12`}>Destination</th>
-                      <th className={`${tableStyle} w-2/12`}>
+                      <th className={`${tableStyle}  w-2/12 `}>From</th>
+                      <th className={`${tableStyle}w-2/12 `}>To</th>
+                      <th className={`${tableStyle} w-1/12`}>
                         Type of Transportation
                       </th>
                       <th className={`${tableStyle} w-10`}>Amount</th>
-                      <th className={`${tableStyle} w-10`}>Hotel</th>
+                      <th className={`${tableStyle}  w-2/12`}>Hotel</th>
                       <th className={`${tableStyle} w-2/12`}>Place</th>
                       <th className={`${tableStyle}`}>Amount</th>
                       <th className={`${tableStyle}`}>Per Diem</th>
@@ -688,21 +693,35 @@ const ViewLiquidationModal: React.FC<Props> = ({
                                     e.target.value
                                   )
                                 }
-                                className={`${tableStyle2} w-20`}
+                                className={`${tableStyle2}  w-20`}
                               />
                             </td>
                             <td className={tableCellStyle}>
                               <input
                                 type="text"
-                                value={item.destination}
+                                value={item.from}
                                 onChange={(e) =>
                                   handleItemChange(
                                     index,
-                                    "destination",
+                                    "from",
                                     e.target.value
                                   )
                                 }
                                 className={`${tableStyle2}`}
+                              />
+                            </td>
+                            <td className={tableCellStyle}>
+                              <input
+                                type="text"
+                                value={item.to}
+                                onChange={(e) =>
+                                  handleItemChange(
+                                    index,
+                                    "to",
+                                    e.target.value
+                                  )
+                                }
+                                className={`${tableStyle2} w-20`}
                               />
                             </td>
                             <td className={tableCellStyle}>
@@ -833,30 +852,37 @@ const ViewLiquidationModal: React.FC<Props> = ({
                               {formatDate2(item.liquidationDate)}
                             </td>
                             <td className={tableCellStyle}>
-                              {item.destination}
+                              {item.from}
+                            </td>
+                            <td className={`${tableCellStyle}`}>
+                              {item.to}
                             </td>
                             <td className={tableCellStyle}>
                               {item.transportation}
                             </td>
                             <td className={tableCellStyle}>
-                              {item.transportationAmount}
-                            </td>
-                            <td className={tableCellStyle}>{item.hotel}</td>
-                            <td className={tableCellStyle}>
-                              {item.hotelAddress}
+                            {parseFloat(item.transportationAmount).toFixed(2)} 
                             </td>
                             <td className={tableCellStyle}>
-                              {item.hotelAmount}
-                            </td>
-                            <td className={tableCellStyle}>{item.perDiem}</td>
+                            {parseFloat(item.hotel).toFixed(2)} 
+                              </td>
                             <td className={tableCellStyle}>
-                              {item.particulars}
-                            </td>
-                            <td className={tableCellStyle}>
-                              {item.particularsAmount}
+                            {parseFloat(item.hotelAddress).toFixed(2)} 
                             </td>
                             <td className={tableCellStyle}>
-                              {item.grandTotal}
+                            {parseFloat(item.hotelAmount).toFixed(2)} 
+                            </td>
+                            <td className={tableCellStyle}>
+                            {parseFloat(item.perDiem).toFixed(2)} 
+                            </td>
+                            <td className={tableCellStyle}>
+                            {parseFloat(item.particulars).toFixed(2)} 
+                            </td>
+                            <td className={tableCellStyle}>
+                            {parseFloat(item.particularsAmount).toFixed(2)} 
+                            </td>
+                            <td className={tableCellStyle}>
+                            {parseFloat(item.grandTotal).toFixed(2)}
                             </td>
                           </tr>
                         ))}
@@ -919,7 +945,7 @@ const ViewLiquidationModal: React.FC<Props> = ({
               </table>
             </div>
             <div>
-              <table className="border border-black  mt-10 w-full">
+              <table className="border border-black  mt-10 mb-10 w-full">
                 <tr>
                   <td className={`${input2Style} `}>
                     <p className="font-semibold pl-2 pr-20   ">
@@ -931,11 +957,11 @@ const ViewLiquidationModal: React.FC<Props> = ({
                   </td>
                 </tr>
                 <tr>
-                  <td className={`${input2Style} `}>
+                  <td className={`${input2Style} h-20 `}>
                     <p className="font-semibold pl-2    ">SIGNATURE</p>
                   </td>
-                  <td className={`${tableStyle}`}>
-                    <img src={record.form_data[0].signature} />
+                  <td className={`${tableStyle} h-10`}>
+                    <img src={record.form_data[0].signature} className="h-24" />
                   </td>
                 </tr>
                 <tr>
@@ -973,7 +999,7 @@ const ViewLiquidationModal: React.FC<Props> = ({
                       <div className="relative flex flex-col items-center justify-center">
                         {/* Signature */}
                         {user.data?.signature && (
-                          <div className="absolute top-0">
+                          <div className="absolute -top-4">
                             <img
                               src={user.data?.signature}
                               alt="avatar"
@@ -1027,7 +1053,7 @@ const ViewLiquidationModal: React.FC<Props> = ({
                           {(user.status === "Approved" ||
                             (typeof user.status === "string" &&
                               user.status.split(" ")[0] === "Rejected")) && (
-                            <div className="absolute top-0">
+                            <div className="absolute -top-4">
                               <img
                                 src={user.signature}
                                 alt="avatar"
@@ -1087,7 +1113,7 @@ const ViewLiquidationModal: React.FC<Props> = ({
                           {(user.status === "Approved" ||
                             (typeof user.status === "string" &&
                               user.status.split(" ")[0] === "Rejected")) && (
-                            <div className="absolute top-0">
+                            <div className="absolute -top-4">
                               <img
                                 src={user.signature}
                                 alt="avatar"

@@ -35,6 +35,7 @@ const requestType = [
   { title: "Application For Cash Advance", path: "/request/afca" },
   { title: "Liquidation of Actual Expense", path: "/request/loae" },
   { title: "Request for Refund", path: "/request/rfr" },
+  { title: "Discount Request", path: "/request/dr" },
 ];
 const schema = z.object({ 
   approver_list_id: z.number(),
@@ -603,6 +604,7 @@ const CreateCashDisbursement = (props: Props) => {
                 </div>
             <div className="space-x-3 flex justify-end mt-20 pb-10">
               <button
+               type="button"
                 className={`bg-yellow ${buttonStyle}`}
                 onClick={handleAddItem}
               >
@@ -610,6 +612,7 @@ const CreateCashDisbursement = (props: Props) => {
               </button>
               {items.length > 1 && (
                 <button
+                 type="button"
                   className={`${buttonStyle} bg-pink`}
                   onClick={handleRemoveItem}
                 >

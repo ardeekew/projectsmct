@@ -10,9 +10,13 @@ import ViewLiquidationModal from "./Modals/ViewLiquidationModal";
 import ViewRequestModal from "./Modals/ViewRequestModal";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import { QuestionMarkCircleIcon } from "@heroicons/react/24/outline";
+import ViewDiscountModal from "./Modals/ViewDiscountModal";
 type Props = {};
 
 type Record = {
+  total_labor:number;
+  total_discount:number;
+  total_spotcash:number;
   pending_approver: {
     approver_name: string;
   };
@@ -40,7 +44,8 @@ type Record = {
   status: string;
   }[];
   user_id: number;
-  request_id: string;
+  request_code: string;
+  
   form_type: string;
   form_data: MyFormData[];
   date: Date;
@@ -57,6 +62,9 @@ type Record = {
 };
 
 type MyFormData = {
+  total_labor:number;
+  total_discount:number;
+  total_spotcash:number;
   approvers_id: number;
   employeeID:string;
   purpose: string;
@@ -122,6 +130,14 @@ type MyFormData = {
 };
 
 type MyItem = {
+
+  brand: string;
+  model: string;
+  unit: string;
+  partno: string;
+  labor: string;
+  spotcash: string;
+  discountedPrice: string;
   quantity: string;
   description: string;
   unitCost: string;
@@ -132,7 +148,8 @@ type MyItem = {
   branch: string;
   status: string;
   day: string;
-  itinerary: string;
+  from: string;
+  to: string;
   activity: string;
   hotel: string;
   rate: string;
@@ -284,8 +301,8 @@ const Request = (props: Props) => {
   const columns = [
     {
       name: "Request ID",
-      selector: (row: Record) => row.id,
-      width: "100px",
+      selector: (row: Record) => row.request_code,
+      width: "160px",
       sortable: true,
     },
 
@@ -378,7 +395,7 @@ const Request = (props: Props) => {
   const closeModal = () => {
     setModalIsOpen(false);
   };
-
+console.log(requests)
   return (
     <div className="bg-graybg dark:bg-blackbg w-full h-lvh pt-4 px-10 md:px-10 lg:px-30">
       <Link to="/request/sr">
@@ -427,6 +444,15 @@ const Request = (props: Props) => {
         selectedRecord &&
         selectedRecord.form_type === "Stock Requisition Slip" && (
           <ViewStockModal
+            closeModal={closeModal}
+            record={{ ...selectedRecord, date: selectedRecord.date.toString() }}
+            refreshData={refreshData}
+          />
+        )}
+          {modalIsOpen &&
+        selectedRecord &&
+        selectedRecord.form_type === "Discount Requisition Form" && (
+          <ViewDiscountModal
             closeModal={closeModal}
             record={{ ...selectedRecord, date: selectedRecord.date.toString() }}
             refreshData={refreshData}

@@ -50,6 +50,7 @@ const requestType = [
   { title: "Application For Cash Advance", path: "/request/afca" },
   { title: "Liquidation of Actual Expense", path: "/request/loae" },
   { title: "Request for Refund", path: "/request/rfr" },
+  { title: "Discount Request", path: "/request/dr" },
 ];
 
 const inputStyle = "w-full   border-2 border-black rounded-[12px] pl-[10px] bg-white  autofill-input";
@@ -610,6 +611,7 @@ const CreateRefund = (props: Props) => {
                 </div>
             <div className="space-x-3 flex justify-end mt-20 pb-10">
               <button
+               type="button"
                 className={`bg-yellow ${buttonStyle}`}
                 onClick={handleAddItem}
               >
@@ -617,6 +619,7 @@ const CreateRefund = (props: Props) => {
               </button>
               {items.length > 1 && (
                 <button
+                 type="button"
                   className={`${buttonStyle} bg-pink`}
                   onClick={handleRemoveItem}
                 >

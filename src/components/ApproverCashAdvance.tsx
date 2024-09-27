@@ -31,6 +31,7 @@ interface Approver {
   branch: string;
 }
 type Record = {
+  request_code: string;
   id: number;
   created_at: Date;
   status: string;
@@ -42,8 +43,10 @@ type Record = {
   date: string;
   user_id: number;
   attachment: string;
-  noted_by:Approver[];
-  approved_by:Approver[];
+  noted_by: Approver[];
+  approved_by: Approver[];
+  avp_staff: Approver[];
+  approved_attachment: string;
 };
 
 type FormData = {
@@ -105,6 +108,10 @@ const ApproverCashAdvance: React.FC<Props> = ({
   const [editedApprovers, setEditedApprovers] = useState<number>(
     record.approvers_id
   );
+  const [attachment, setAttachment] = useState<any>([]);
+  const [file, setFile] = useState<File[]>([]);
+  const [position, setPosition] = useState("");
+  const [commentMessage, setCommentMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [approvers, setApprovers] = useState<Approver[]>([]);
   const [isFetchingApprovers, setisFetchingApprovers] = useState(false);
@@ -112,6 +119,8 @@ const ApproverCashAdvance: React.FC<Props> = ({
   const [errorMessage, setErrorMessage] = useState("");
   const [notedBy, setNotedBy] = useState<Approver[]>([]);
   const [approvedBy, setApprovedBy] = useState<Approver[]>([]);
+
+  const [avpstaff, setAvpstaff] = useState<Approver[]>([]);
   const [customApprovers, setCustomApprovers] = useState<any>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [comments, setComments] = useState("");
@@ -143,6 +152,44 @@ const ApproverCashAdvance: React.FC<Props> = ({
   } else {
     logo = null; // Handle the case where branch does not match any of the above
   }
+
+  useEffect(() => {
+    const fetchUserInformation = async () => {
+      try {
+        const id = localStorage.getItem("id");
+        const token = localStorage.getItem("token");
+        if (!token) {
+          console.error("Token is missing");
+          return;
+        }
+
+        const response = await axios.get(
+          `http://122.53.61.91:6002/api/view-user/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.data.status) {
+          setUser(response.data.data);
+
+          setPosition(response.data.data.position);
+        } else {
+          throw new Error(
+            response.data.message || "Failed to fetch user information"
+          );
+        }
+      } finally {
+        setLoading(false); // Update loading state when done fetching
+      }
+    };
+
+    fetchUserInformation();
+  }, []);
+
+
   useEffect(() => {
     const fetchBranchData = async () => {
       try {
@@ -173,8 +220,9 @@ const ApproverCashAdvance: React.FC<Props> = ({
     const currentUserId = localStorage.getItem("id");
 
     const userId = currentUserId ? parseInt(currentUserId) : 0;
-    setNotedBy(record.noted_by)
+    setNotedBy(record.noted_by);
     setApprovedBy(record.approved_by);
+    setAvpstaff(record.avp_staff);
     setNewData(record.form_data[0].items.map((item) => ({ ...item })));
     setEditableRecord(record);
     setNewTotalBoatFare(record.form_data[0].totalBoatFare);
@@ -184,7 +232,6 @@ const ApproverCashAdvance: React.FC<Props> = ({
     setEditedApprovers(record.approvers_id);
     if (currentUserId) {
       fetchUser(record.user_id);
-
     }
     try {
       // If record.attachment is a JSON string, parse it
@@ -201,10 +248,44 @@ const ApproverCashAdvance: React.FC<Props> = ({
         console.warn("Attachment is not a JSON string:", record.attachment);
         // Optionally handle this case if needed
       }
+      if (
+        Array.isArray(record.approved_attachment) &&
+        record.approved_attachment.length > 0
+      ) {
+        const approvedAttachmentString = record.approved_attachment[0]; // Access the first element
+        const parsedApprovedAttachment = JSON.parse(approvedAttachmentString); // Parse the string to get the actual array
+        console.log("Parsed approved attachment:", parsedApprovedAttachment); // Log parsed attachment
+
+        if (
+          Array.isArray(parsedApprovedAttachment) &&
+          parsedApprovedAttachment.length > 0
+        ) {
+          // Access the first element of the array
+          const formattedAttachment = parsedApprovedAttachment[0];
+          setAttachment(formattedAttachment); // Set the state with the string
+          console.log("Formatted approved attachment:", formattedAttachment); // Log the formatted attachment
+        } else {
+          console.warn(
+            "Parsed approved attachment is not an array or is empty:",
+            parsedApprovedAttachment
+          );
+        }
+      } else {
+        console.warn(
+          "Approved attachment is not an array or is empty:",
+          record.approved_attachment
+        );
+      }
     } catch (error) {
       console.error("Error parsing attachment:", error);
     }
   }, [record]);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      // Convert FileList to array and set it
+      setFile(Array.from(e.target.files));
+    }
+  };
   const handleDisapprove = async () => {
     const userId = localStorage.getItem("id") ?? "";
     try {
@@ -215,13 +296,24 @@ const ApproverCashAdvance: React.FC<Props> = ({
         return;
       }
 
-      const requestData = {
-        user_id: parseInt(userId),
-        action: "disapprove",
-        comment: comments,
-      };
+      const requestData = new FormData();
 
-      const response = await axios.put(
+      // Only append attachments if the file array is not empty
+      if (file && file.length > 0) {
+        file.forEach((file) => {
+          requestData.append("attachment[]", file);
+        });
+      }
+
+      requestData.append("user_id", parseInt(userId).toString());
+      requestData.append("action", "disapprove");
+      requestData.append("comment", comments);
+
+      // Log the contents of requestData for debugging
+      for (const [key, value] of requestData.entries()) {
+        console.log(`${key}:`, value);
+      }
+      const response = await axios.post(
         `http://122.53.61.91:6002/api/request-forms/${record.id}/process`,
         requestData,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -238,7 +330,7 @@ const ApproverCashAdvance: React.FC<Props> = ({
         error.message ||
         "Failed to update stock requisition.";
       console.error("Error disapproving request form:", errorMessage);
-      setErrorMessage(errorMessage);
+      setCommentMessage(errorMessage);
     }
   };
 
@@ -251,16 +343,28 @@ const ApproverCashAdvance: React.FC<Props> = ({
       return;
     }
 
-    const requestData = {
-      user_id: parseInt(userId),
-      action: "approve",
-      comment: comments,
-    };
+    const requestData = new FormData();
+
+    // Only append attachments if the file array is not empty
+    if (file && file.length > 0) {
+      file.forEach((file) => {
+        requestData.append("attachment[]", file);
+      });
+    }
+
+    requestData.append("user_id", parseInt(userId).toString());
+    requestData.append("action", "approve");
+    requestData.append("comment", comments);
+
+    // Log the contents of requestData for debugging
+    for (const [key, value] of requestData.entries()) {
+      console.log(`${key}:`, value);
+    }
 
     try {
       setApprovedLoading(true);
 
-      const response = await axios.put(
+      const response = await axios.post(
         `http://122.53.61.91:6002/api/request-forms/${record.id}/process`,
         requestData,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -277,10 +381,9 @@ const ApproverCashAdvance: React.FC<Props> = ({
         error.message ||
         "Failed to update stock requisition.";
       console.error("Error approving request form:", errorMessage);
-      setErrorMessage(errorMessage);
+      setCommentMessage(errorMessage);
     }
   };
-
   const calculateGrandTotal = () => {
     let total = 0;
     total += parseFloat(newTotalBoatFare);
@@ -401,10 +504,11 @@ const ApproverCashAdvance: React.FC<Props> = ({
         }
       );
 
-      const { notedby, approvedby } = response.data;
+      const { notedby, approvedby, avp_staff } = response.data;
       setNotedBy(notedby);
       setApprovedBy(approvedby);
       setApprovers(approvers);
+      setAvpstaff(avp_staff);
     } catch (error) {
       console.error("Failed to fetch approvers:", error);
     } finally {
@@ -469,7 +573,7 @@ const ApproverCashAdvance: React.FC<Props> = ({
         </div>
         <div className="justify-start items-start flex flex-col space-y-4 w-full">
           <div className="flex items-center justify-between w-full">
-            <p className="font-medium text-[14px]">Request ID: #{record.id}</p>
+            <p className="font-medium text-[14px]">Request ID: #{record.request_code}</p>
             <div className="w-auto flex ">
               <p>Date: </p>
               <p className="font-bold pl-2">{formatDate2(record.created_at)}</p>
@@ -495,129 +599,161 @@ const ApproverCashAdvance: React.FC<Props> = ({
           </div>
 
           <div className="mt-4 w-full overflow-x-auto">
-  <div className="w-full border-collapse">
-    <div className="table-container">
-      <table className="border w-full space-x-auto">
-        <thead className="border border-black h-1/3 bg-[#8EC7F7]">
-          <tr>
-            <th className={`${tableStyle}`}>Date</th>
-            <th className={`${tableStyle}`}>Day</th>
-            <th className={`${tableStyle}`}>Itinerary</th>
-            <th className={`${tableStyle}`}>Activity</th>
-            <th className={`${tableStyle}`}>Hotel</th>
-            <th className={`${tableStyle}`}>Rate</th>
-            <th className={`${tableStyle}`}>Amount</th>
-            <th className={`${tableStyle}`}>Per Diem</th>
-            <th className={`${tableStyle}`}>Remarks</th>
-          </tr>
-        </thead>
-        <tbody className={`${tableCellStyle}`}>
-          {isEditing
-            ? newData.map((item, index) => (
-                <tr key={index}>
-                  <td className={tableCellStyle}>
-                    <input
-                      type="date"
-                      value={item.cashDate}
-                      onChange={(e) =>
-                        handleItemChange(index, "cashDate", e.target.value)
-                      }
-                    />
-                  </td>
-                  <td className={tableCellStyle}>
-                    <input
-                      type="text"
-                      value={item.day}
-                      onChange={(e) =>
-                        handleItemChange(index, "day", e.target.value)
-                      }
-                    />
-                  </td>
-                  <td className={tableCellStyle}>
-                    <input
-                      type="text"
-                      value={item.itinerary}
-                      onChange={(e) =>
-                        handleItemChange(index, "itinerary", e.target.value)
-                      }
-                    />
-                  </td>
-                  <td className={tableCellStyle}>
-                    <input
-                      type="text"
-                      value={item.activity}
-                      onChange={(e) =>
-                        handleItemChange(index, "activity", e.target.value)
-                      }
-                    />
-                  </td>
-                  <td className={tableCellStyle}>
-                    <input
-                      type="text"
-                      value={item.hotel}
-                      onChange={(e) =>
-                        handleItemChange(index, "hotel", e.target.value)
-                      }
-                    />
-                  </td>
-                  <td className={tableCellStyle}>
-                    <input
-                      type="text"
-                      value={item.rate}
-                      onChange={(e) =>
-                        handleItemChange(index, "rate", e.target.value)
-                      }
-                    />
-                  </td>
-                  <td className={tableCellStyle}>
-                    <input
-                      type="text"
-                      value={item.amount}
-                      onChange={(e) =>
-                        handleItemChange(index, "amount", e.target.value)
-                      }
-                    />
-                  </td>
-                  <td className={tableCellStyle}>
-                    <input
-                      type="text"
-                      value={item.perDiem}
-                      onChange={(e) =>
-                        handleItemChange(index, "perDiem", e.target.value)
-                      }
-                    />
-                  </td>
-                  <td className={tableCellStyle}>
-                    <input
-                      type="text"
-                      value={item.remarks}
-                      onChange={(e) =>
-                        handleItemChange(index, "remarks", e.target.value)
-                      }
-                    />
-                  </td>
-                </tr>
-              ))
-            : editableRecord.form_data[0].items.map((item, index) => (
-                <tr key={index}>
-                  <td className={tableCellStyle}>
-                    {formatDate(item.cashDate)}
-                  </td>
-                  <td className={tableCellStyle}>{item.day}</td>
-                  <td className={tableCellStyle}>{item.itinerary}</td>
-                  <td className={tableCellStyle}>{item.activity}</td>
-                  <td className={tableCellStyle}>{item.hotel}</td>
-                  <td className={tableCellStyle}>{item.rate}</td>
-                  <td className={tableCellStyle}>{item.amount}</td>
-                  <td className={tableCellStyle}>{item.perDiem}</td>
-                  <td className={tableCellStyle}>{item.remarks}</td>
-                </tr>
-              ))}
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
+            <div className="w-full border-collapse">
+              <div className="table-container">
+                <table className="border w-full space-x-auto">
+                  <thead className="border border-black h-1/3 bg-[#8EC7F7]">
+                    <tr>
+                      <th className={`${tableStyle}`}>Date</th>
+                      <th className={`${tableStyle}`}>Day</th>
+                      <th className={`${tableStyle}`}>Itinerary</th>
+                      <th className={`${tableStyle}`}>Activity</th>
+                      <th className={`${tableStyle}`}>Hotel</th>
+                      <th className={`${tableStyle}`}>Rate</th>
+                      <th className={`${tableStyle}`}>Amount</th>
+                      <th className={`${tableStyle}`}>Per Diem</th>
+                      <th className={`${tableStyle}`}>Remarks</th>
+                    </tr>
+                  </thead>
+                  <tbody className={`${tableCellStyle}`}>
+                    {isEditing
+                      ? newData.map((item, index) => (
+                          <tr key={index}>
+                            <td className={tableCellStyle}>
+                              <input
+                                type="date"
+                                value={item.cashDate}
+                                onChange={(e) =>
+                                  handleItemChange(
+                                    index,
+                                    "cashDate",
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </td>
+                            <td className={tableCellStyle}>
+                              <input
+                                type="text"
+                                value={item.day}
+                                onChange={(e) =>
+                                  handleItemChange(index, "day", e.target.value)
+                                }
+                              />
+                            </td>
+                            <td className={tableCellStyle}>
+                              <input
+                                type="text"
+                                value={item.itinerary}
+                                onChange={(e) =>
+                                  handleItemChange(
+                                    index,
+                                    "itinerary",
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </td>
+                            <td className={tableCellStyle}>
+                              <input
+                                type="text"
+                                value={item.activity}
+                                onChange={(e) =>
+                                  handleItemChange(
+                                    index,
+                                    "activity",
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </td>
+                            <td className={tableCellStyle}>
+                              <input
+                                type="text"
+                                value={item.hotel}
+                                onChange={(e) =>
+                                  handleItemChange(
+                                    index,
+                                    "hotel",
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </td>
+                            <td className={tableCellStyle}>
+                              <input
+                                type="text"
+                                value={item.rate}
+                                onChange={(e) =>
+                                  handleItemChange(
+                                    index,
+                                    "rate",
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </td>
+                            <td className={tableCellStyle}>
+                              <input
+                                type="text"
+                                value={item.amount}
+                                onChange={(e) =>
+                                  handleItemChange(
+                                    index,
+                                    "amount",
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </td>
+                            <td className={tableCellStyle}>
+                              <input
+                                type="text"
+                                value={item.perDiem}
+                                onChange={(e) =>
+                                  handleItemChange(
+                                    index,
+                                    "perDiem",
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </td>
+                            <td className={tableCellStyle}>
+                              <input
+                                type="text"
+                                value={item.remarks}
+                                onChange={(e) =>
+                                  handleItemChange(
+                                    index,
+                                    "remarks",
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </td>
+                          </tr>
+                        ))
+                      : editableRecord.form_data[0].items.map((item, index) => (
+                          <tr key={index}>
+                            <td className={tableCellStyle}>
+                              {formatDate(item.cashDate)}
+                            </td>
+                            <td className={tableCellStyle}>{item.day}</td>
+                            <td className={tableCellStyle}>{item.itinerary}</td>
+                            <td className={tableCellStyle}>{item.activity}</td>
+                            <td className={tableCellStyle}>{item.hotel}</td>
+                            <td className={tableCellStyle}>{item.rate}</td>
+                            <td className={tableCellStyle}>{item.amount}</td>
+                            <td className={tableCellStyle}>{item.perDiem}</td>
+                            <td className={tableCellStyle}>{item.remarks}</td>
+                          </tr>
+                        ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
 
           {errorMessage && <p className="text-red-500">{errorMessage}</p>}
           <div className="inline-block w-full">
@@ -756,7 +892,7 @@ const ApproverCashAdvance: React.FC<Props> = ({
                       <div className="relative flex flex-col items-center justify-center">
                         {/* Signature */}
                         {user.data?.signature && (
-                          <div className="absolute top-0">
+                          <div className="absolute -top-4">
                             <img
                               src={user.data?.signature}
                               alt="avatar"
@@ -810,7 +946,7 @@ const ApproverCashAdvance: React.FC<Props> = ({
                           {(user.status === "Approved" ||
                             (typeof user.status === "string" &&
                               user.status.split(" ")[0] === "Rejected")) && (
-                            <div className="absolute top-0">
+                            <div className="absolute -top-4">
                               <img
                                 src={user.signature}
                                 alt="avatar"
@@ -870,7 +1006,7 @@ const ApproverCashAdvance: React.FC<Props> = ({
                           {(user.status === "Approved" ||
                             (typeof user.status === "string" &&
                               user.status.split(" ")[0] === "Rejected")) && (
-                            <div className="absolute top-0">
+                            <div className="absolute -top-4">
                               <img
                                 src={user.signature}
                                 alt="avatar"
@@ -953,7 +1089,8 @@ const ApproverCashAdvance: React.FC<Props> = ({
                 />
               </div>
             )}
-
+            {commentMessage && <p className="text-red-500">{commentMessage}</p>}
+         
             {/* Comments Section */}
             <ul className="flex flex-col w-full mb-4 space-y-4">
               {notedBy.filter((user) => user.comment).length > 0 ||
@@ -1006,13 +1143,60 @@ const ApproverCashAdvance: React.FC<Props> = ({
                         </div>
                       </div>
                     ))}
+                  {avpstaff
+                    .filter((user) => user.comment)
+                    .map((user, index) => (
+                      <div className="flex">
+                        <div>
+                          <img
+                            alt="logo"
+                            className="cursor-pointer hidden sm:block"
+                            src={Avatar}
+                            height={35}
+                            width={45}
+                          />
+                        </div>
+                        <div className="flex flex-row w-full" key={index}>
+                          <li className="flex flex-col justify-between pl-2">
+                            <h3 className="font-bold text-lg">
+                              {user.firstName} {user.lastName} - AVP STAFF
+                            </h3>
+                            <p>{user.comment}</p>
+                          </li>
+                        </div>
+                      </div>
+                    ))}
                 </>
               ) : (
                 <p className="text-gray-500">No comments yet</p>
               )}
             </ul>
           </div>
+          <div className="w-full max-w-md ">
+            <p className="font-semibold">Approved Attachment:</p>
 
+            {record.approved_attachment.length === 0 &&
+            position === "Vice President" &&
+            record.status === "Pending" ? (
+              <input
+                id="file"
+                type="file"
+                multiple
+                onChange={handleFileChange}
+                className="w-full mt-2"
+              />
+            ) : record.approved_attachment.length > 0 && attachment ? (
+              <div className="mt-2">
+                <img
+                  src={`http://122.53.61.91:6002/storage/${attachment}`}
+                  alt="Approved Attachment"
+                  className="max-w-full h-auto rounded"
+                />
+              </div>
+            ) : (
+              <p className="text-gray-500">No approved attachment available.</p>
+            )}
+          </div>
           {record.status === "Pending" && (
             <div className="w-full space-x-2 flex items-center justify-between">
               <button

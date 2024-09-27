@@ -61,8 +61,6 @@ const Sidebar2: React.FC<SidebarProps> = ({ darkMode, role }) => {
       : role === "Admin"
       ? [
           { title: "Dashboard", icon: ChartBarIcon, path: "/dashboard" },
-          { title: "View Request", icon: EnvelopeIcon, path: "/request" },
-          { title: "Create Request", icon: DocumentPlusIcon, path: "/request" },
          /*  {
             title: "Custom Request",
             icon: UserGroupIcon,
@@ -71,6 +69,11 @@ const Sidebar2: React.FC<SidebarProps> = ({ darkMode, role }) => {
           { title: "User", icon: UserPlusIcon, path: "/setup/User" },
           { title: "Branch", icon: BuildingOfficeIcon, path: "/setup/Branch" },
           { title: "Approver", icon: UserIcon, path: "/setup/Approver" },
+          {
+            title: "AVP Staff",
+            icon: UserGroupIcon,
+            path: "/setup/AVP",
+          },
           {
             title: "Area Manager",
             icon: BeakerIcon,

@@ -18,16 +18,19 @@ import ApproverRefund from "./ApproverRefund";
 import { QuestionMarkCircleIcon } from "@heroicons/react/24/outline";
 import { request } from "http";
 import { record } from "zod";
+import ApproverDiscount from "./ApproverDiscount";
 type Props = {};
 
 type Record = {
-  employeeID:string;
+  approved_attachment: string;
+  employeeID: string;
   pending_approver: string;
-  requested_by:string;
+  requested_by: string;
   id: number;
   created_at: Date;
   user_id: number;
   request_id: string;
+  request_code: string;
   form_type: string;
   form_data: MyFormData[];
   date: Date;
@@ -40,8 +43,9 @@ type Record = {
   grandTotal: string;
   approvers_id: number;
   attachment: string;
-  noted_by:Approver[];
+  noted_by: Approver[];
   approved_by: Approver[];
+  avp_staff: Approver[];
 };
 interface Approver {
   id: number;
@@ -57,8 +61,11 @@ interface Approver {
   branch: string;
 }
 type MyFormData = {
-  employeeID:string;
-  requested_by:string;
+  total_labor: number;
+  total_discount: number;
+  total_spotcash: number;
+  employeeID: string;
+  requested_by: string;
   approvers_id: number;
   purpose: string;
   items: MyItem[];
@@ -66,8 +73,8 @@ type MyFormData = {
     noted_by: {
       firstName: string;
       lastName: string;
-      firstname:string;
-      lastname:string;
+      firstname: string;
+      lastname: string;
       position: string;
       signature: string;
       status: string;
@@ -100,6 +107,13 @@ type MyFormData = {
 };
 
 type MyItem = {
+  brand: string;
+  model: string;
+  unit: string;
+  partno: string;
+  labor: string;
+  spotcash: string;
+  discountedPrice: string;
   quantity: string;
   description: string;
   unitCost: string;
@@ -174,8 +188,6 @@ const RequestApprover = (props: Props) => {
 
         setBranchList(branches);
         setBranchMap(branchMapping);
-
-      
       } catch (error) {
         console.error("Error fetching branch data:", error);
       }
@@ -186,7 +198,6 @@ const RequestApprover = (props: Props) => {
 
   useEffect(() => {
     if (userId) {
-     
       const token = localStorage.getItem("token");
       if (!token) {
         console.error("Token is missing");
@@ -206,7 +217,7 @@ const RequestApprover = (props: Props) => {
         )
         .then((response) => {
           setRequests(response.data.request_forms);
-         
+          console.log('req', requests);
         })
         .catch((error) => {
           console.error("Error fetching requests data:", error);
@@ -229,15 +240,17 @@ const RequestApprover = (props: Props) => {
         return requests;
       case 1: // Pending Requests
         return requests.filter(
-          (item: Record) => item.status.trim() === "Pending" || item.status.trim() === "Ongoing" 
+          (item: Record) =>
+            item.status.trim() === "Pending" || item.status.trim() === "Ongoing"
         );
       case 2: // Approved Requests
         return requests.filter(
-          (item: Record) => item.status.trim() === "Approved" 
+          (item: Record) => item.status.trim() === "Approved"
         );
       case 3: // Unsuccessful Requests
         return requests.filter(
-          (item: Record) => item.status.startsWith("Rejected") || item.status ==="Disapproved"
+          (item: Record) =>
+            item.status.startsWith("Rejected") || item.status === "Disapproved"
         );
       default:
         return requests;
@@ -247,15 +260,14 @@ const RequestApprover = (props: Props) => {
   const columns = [
     {
       name: "Request ID",
-      selector: (row: Record) => row.id,
-      width: "100px",
+      selector: (row: Record) => row.request_code,
+      width: "160px",
       sortable: true,
     },
     {
       name: "Requested by",
-      sortable:true,
+      sortable: true,
       selector: (row: Record) => row.requested_by,
-     
     },
     {
       name: "Request Type",
@@ -295,7 +307,8 @@ const RequestApprover = (props: Props) => {
                 ? "bg-yellow"
                 : row.status.trim() === "Approved"
                 ? "bg-green"
-                : row.status.trim() === "Disapproved" || row.status.trim().startsWith("Rejected")
+                : row.status.trim() === "Disapproved" ||
+                  row.status.trim().startsWith("Rejected")
                 ? "bg-pink"
                 : row.status.trim() === "Ongoing"
                 ? "bg-blue-500"
@@ -304,20 +317,20 @@ const RequestApprover = (props: Props) => {
           >
             {row.status.trim()}
           </div>
-  
+
           {/* Tooltip Icon */}
           {(row.status === "Pending" || row.status === "Approved") && (
-          <div className=" relative top-1/2 justify-center items-center flex ml-4 transform -translate-x-full -translate-y-1/2  group-hover:opacity-100 transition-opacity duration-300 z-10">
-            <QuestionMarkCircleIcon className="w-6 h-6 text-gray-500 absolute" />
-          </div>
+            <div className=" relative top-1/2 justify-center items-center flex ml-4 transform -translate-x-full -translate-y-1/2  group-hover:opacity-100 transition-opacity duration-300 z-10">
+              <QuestionMarkCircleIcon className="w-6 h-6 text-gray-500 absolute" />
+            </div>
           )}
           {/* Tooltip */}
           {(row.status === "Pending" || row.status === "Approved") && (
-          <div className="h-auto mb-4 absolute drop-shadow-sm   mt-2 hidden group-hover:block  bg-gray-600  ml-10  text-black p-1 rounded-md shadow-lg w-full z-40">
-            <p className="text-[11px] text-white">
-         Pending: {row.pending_approver} 
-            </p>
-          </div>
+            <div className="h-auto mb-4 absolute drop-shadow-sm   mt-2 hidden group-hover:block  bg-gray-600  ml-10  text-black p-1 rounded-md shadow-lg w-full z-40">
+              <p className="text-[11px] text-white">
+                Pending: {row.pending_approver}
+              </p>
+            </div>
           )}
         </div>
       ),
@@ -342,7 +355,6 @@ const RequestApprover = (props: Props) => {
 
   const refreshData = () => {
     if (userId) {
-    
       const token = localStorage.getItem("token");
       if (!token) {
         console.error("Token is missing");
@@ -362,7 +374,6 @@ const RequestApprover = (props: Props) => {
         )
         .then((response) => {
           setRequests(response.data.request_forms);
-       
         })
         .catch((error) => {
           console.error("Error refreshing requests data:", error);
@@ -388,7 +399,7 @@ const RequestApprover = (props: Props) => {
         <div className="bg-white rounded-lg w-full flex flex-col items-center overflow-x-auto">
           <div className="w-full border-b-2 md:px-30">
             <ul className="px-2 md:px-30 flex justify-start items-center space-x-4 md:space-x-6 py-4 font-medium overflow-x-auto">
-            {items.map((item, index) => (
+              {items.map((item, index) => (
                 <li
                   key={index}
                   onClick={() => handleClick(index)}
@@ -433,6 +444,15 @@ const RequestApprover = (props: Props) => {
         selectedRecord &&
         selectedRecord.form_type === "Purchase Order Requisition Slip" && (
           <ApproverPurchase
+            closeModal={closeModal}
+            record={{ ...selectedRecord, date: selectedRecord.date.toString() }}
+            refreshData={refreshData}
+          />
+        )}
+          {modalIsOpen &&
+        selectedRecord &&
+        selectedRecord.form_type === "Discount Requisition Form" && (
+          <ApproverDiscount
             closeModal={closeModal}
             record={{ ...selectedRecord, date: selectedRecord.date.toString() }}
             refreshData={refreshData}

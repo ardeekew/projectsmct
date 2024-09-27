@@ -90,7 +90,7 @@ const PrintCashDisbursement: React.FC<PrintRefundProps> = ({ data }) => {
           <p className=" mb-2 flex font-bold  ">
             Date:{" "}
             <p className="underline ml-2">
-            {formatDate(printData?.id.form_data[0].date)}
+            {formatDate(printData?.id.created_at)}
             </p>
           </p>
         </div>
@@ -141,7 +141,7 @@ const PrintCashDisbursement: React.FC<PrintRefundProps> = ({ data }) => {
               <h3 className="font-bold mb-3">Requested By:</h3>
               <div className="flex flex-col items-center justify-center relative pt-8">
                 <img
-                  className="absolute top-4 left-1/2 transform -translate-x-1/2 pointer-events-none"
+                  className="absolute -top-4 left-1/2 transform -translate-x-1/2 pointer-events-none"
                   src={printData?.user.data.signature}
                   alt="avatar"
                   width={120}

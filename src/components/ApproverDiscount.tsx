@@ -1,18 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import { BeatLoader } from "react-spinners";
 import axios from "axios";
-import PencilIcon from "@heroicons/react/24/solid/PencilIcon";
-import PrintCashDisbursement from "./PrintCashDisbursement";
-import { set } from "react-hook-form";
-import Avatar from "./assets/avatar.png";
-import { useNavigate } from "react-router-dom";
+import ClipLoader from "react-spinners/ClipLoader";
+import { PencilIcon } from "@heroicons/react/24/solid";
+import PrintCash from "./PrintCash";
+import BeatLoader from "react-spinners/BeatLoader";
+import PrintPurchase from "./PrintPurchase";
 import SMCTLogo from "./assets/SMCT.png";
 import DSMLogo from "./assets/DSM.jpg";
 import DAPLogo from "./assets/DAP.jpg";
 import HDILogo from "./assets/HDI.jpg";
 import ApproveSuccessModal from "./ApproveSuccessModal";
-
+import Avatar from "./assets/avatar.png";
 type Props = {
   closeModal: () => void;
   record: Record;
@@ -33,11 +32,13 @@ interface Approver {
 }
 type Record = {
   request_code: string;
-  created_at: Date;
   id: number;
+  created_at: Date;
   status: string;
   approvers_id: number;
   form_data: FormData[];
+  supplier?: string;
+  address?: string;
   branch: string;
   date: string;
   user_id: number;
@@ -49,79 +50,84 @@ type Record = {
 };
 
 type FormData = {
+  total_labor: number;
+  total_discount: number;
+  total_spotcash: number;
   approvers_id: number;
   approvers: {
-    noted_by: {
-      firstName: string;
-      lastName: string;
-      position: string;
-      signature: string;
-      status: string;
-      branch: string;
-    }[];
-    approved_by: {
-      firstName: string;
-      lastName: string;
-      position: string;
-      signature: string;
-      status: string;
-      branch: string;
-    }[];
+    noted_by: { firstName: string; lastName: string }[];
+    approved_by: { firstName: string; lastName: string }[];
   };
   purpose: string;
   items: Item[];
   branch: string;
   date: string;
   grand_total: string;
+  supplier: string;
+  address: string;
+  totalBoatFare: string;
+  totalContingency: string;
+  totalFare: string;
+  totalHotel: string;
+  totalperDiem: string;
+  totalExpense: string;
+  short: string;
 };
 
+// Define the Item type
 type Item = {
-  quantity: string;
-  description: string;
-  unitCost: string;
-  totalAmount: string;
-  remarks: string;
+  brand: string;
+  model: string;
+  unit: string;
+  partno: string;
+  labor: string;
+  spotcash: string;
+  discountedPrice: string;
 };
-const inputStyle = "border border-black text-[12px] font-bold p-2";
-const tableCellStyle = `${inputStyle} w-20`;
-const ApproverCashDisbursement: React.FC<Props> = ({
+const tableInput = "break-words border border-black p-2"
+const inputStyle = "border border-black text-[12px] font-bold p-2 h-14";
+const tableStyle = "border border-black p-2";
+const tableCellStyle = `${inputStyle}  w-10`;
+const ApproverDiscount: React.FC<Props> = ({
   closeModal,
   record,
   refreshData,
 }) => {
   const [editableRecord, setEditableRecord] = useState(record);
   const [newData, setNewData] = useState<Item[]>([]);
+  const [newTotalBoatFare, setNewTotalBoatFare] = useState("");
+  const [newTotalHotel, setNewTotalHotel] = useState("");
+  const [newTotalFare, setNewTotalFare] = useState("");
+  const [newTotalContingency, setNewTotalContingency] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedDate, setEditedDate] = useState("");
   const [editedApprovers, setEditedApprovers] = useState<number>(
     record.approvers_id
-  );
-  const [isEditing, setIsEditing] = useState(false);
-  const [approvers, setApprovers] = useState<Approver[]>([]);
-  const [fetchingApprovers, setFetchingApprovers] = useState(false);
-  const [editedDate, setEditedDate] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [savedSuccessfully, setSavedSuccessfully] = useState(false);
-  const [isFetchingApprovers, setisFetchingApprovers] = useState(false);
-  const [isFetchingUser, setisFetchingUser] = useState(false);
-  const [notedBy, setNotedBy] = useState<Approver[]>([]);
-  const [approvedBy, setApprovedBy] = useState<Approver[]>([]);
-  const [avpstaff, setAvpstaff] = useState<Approver[]>([]);
-  const [customApprovers, setCustomApprovers] = useState<any>({});
-  const [comments, setComments] = useState("");
-  const [nameComments, setNameComments] = useState([]);
-  const [user, setUser] = useState<any>({});
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [printWindow, setPrintWindow] = useState<Window | null>(null);
-  const [approveLoading, setApprovedLoading] = useState(false);
-  const [attachmentUrl, setAttachmentUrl] = useState<string[]>([]);
-  const [modalStatus, setModalStatus] = useState<"approved" | "disapproved">(
-    "approved"
   );
   const [attachment, setAttachment] = useState<any>([]);
   const [file, setFile] = useState<File[]>([]);
   const [position, setPosition] = useState("");
   const [commentMessage, setCommentMessage] = useState("");
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [approvers, setApprovers] = useState<Approver[]>([]);
+  const [isFetchingApprovers, setisFetchingApprovers] = useState(false);
+  const [savedSuccessfully, setSavedSuccessfully] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [notedBy, setNotedBy] = useState<Approver[]>([]);
+  const [approvedBy, setApprovedBy] = useState<Approver[]>([]);
+
+  const [avpstaff, setAvpstaff] = useState<Approver[]>([]);
+  const [customApprovers, setCustomApprovers] = useState<any>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [comments, setComments] = useState("");
+  const [approveLoading, setApprovedLoading] = useState(false);
+  const [isFetchingUser, setisFetchingUser] = useState(false);
+  const [user, setUser] = useState<any>({});
+  const [printWindow, setPrintWindow] = useState<Window | null>(null);
+  const [attachmentUrl, setAttachmentUrl] = useState<string[]>([]);
+  const [modalStatus, setModalStatus] = useState<"approved" | "disapproved">(
+    "approved"
+  );
   let logo;
   const [branchList, setBranchList] = useState<any[]>([]);
   const [branchMap, setBranchMap] = useState<Map<number, string>>(new Map());
@@ -131,7 +137,6 @@ const ApproverCashDisbursement: React.FC<Props> = ({
   const hasDisapprovedInApprovedBy = approvedBy.some(
     (user) => user.status === "Disapproved"
   );
-
   if (user?.data?.branch === "Strong Motocentrum, Inc.") {
     logo = <img src={SMCTLogo} alt="SMCT Logo" />;
   } else if (user?.data?.branch === "Des Strong Motors, Inc.") {
@@ -180,6 +185,7 @@ const ApproverCashDisbursement: React.FC<Props> = ({
     fetchUserInformation();
   }, []);
 
+
   useEffect(() => {
     const fetchBranchData = async () => {
       try {
@@ -209,14 +215,17 @@ const ApproverCashDisbursement: React.FC<Props> = ({
   useEffect(() => {
     const currentUserId = localStorage.getItem("id");
 
-    // Ensure currentUserId and userId are converted to numbers if they exist
     const userId = currentUserId ? parseInt(currentUserId) : 0;
     setNotedBy(record.noted_by);
     setApprovedBy(record.approved_by);
     setAvpstaff(record.avp_staff);
     setNewData(record.form_data[0].items.map((item) => ({ ...item })));
     setEditableRecord(record);
-
+    setNewTotalBoatFare(record.form_data[0].totalBoatFare);
+    setNewTotalHotel(record.form_data[0].totalHotel);
+    setNewTotalFare(record.form_data[0].totalFare);
+    setNewTotalContingency(record.form_data[0].totalContingency);
+    setEditedApprovers(record.approvers_id);
     if (currentUserId) {
       fetchUser(record.user_id);
     }
@@ -267,60 +276,12 @@ const ApproverCashDisbursement: React.FC<Props> = ({
       console.error("Error parsing attachment:", error);
     }
   }, [record]);
-
-  const fetchUser = async (id: number) => {
-    setisFetchingUser(true);
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        throw new Error("Token is missing");
-      }
-
-      const response = await axios.get(
-        `http://122.53.61.91:6002/api/view-user/${id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      setUser(response.data);
-    } catch (error) {
-      console.error("Failed to fetch approvers:", error);
-    } finally {
-      setisFetchingUser(false);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      // Convert FileList to array and set it
+      setFile(Array.from(e.target.files));
     }
   };
-
-  const fetchCustomApprovers = async (id: number) => {
-    setisFetchingApprovers(true);
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        throw new Error("Token is missing");
-      }
-
-      const response = await axios.get(
-        `http://122.53.61.91:6002/api/request-forms/${id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const { notedby, approvedby } = response.data;
-      setNotedBy(notedby);
-      setApprovedBy(approvedby);
-      setApprovers(approvers);
-    } catch (error) {
-      console.error("Failed to fetch approvers:", error);
-    } finally {
-      setisFetchingApprovers(false);
-    }
-  };
-
   const handleDisapprove = async () => {
     const userId = localStorage.getItem("id") ?? "";
     try {
@@ -368,12 +329,7 @@ const ApproverCashDisbursement: React.FC<Props> = ({
       setCommentMessage(errorMessage);
     }
   };
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      // Convert FileList to array and set it
-      setFile(Array.from(e.target.files));
-    }
-  };
+
   const handleApprove = async () => {
     const userId = localStorage.getItem("id") ?? "";
     const token = localStorage.getItem("token");
@@ -424,16 +380,7 @@ const ApproverCashDisbursement: React.FC<Props> = ({
       setCommentMessage(errorMessage);
     }
   };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const options: Intl.DateTimeFormatOptions = {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    };
-    return date.toLocaleDateString("en-US", options);
-  };
+  
 
   const formatDate2 = (dateString: Date) => {
     const date = new Date(dateString);
@@ -445,74 +392,88 @@ const ApproverCashDisbursement: React.FC<Props> = ({
     return date.toLocaleDateString("en-US", options);
   };
 
-  const handleItemChange = (
-    index: number,
-    field: keyof Item,
-    value: string
-  ) => {
-    // Update the field of the item at the specified index in newData
-    const newDataCopy = [...newData];
-    newDataCopy[index] = { ...newDataCopy[index], [field]: value };
-    setErrorMessage("");
-    // Calculate totalAmount if either quantity or unitCost changes
-    if (field === "quantity" || field === "unitCost") {
-      const quantity = parseFloat(newDataCopy[index].quantity);
-      const unitCost = parseFloat(newDataCopy[index].unitCost);
-      newDataCopy[index].totalAmount = (quantity * unitCost).toString();
-    }
-
-    // Calculate grandTotal
-    let total = 0;
-    for (const item of newDataCopy) {
-      total += parseFloat(item.totalAmount);
-    }
-    const grandTotal = total.toString();
-
-    // Update the state with the modified newDataCopy and grandTotal
-    setNewData(newDataCopy);
-    setEditableRecord((prevState) => ({
-      ...prevState,
-      form_data: [
-        {
-          ...prevState.form_data[0],
-          grand_total: grandTotal,
-          date: editedDate !== "" ? editedDate : prevState.form_data[0].date,
-        },
-      ],
-      approvers_id: editedApprovers,
-    }));
-  };
-
   if (!record) return null;
 
+  
+
+  const fetchUser = async (id: number) => {
+    setisFetchingUser(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("Token is missing");
+      }
+
+      const response = await axios.get(
+        `http://122.53.61.91:6002/api/view-user/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setUser(response.data);
+    } catch (error) {
+      console.error("Failed to fetch approvers:", error);
+    } finally {
+      setisFetchingUser(false);
+    }
+  };
+  const fetchCustomApprovers = async (id: number) => {
+    setisFetchingApprovers(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("Token is missing");
+      }
+
+      const response = await axios.get(
+        `http://122.53.61.91:6002/api/request-forms/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const { notedby, approvedby, avp_staff } = response.data;
+      setNotedBy(notedby);
+      setApprovedBy(approvedby);
+      setApprovers(approvers);
+      setAvpstaff(avp_staff);
+    } catch (error) {
+      console.error("Failed to fetch approvers:", error);
+    } finally {
+      setisFetchingApprovers(false);
+    }
+  };
   const handlePrint = () => {
     // Construct the data object to be passed
     const data = {
       id: record,
-      notedBy: notedBy,
       approvedBy: approvedBy,
+      notedBy: notedBy,
       user: user,
     };
 
-    // Open a new window with PrintCashDisbursement component
     localStorage.setItem("printData", JSON.stringify(data));
-    const newWindow = window.open(`/print-cashDisbursement`, "_blank");
+    // Open a new window with PrintRefund component
+    const newWindow = window.open(`/print-cash`, "_blank");
 
     // Optional: Focus the new window
     if (newWindow) {
       newWindow.focus();
     }
   };
+
   return (
     <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="p-4 relative w-full mx-10 md:mx-0 z-10 md:w-1/2 space-y-auto h-3/4 overflow-scroll bg-white border-black rounded-t-lg shadow-lg">
+      <div className="p-4 relative w-full mx-10 md:mx-0 z-10 md:w-1/2 lg:w-2/3 space-y-auto h-4/5 overflow-scroll bg-white border-black shadow-lg">
         <div className=" top-2 flex justify-end cursor-pointer sticky">
-          <XMarkIcon
-            className="h-8 w-8 text-black  bg-white rounded-full p-1  "
-            onClick={closeModal}
-          />
+          <XMarkIcon className="h-6 w-6 text-black" onClick={closeModal} />
         </div>
-        {!fetchingApprovers && !isFetchingApprovers && (
+        {!isFetchingApprovers && (
           <>
             <button
               className="bg-blue-600 p-1 px-2 rounded-md text-white"
@@ -521,7 +482,7 @@ const ApproverCashDisbursement: React.FC<Props> = ({
               Print
             </button>
             {printWindow && (
-              <PrintCashDisbursement
+              <PrintCash
                 data={{
                   id: record,
                   approvedBy: approvedBy,
@@ -536,7 +497,7 @@ const ApproverCashDisbursement: React.FC<Props> = ({
         <div className="flex flex-col justify-center items-center">
           <div className="justify-center w-1/2">{logo}</div>
           <h1 className="font-bold text-[18px] uppercase ">
-            Cash Disbursement Requisition Slip
+          Discount Requisition Form
           </h1>
           <div className="flex flex-col justify-center ">
             <p className="underline ">{user?.data?.branch}</p>
@@ -545,9 +506,7 @@ const ApproverCashDisbursement: React.FC<Props> = ({
         </div>
         <div className="justify-start items-start flex flex-col space-y-4 w-full">
           <div className="flex items-center justify-between w-full">
-            <p className="font-medium text-[14px]">
-              Request ID: #{record.request_code}
-            </p>
+            <p className="font-medium text-[14px]">Request ID: #{record.request_code}</p>
             <div className="w-auto flex ">
               <p>Date: </p>
               <p className="font-bold pl-2">{formatDate2(record.created_at)}</p>
@@ -572,111 +531,53 @@ const ApproverCashDisbursement: React.FC<Props> = ({
             </p>
           </div>
           <div className="mt-4 w-full overflow-x-auto">
-            <div className="w-full border-collapse ">
-              <div className="table-container">
-                <table className="border w-full space-x-auto ">
-                  <thead className="border border-black h-14  bg-[#8EC7F7]">
-                    <tr className="border ">
-                      <th className={`${inputStyle}`}>QTY</th>
-                      <th className={`${inputStyle}`}>DESCRIPTION</th>
-                      <th className={`${inputStyle}`}>UNIT COST</th>
-                      <th className={`${inputStyle}`}>TOTAL AMOUNT</th>
-                      <th className={`${inputStyle}`}>USAGE/REMARKS</th>
-                    </tr>
-                  </thead>
-                  <tbody className={`${tableCellStyle}`}>
-                    {isEditing
-                      ? newData.map((item, index) => (
-                          <tr key={index}>
-                            <td className={tableCellStyle}>
-                              <input
-                                type="number"
-                                value={item.quantity}
-                                onChange={(e) =>
-                                  handleItemChange(
-                                    index,
-                                    "quantity",
-                                    e.target.value
-                                  )
-                                }
-                              />
-                            </td>
-                            <td className={tableCellStyle}>
-                              <input
-                                type="text"
-                                value={item.description}
-                                onChange={(e) =>
-                                  handleItemChange(
-                                    index,
-                                    "description",
-                                    e.target.value
-                                  )
-                                }
-                              />
-                            </td>
-                            <td className={tableCellStyle}>
-                              <input
-                                type="number"
-                                value={item.unitCost}
-                                onChange={(e) =>
-                                  handleItemChange(
-                                    index,
-                                    "unitCost",
-                                    e.target.value
-                                  )
-                                }
-                              />
-                            </td>
-                            <td className={tableCellStyle}>
-                              <input
-                                type="text"
-                                value={item.totalAmount}
-                                readOnly
-                              />
-                            </td>
-                            <td className={tableCellStyle}>
-                              <input
-                                type="text"
-                                value={item.remarks}
-                                onChange={(e) =>
-                                  handleItemChange(
-                                    index,
-                                    "remarks",
-                                    e.target.value
-                                  )
-                                }
-                              />
-                            </td>
-                          </tr>
-                        ))
-                      : editableRecord.form_data[0].items.map((item, index) => (
-                          <tr key={index}>
-                            <td className={tableCellStyle}>{item.quantity}</td>
-                            <td className={tableCellStyle}>
-                              {item.description}
-                            </td>
-                            <td className={tableCellStyle}>{item.unitCost}</td>
-                            <td className={tableCellStyle}>
-                              {item.totalAmount}
-                            </td>
-                            <td className={tableCellStyle}>{item.remarks}</td>
-                          </tr>
-                        ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            {errorMessage && <p className="text-red-600">{errorMessage}</p>}
-          </div>
-          <div className="w-full">
-            <h1>Grand Total</h1>
+  <div className="w-full border-collapse">
+    <table className="border-collapse w-full border-black border lg:overflow-auto xl:table-fixed">
+      <thead>
+        <tr>
+          <th className="border p-2 border-black bg-[#8EC7F7] w-1/12">Brand</th>
+          <th className="border border-black bg-[#8EC7F7] w-1/12">Model</th>
+          <th className="border border-black bg-[#8EC7F7] w-2/12">Unit/Part/Job</th>
+          <th className="border border-black bg-[#8EC7F7] w-2/12">Part No./Job Order No.</th>
+          <th className="border border-black bg-[#8EC7F7] w-2/12">Labor Charge</th>
+          <th className="border border-black bg-[#8EC7F7] w-2/12">Net Spotcash</th>
+          <th className="border border-black bg-[#8EC7F7] w-2/12">Discounted Price</th>
+        </tr>
+      </thead>
+      <tbody>
+        {editableRecord.form_data[0].items.map((item, index) => (
+          <tr key={index}>
+            <td className={`${tableInput}`}>{item.brand}</td>
+            <td className={`${tableInput}`}>{item.model}</td>
+            <td className={`${tableInput}`}>{item.unit}</td>
+            <td className={`${tableInput}`}>{item.partno}</td>
+            <td className={`${tableInput}`}>{item.labor}</td>
+            <td className={`${tableInput}`}>{item.spotcash}</td>
+            <td className={`${tableInput}`}>{item.discountedPrice}</td>
+          </tr>
+        ))}
+      </tbody>
+      <tfoot className="bg-gray-100">
+        <tr>
+          <td colSpan={4} className="text-right font-bold p-2">Totals:</td>
+          <td className="p-2 border border-black text-center font-bold">
+            {record.form_data[0].total_labor.toFixed(2)}
+          </td>
+          <td className="p-2 border border-black text-center font-bold">
+            {record.form_data[0].total_spotcash.toFixed(2)}
+          </td>
+          <td className="p-2 border border-black text-center font-bold">
+            {record.form_data[0].total_discount.toFixed(2)}
+          </td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
 
-            <input
-              type="text"
-              className="border bg-white border-black rounded-md p-1 mt-2 w-full font-bold "
-              value={`₱ ${editableRecord.form_data[0].grand_total}`}
-            />
-          </div>
+          
+
+       
 
           <div className="w-full flex-col justify-center items-center">
             {isFetchingApprovers ? (
@@ -890,7 +791,7 @@ const ApproverCashDisbursement: React.FC<Props> = ({
               </div>
             )}
             {commentMessage && <p className="text-red-500">{commentMessage}</p>}
-
+         
             {/* Comments Section */}
             <ul className="flex flex-col w-full mb-4 space-y-4">
               {notedBy.filter((user) => user.comment).length > 0 ||
@@ -1021,17 +922,17 @@ const ApproverCashDisbursement: React.FC<Props> = ({
               </button>
             </div>
           )}
-          {showSuccessModal && (
-            <ApproveSuccessModal
-              closeModal={() => setShowSuccessModal(false)}
-              closeParentModal={closeModal} // Pass the closeModal function as closeParentModal prop
-              status={modalStatus}
-            />
-          )}
         </div>
       </div>
+      {showSuccessModal && (
+        <ApproveSuccessModal
+          closeModal={() => setShowSuccessModal(false)}
+          closeParentModal={closeModal} // Pass the closeModal function as closeParentModal prop
+          status={modalStatus}
+        />
+      )}
     </div>
   );
 };
 
-export default ApproverCashDisbursement;
+export default ApproverDiscount;

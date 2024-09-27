@@ -648,7 +648,7 @@ const ViewCashDisbursementModal: React.FC<Props> = ({
                       <div className="relative flex flex-col items-center justify-center">
                         {/* Signature */}
                         {user.data?.signature && (
-                          <div className="absolute top-0">
+                          <div className="absolute -top-4">
                             <img
                               src={user.data?.signature}
                               alt="avatar"
@@ -702,7 +702,7 @@ const ViewCashDisbursementModal: React.FC<Props> = ({
                           {(user.status === "Approved" ||
                             (typeof user.status === "string" &&
                               user.status.split(" ")[0] === "Rejected")) && (
-                            <div className="absolute top-0">
+                            <div className="absolute -top-4">
                               <img
                                 src={user.signature}
                                 alt="avatar"
@@ -762,7 +762,7 @@ const ViewCashDisbursementModal: React.FC<Props> = ({
                           {(user.status === "Approved" ||
                             (typeof user.status === "string" &&
                               user.status.split(" ")[0] === "Rejected")) && (
-                            <div className="absolute top-0">
+                            <div className="absolute -top-4">
                               <img
                                 src={user.signature}
                                 alt="avatar"

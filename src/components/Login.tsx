@@ -43,7 +43,7 @@ const Login: React.FC = () => {
     margin: "0 auto",
     borderColor: "red",
   };
-  useEffect(() => {
+/*   useEffect(() => {
     const checkAuthRedirect = () => {
       const token = localStorage.getItem('token');
       
@@ -54,7 +54,7 @@ const Login: React.FC = () => {
     };
 
     checkAuthRedirect();
-  }, [navigate]);
+  }, [navigate]); */
 
   const submitData: SubmitHandler<UserCredentials> = async (data) => {
     try {

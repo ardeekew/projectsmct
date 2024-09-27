@@ -89,7 +89,7 @@ const PrintPurchase: React.FC<PrintRefundProps> = ({ data }) => {
         <p className=" mb-2 flex font-bold ">
             Date:{" "}
             <p className="underline ml-2 mb-2">
-            {formatDate(printData?.id.form_data[0].date)}
+            {formatDate(printData?.id.created_at)}
             </p>
           </p>
         </div>

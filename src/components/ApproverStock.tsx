@@ -31,6 +31,7 @@ interface Approver {
   branch: string;
 }
 type Record = {
+  request_code: string;
   created_at: Date;
   id: number;
   status: string;
@@ -42,6 +43,8 @@ type Record = {
   attachment: string;
   noted_by: Approver[];
   approved_by: Approver[];
+  avp_staff: Approver[];
+  approved_attachment: string;
 };
 
 type FormData = {
@@ -55,6 +58,7 @@ type FormData = {
       status: string;
       branch: string;
     }[];
+
     approved_by: {
       firstName: string;
       lastName: string;
@@ -93,9 +97,14 @@ const ApproversStock: React.FC<Props> = ({
   const [checkedPurpose, setCheckedPurpose] = useState("");
   const [comments, setComments] = useState("");
   const [loading, setLoading] = useState(false);
+  const [removedAttachments, setRemovedAttachments] = useState<
+    (string | number)[]
+  >([]);
+  const [attachment, setAttachment] = useState<any>([]);
   const [isFetchingApprovers, setisFetchingApprovers] = useState(false);
   const [notedBy, setNotedBy] = useState<Approver[]>([]);
   const [approvedBy, setApprovedBy] = useState<Approver[]>([]);
+  const [avpstaff, setAvpstaff] = useState<Approver[]>([]);
   const [user, setUser] = useState<any>({});
   const [isFetchingUser, setisFetchingUser] = useState(false);
   const [printWindow, setPrintWindow] = useState<Window | null>(null);
@@ -104,10 +113,13 @@ const ApproversStock: React.FC<Props> = ({
   const [editedApprovers, setEditedApprovers] = useState<number>(
     record.approvers_id
   );
+  const [file, setFile] = useState<File[]>([]);
+  const [commentMessage, setCommentMessage] = useState("");
   const [attachmentUrl, setAttachmentUrl] = useState<string[]>([]);
   const [modalStatus, setModalStatus] = useState<"approved" | "disapproved">(
     "approved"
   );
+  const [position, setPosition] = useState("");
   const [branchList, setBranchList] = useState<any[]>([]);
   const [branchMap, setBranchMap] = useState<Map<number, string>>(new Map());
   const hasDisapprovedInNotedBy = notedBy.some(
@@ -129,6 +141,41 @@ const ApproversStock: React.FC<Props> = ({
   } else {
     logo = null; // Handle the case where branch does not match any of the above
   }
+  useEffect(() => {
+    const fetchUserInformation = async () => {
+      try {
+        const id = localStorage.getItem("id");
+        const token = localStorage.getItem("token");
+        if (!token) {
+          console.error("Token is missing");
+          return;
+        }
+
+        const response = await axios.get(
+          `http://122.53.61.91:6002/api/view-user/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.data.status) {
+          setUser(response.data.data);
+
+          setPosition(response.data.data.position);
+        } else {
+          throw new Error(
+            response.data.message || "Failed to fetch user information"
+          );
+        }
+      } finally {
+        setLoading(false); // Update loading state when done fetching
+      }
+    };
+
+    fetchUserInformation();
+  }, []);
   useEffect(() => {
     const fetchBranchData = async () => {
       try {
@@ -156,29 +203,85 @@ const ApproversStock: React.FC<Props> = ({
   }, []);
 
   useEffect(() => {
+    // Log the entire record object to understand its structure
+    console.log("Record data:", record);
+
+    // Fetch user data based on user_id
     fetchUser(record.user_id);
+
+    // Set other state values from record
     setNotedBy(record.noted_by);
+    setAvpstaff(record.avp_staff);
     setApprovedBy(record.approved_by);
     setCheckedPurpose(record.form_data[0].purpose);
+
     try {
-      // If record.attachment is a JSON string, parse it
+      // Handle record.attachment if it is a JSON string
       if (typeof record.attachment === "string") {
         const parsedAttachment = JSON.parse(record.attachment);
-        // Handle the parsed attachment
         const fileUrls = parsedAttachment.map(
           (filePath: string) =>
             `http://122.53.61.91:6002/storage/${filePath.replace(/\\/g, "/")}`
         );
         setAttachmentUrl(fileUrls);
+        console.log("Parsed attachment URLs:", fileUrls); // Log parsed URLs
       } else {
-        // Handle case where record.attachment is already an object
         console.warn("Attachment is not a JSON string:", record.attachment);
-        // Optionally handle this case if needed
+      }
+
+      // Check if approved_attachment is an array with a string element
+      if (
+        Array.isArray(record.approved_attachment) &&
+        record.approved_attachment.length > 0
+      ) {
+        const approvedAttachmentString = record.approved_attachment[0]; // Access the first element
+        const parsedApprovedAttachment = JSON.parse(approvedAttachmentString); // Parse the string to get the actual array
+        console.log("Parsed approved attachment:", parsedApprovedAttachment); // Log parsed attachment
+
+        if (
+          Array.isArray(parsedApprovedAttachment) &&
+          parsedApprovedAttachment.length > 0
+        ) {
+          // Access the first element of the array
+          const formattedAttachment = parsedApprovedAttachment[0];
+          setAttachment(formattedAttachment); // Set the state with the string
+          console.log("Formatted approved attachment:", formattedAttachment); // Log the formatted attachment
+        } else {
+          console.warn(
+            "Parsed approved attachment is not an array or is empty:",
+            parsedApprovedAttachment
+          );
+        }
+      } else {
+        console.warn(
+          "Approved attachment is not an array or is empty:",
+          record.approved_attachment
+        );
       }
     } catch (error) {
       console.error("Error parsing attachment:", error);
     }
-  }, [record]);
+  }, [record]); // Dependency on record
+
+  console.log("est", attachment);
+  const handleRemoveAttachment = (index: number) => {
+    // Get the path of the attachment to be removed
+    const attachmentPath = attachmentUrl[index].split(
+      "storage/attachments/"
+    )[1];
+
+    // Add the path to the removedAttachments state
+    setRemovedAttachments((prevRemoved) => [...prevRemoved, attachmentPath]);
+
+    // Remove the attachment from the current list
+    setAttachmentUrl((prevUrls) => prevUrls.filter((_, i) => i !== index));
+  };
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      // Convert FileList to array and set it
+      setFile(Array.from(e.target.files));
+    }
+  };
 
   const fetchUser = async (id: number) => {
     setisFetchingUser(true);
@@ -204,43 +307,9 @@ const ApproversStock: React.FC<Props> = ({
       setisFetchingUser(false);
     }
   };
-  const fetchCustomApprovers = async (id: number) => {
-    setisFetchingApprovers(true);
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        throw new Error("Token is missing");
-      }
 
-      const response = await axios.get(
-        `http://122.53.61.91:6002/api/request-forms/${id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+  
 
-      const { notedby, approvedby } = response.data;
-      setNotedBy(notedby);
-      setApprovedBy(approvedby);
-      setApprovers(approvers);
-    } catch (error) {
-      console.error("Failed to fetch approvers:", error);
-    } finally {
-      setisFetchingApprovers(false);
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const options: Intl.DateTimeFormatOptions = {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    };
-    return date.toLocaleDateString("en-US", options);
-  };
   const formatDate2 = (dateString: Date) => {
     const date = new Date(dateString);
     const options: Intl.DateTimeFormatOptions = {
@@ -250,6 +319,8 @@ const ApproversStock: React.FC<Props> = ({
     };
     return date.toLocaleDateString("en-US", options);
   };
+  console.log(record);
+
   const handleApprove = async () => {
     const userId = localStorage.getItem("id") ?? "";
     const token = localStorage.getItem("token");
@@ -259,16 +330,28 @@ const ApproversStock: React.FC<Props> = ({
       return;
     }
 
-    const requestData = {
-      user_id: parseInt(userId),
-      action: "approve",
-      comment: comments,
-    };
+    const requestData = new FormData();
+
+    // Only append attachments if the file array is not empty
+    if (file && file.length > 0) {
+      file.forEach((file) => {
+        requestData.append("attachment[]", file);
+      });
+    }
+
+    requestData.append("user_id", parseInt(userId).toString());
+    requestData.append("action", "approve");
+    requestData.append("comment", comments);
+
+    // Log the contents of requestData for debugging
+    for (const [key, value] of requestData.entries()) {
+      console.log(`${key}:`, value);
+    }
 
     try {
       setApprovedLoading(true);
 
-      const response = await axios.put(
+      const response = await axios.post(
         `http://122.53.61.91:6002/api/request-forms/${record.id}/process`,
         requestData,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -285,7 +368,7 @@ const ApproversStock: React.FC<Props> = ({
         error.message ||
         "Failed to update stock requisition.";
       console.error("Error approving request form:", errorMessage);
-      setErrorMessage(errorMessage);
+      setCommentMessage(errorMessage);
     }
   };
 
@@ -299,13 +382,25 @@ const ApproversStock: React.FC<Props> = ({
         return;
       }
 
-      const requestData = {
-        user_id: parseInt(userId),
-        action: "disapprove",
-        comment: comments,
-      };
+  
+      const requestData = new FormData();
 
-      const response = await axios.put(
+      // Only append attachments if the file array is not empty
+      if (file && file.length > 0) {
+        file.forEach((file) => {
+          requestData.append("attachment[]", file);
+        });
+      }
+  
+      requestData.append("user_id", parseInt(userId).toString());
+      requestData.append("action", "disapprove");
+      requestData.append("comment", comments);
+  
+      // Log the contents of requestData for debugging
+      for (const [key, value] of requestData.entries()) {
+        console.log(`${key}:`, value);
+      }
+      const response = await axios.post(
         `http://122.53.61.91:6002/api/request-forms/${record.id}/process`,
         requestData,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -322,7 +417,7 @@ const ApproversStock: React.FC<Props> = ({
         error.message ||
         "Failed to update stock requisition.";
       console.error("Error disapproving request form:", errorMessage);
-      setErrorMessage(errorMessage);
+      setCommentMessage(errorMessage);
     }
   };
 
@@ -386,7 +481,9 @@ const ApproversStock: React.FC<Props> = ({
         </div>
         <div className="justify-start items-start flex flex-col space-y-4 w-full">
           <div className="flex items-center justify-between w-full">
-            <p className="font-medium text-[14px]">Request ID: #{record.id}</p>
+            <p className="font-medium text-[14px]">
+              Request ID: #{record.request_code}
+            </p>
             <div className="w-auto flex ">
               <p>Date: </p>
               <p className="font-bold pl-2">{formatDate2(record.created_at)}</p>
@@ -495,7 +592,7 @@ const ApproversStock: React.FC<Props> = ({
                       <div className="relative flex flex-col items-center justify-center">
                         {/* Signature */}
                         {user.data?.signature && (
-                          <div className="absolute top-0">
+                          <div className="absolute -top-4">
                             <img
                               src={user.data?.signature}
                               alt="avatar"
@@ -554,7 +651,7 @@ const ApproversStock: React.FC<Props> = ({
                           {(user.status === "Approved" ||
                             (typeof user.status === "string" &&
                               user.status.split(" ")[0] === "Rejected")) && (
-                            <div className="absolute top-0">
+                            <div className="absolute -top-4">
                               <img
                                 src={user.signature}
                                 alt="avatar"
@@ -619,7 +716,7 @@ const ApproversStock: React.FC<Props> = ({
                           {(user.status === "Approved" ||
                             (typeof user.status === "string" &&
                               user.status.split(" ")[0] === "Rejected")) && (
-                            <div className="absolute top-0">
+                            <div className="absolute -top-4">
                               <img
                                 src={user.signature}
                                 alt="avatar"
@@ -708,11 +805,13 @@ const ApproversStock: React.FC<Props> = ({
                 />
               </div>
             )}
+            {commentMessage && <p className="text-red-500">{commentMessage}</p>}
 
             {/* Comments Section */}
             <ul className="flex flex-col w-full mb-4 space-y-4">
               {notedBy.filter((user) => user.comment).length > 0 ||
-              approvedBy.filter((user) => user.comment).length > 0 ? (
+              approvedBy.filter((user) => user.comment).length > 0 ||
+              avpstaff.filter((user) => user.comment).length > 0 ? (
                 <>
                   {notedBy
                     .filter((user) => user.comment)
@@ -761,11 +860,58 @@ const ApproversStock: React.FC<Props> = ({
                         </div>
                       </div>
                     ))}
+                  {avpstaff
+                    .filter((user) => user.comment)
+                    .map((user, index) => (
+                      <div className="flex">
+                        <div>
+                          <img
+                            alt="logo"
+                            className="cursor-pointer hidden sm:block"
+                            src={Avatar}
+                            height={35}
+                            width={45}
+                          />
+                        </div>
+                        <div className="flex flex-row w-full" key={index}>
+                          <li className="flex flex-col justify-between pl-2">
+                            <h3 className="font-bold text-lg">
+                              {user.firstName} {user.lastName} - AVP STAFF
+                            </h3>
+                            <p>{user.comment}</p>
+                          </li>
+                        </div>
+                      </div>
+                    ))}
                 </>
               ) : (
                 <p className="text-gray-500">No comments yet</p>
               )}
             </ul>
+          </div>
+          <div className="w-full max-w-md ">
+            <p className="font-semibold">Approved Attachment:</p>
+
+            {record.approved_attachment.length === 0 &&
+            position === "Vice President" && record.status === "Pending" ? (
+              <input
+                id="file"
+                type="file"
+                multiple
+                onChange={handleFileChange}
+                className="w-full mt-2"
+              />
+            ) : record.approved_attachment.length > 0 && attachment  ? (
+              <div className="mt-2">
+                <img
+                  src={`http://122.53.61.91:6002/storage/${attachment}`}
+                  alt="Approved Attachment"
+                  className="max-w-full h-auto rounded"
+                />
+              </div>
+            ) : (
+              <p className="text-gray-500">No approved attachment available.</p>
+            )}
           </div>
 
           {record.status === "Pending" && (

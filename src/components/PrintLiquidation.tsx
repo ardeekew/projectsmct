@@ -50,32 +50,31 @@ const PrintLiquidation: React.FC<PrintRefundProps> = ({ data }) => {
 
   useEffect(() => {
     // Retrieve the data from localStorage
-    const storedData = localStorage.getItem('printData');
+    const storedData = localStorage.getItem("printData");
     if (storedData) {
       const parsedData = JSON.parse(storedData);
       setPrintData(parsedData); // Set the printData state
-     
     }
-  
-    localStorage.removeItem('printData');
+
+    localStorage.removeItem("printData");
   }, []);
 
   const tableStyle = "border border-black  py-4";
   useEffect(() => {
     if (printData !== null) {
       window.print();
-  
+
       window.onafterprint = () => {
-        localStorage.removeItem('printData'); // Clean up after printing
+        localStorage.removeItem("printData"); // Clean up after printing
         window.close(); // Close the tab after printing or canceling
       };
     }
   }, [printData]);
-  
+  console.log(printData);
   return (
     <div className="print-container  ">
-    <style>
-  {`
+      <style>
+        {`
     @media print {
       .print-container {
         padding: 10px;
@@ -128,12 +127,12 @@ const PrintLiquidation: React.FC<PrintRefundProps> = ({ data }) => {
       .two-column {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 20px;
+        gap: 10px;
       }
 
       /* Adjust padding and margins */
       .print-container {
-        padding: 10px;
+        padding: 8px;
         margin: 0;
       }
 
@@ -151,152 +150,227 @@ const PrintLiquidation: React.FC<PrintRefundProps> = ({ data }) => {
       }
     }
   `}
-</style>
-      <div className="border-2 border-black px-4 bg-white text-black h-lvh">
-      <div className="flex flex-col justify-center items-center">
-      <div className="justify-center w-1/2 mt-10">{logo}</div>
-          <h1 className="font-bold text-lg uppercase">liquidation of actual expense</h1>
+      </style>
+      <div className=" px-4 bg-white text-black h-lvh">
+        <div className="flex flex-col justify-center items-center">
+          <div className="justify-center w-1/2 mt-10">{logo}</div>
+          <h1 className="font-bold text-lg uppercase">
+            liquidation of actual expense
+          </h1>
           <div className="flex flex-col items-center font-bold mt-2">
             <h1 className="font-medium text-[16px] uppercase underline">
-              {printData?.user.data.branch || ''}
+              {printData?.user.data.branch || ""}
             </h1>
             <h1 className="text-lg">BRANCH</h1>
           </div>
         </div>
+        <div className="px-5">
+          <p className="flex text-xs font-bold">
+            Activity:{" "}
+            <p className="underline ml-2">
+              {printData?.id.form_data[0].purpose}
+            </p>{" "}
+          </p>
+          <p className="flex text-xs font-bold">
+            Date:{" "}
+            <p className="underline ml-2">
+              {formatDate(printData?.id.created_at)}
+            </p>
+          </p>
+        </div>
         <div className="mt-10 w-full overflow-x-auto px-5">
-  <table className="border-collapse w-full border-black border table-fixed">
-    <thead>
-      <tr>
-        <th className="border w-10 border-black bg-[#8EC7F7]">Date</th>
-        <th colSpan={3} className="border border-black bg-[#8EC7F7]">
-          Transportation
-        </th>
-        <th colSpan={3} className="border border-black bg-[#8EC7F7] h-14">
-          Hotel
-        </th>
-        <th colSpan={3} className="border border-black bg-[#8EC7F7]">
-          PER DIEM OTHER RELATED EXPENSES
-        </th>
-        <th className="border border-black bg-[#8EC7F7]"></th>
-      </tr>
-      <tr className="text-[14 px]">
-        <th className="border w-10 border-black whitespace-normal">Date</th>
-        <th className="border w-32 border-black whitespace-normal break-words">Destination</th>
-        <th className="border w-32 border-black whitespace-normal text-[8px] break-words">Transportation</th>
-        <th className="border w-24 border-black whitespace-normal">Amount</th>
-        <th className="border w-32 border-black whitespace-normal">Hotel</th>
-        <th className="border w-32 border-black whitespace-normal">Place</th>
-        <th className="border w-24 border-black whitespace-normal">Amount</th>
-        <th className="border w-32 border-black whitespace-normal">Per Diem</th>
-        <th className="border w-32 border-black whitespace-normal">Particulars</th>
-        <th className="border w-24 border-black whitespace-normal">Amount</th>
-        <th className="border w-24 border-black whitespace-normal">Grand Total</th>
-      </tr>
-    </thead>
-    <tbody>
-      {printData?.id.form_data.map((formData: any, index: number) => (
-        <React.Fragment key={index}>
-          {formData.items.map((item: any, itemIndex: number) => (
-            <tr key={itemIndex}>
-              <td className="border border-black w-10 whitespace-normal break-words text-center" >{formatDate(item.liquidationDate)}</td>
-              <td className="border border-black w-32 whitespace-normal break-words text-center">{item.destination}</td>
-              <td className="border border-black w-32 whitespace-normal break-words text-center">{item.transportation}</td>
-              <td className="border border-black w-24 whitespace-normal break-words text-center">{item.transportationAmount}</td>
-              <td className="border border-black w-32 whitespace-normal break-words text-center">{item.hotel}</td>
-              <td className="border border-black w-32 whitespace-normal break-words text-center">{item.hotelAddress}</td>
-              <td className="border border-black w-24 whitespace-normal break-words text-center">{item.hotelAmount}</td>
-              <td className="border border-black w-32 whitespace-normal break-words text-center">{item.perDiem}</td>
-              <td className="border border-black w-32 whitespace-normal break-words text-center">{item.particulars}</td>
-              <td className="border border-black w-24 whitespace-normal break-words text-center">{item.particularsAmount}</td>
-              <td className="border border-black w-24 whitespace-normal break-words text-center">{item.grandTotal}</td>
-            </tr>
-          ))}
-          {[...Array(Math.max(2 - formData.items.length, 0))].map((_, emptyIndex) => (
-            <tr key={`empty-${index}-${emptyIndex} border-black`}>
-              <td className="border border-black w-10 py-6"></td>
-              <td className="border border-black w-32"></td>
-              <td className="border border-black w-32"></td>
-              <td className="border border-black w-24"></td>
-              <td className="border border-black w-32"></td>
-              <td className="border border-black w-32"></td>
-              <td className="border border-black w-24"></td>
-              <td className="border border-black w-32"></td>
-              <td className="border border-black w-32"></td>
-              <td className="border border-black w-24"></td>
-              <td className="border border-black w-24"></td>
-            </tr>
-          ))}
-        </React.Fragment>
-      ))}
-    </tbody>
-  </table>
-</div>
-
-
-        <div className="two-column grid grid-cols-2 gap-6 mt-10">
-        <div>
-          <table className="border border-black w-full">
-            <tbody className="w-full">
+          <table className="border-collapse w-full border-black border table-fixed">
+            <thead>
               <tr>
-                <td className="border border-black px-2 py-1 font-semibold">
-                  TOTAL EXPENSE
-                </td>
-                <td className="border border-black px-2 py-1 font-bold">
-                  {printData?.id.form_data[0].totalExpense}
-                </td>
+                <th className="border w-10 border-black bg-[#8EC7F7]">Date</th>
+                <th colSpan={3} className="border border-black bg-[#8EC7F7]">
+                  Transportation
+                </th>
+                <th
+                  colSpan={3}
+                  className="border border-black bg-[#8EC7F7] h-14"
+                >
+                  Hotel
+                </th>
+                <th colSpan={3} className="border border-black bg-[#8EC7F7]">
+                  PER DIEM OTHER RELATED EXPENSES
+                </th>
+                <th className="border border-black bg-[#8EC7F7]"></th>
               </tr>
-             
-              <tr>
-                <td className="border border-black px-2 py-1 font-semibold">
-                  CASH Advance
-                </td>
-                <td className="border border-black px-2 py-1 font-bold">
-                  {printData?.id.form_data[0].cashAdvance}
-                </td>
+              <tr className="text-[14 px]">
+                <th className="border w-10 border-black whitespace-normal">
+                  Date
+                </th>
+                <th className="border w-32 border-black whitespace-normal break-words">
+                  From
+                </th>
+                <th className="border w-32 border-black whitespace-normal break-words">
+                  To
+                </th>
+                <th className="border w-32 border-black whitespace-normal text-[8px] break-words">
+                  Transportation
+                </th>
+                <th className="border w-24 border-black whitespace-normal">
+                  Amount
+                </th>
+                <th className="border w-32 border-black whitespace-normal">
+                  Hotel
+                </th>
+                <th className="border w-32 border-black whitespace-normal">
+                  Place
+                </th>
+                <th className="border w-24 border-black whitespace-normal">
+                  Amount
+                </th>
+                <th className="border w-32 border-black whitespace-normal">
+                  Per Diem
+                </th>
+                <th className="border w-32 border-black whitespace-normal">
+                  Particulars
+                </th>
+                <th className="border w-24 border-black whitespace-normal">
+                  Amount
+                </th>
+                <th className="border w-24 border-black whitespace-normal">
+                  Grand Total
+                </th>
               </tr>
-              <tr>
-                <td className="border border-black px-2 py-1 font-semibold">
-                  Short
-                </td>
-                <td className="border border-black px-2 py-1 font-bold">
-                  {printData?.id.form_data[0].short}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      
-        <div>
-          <table className="border border-black w-full">
+            </thead>
             <tbody>
-              <tr>
-                <td className="border border-black px-2 py-1 font-semibold">
-                  NAME OF EMPLOYEE
-                </td>
-                <td className="border border-black px-2 py-1 font-bold">
-                {printData?.user.data.lastName},   {printData?.user.data.firstName}
-                </td>
-              </tr>
-              <tr>
-                <td className="border border-black px-2 py-1 font-semibold">
-                  SIGNATURE
-                </td>
-                <td className="border border-black px-2 py-1 font-bold">
-                  <img src={printData?.user.data.signature} alt="Signature" />
-                </td>
-              </tr>
-              <tr>
-                <td className="border border-black px-2 py-1 font-semibold">
-                EMPLOYEE NO.
-                </td>
-                <td className="border border-black px-2 py-1 font-bold">
-                  {printData?.user.data.employee_id}
-                </td>
-              </tr>
-            
+              {printData?.id.form_data.map((formData: any, index: number) => (
+                <React.Fragment key={index}>
+                  {formData.items.map((item: any, itemIndex: number) => (
+                    <tr key={itemIndex}>
+                      <td className="border border-black w-10 whitespace-normal break-words text-center">
+                        {formatDate(item.liquidationDate)}
+                      </td>
+                      <td className="border border-black w-32 whitespace-normal break-words text-center">
+                        {item.from}
+                      </td>
+                      <td className="border border-black w-32 whitespace-normal break-words text-center">
+                        {item.to}
+                      </td>
+                      <td className="border border-black w-32 whitespace-normal break-words text-center">
+                        {item.transportation}
+                      </td>
+                      <td className="border border-black w-24 whitespace-normal break-words text-center">
+                        {item.transportationAmount}
+                      </td>
+                      <td className="border border-black w-32 whitespace-normal break-words text-center">
+                        {item.hotel}
+                      </td>
+                      <td className="border border-black w-32 whitespace-normal break-words text-center">
+                        {item.hotelAddress}
+                      </td>
+                      <td className="border border-black w-24 whitespace-normal break-words text-center">
+                        {item.hotelAmount}
+                      </td>
+                      <td className="border border-black w-32 whitespace-normal break-words text-center">
+                        {item.perDiem}
+                      </td>
+                      <td className="border border-black w-32 whitespace-normal break-words text-center">
+                        {item.particulars}
+                      </td>
+                      <td className="border border-black w-24 whitespace-normal break-words text-center">
+                        {item.particularsAmount}
+                      </td>
+                      <td className="border border-black w-24 whitespace-normal break-words text-center">
+                        {item.grandTotal}
+                      </td>
+                    </tr>
+                  ))}
+                  {[...Array(Math.max(2 - formData.items.length, 0))].map(
+                    (_, emptyIndex) => (
+                      <tr key={`empty-${index}-${emptyIndex} border-black`}>
+                        <td className="border border-black w-10 py-6"></td>
+                        <td className="border border-black w-32"></td>
+                        <td className="border border-black w-32"></td>
+                        <td className="border border-black w-32"></td>
+                        <td className="border border-black w-24"></td>
+                        <td className="border border-black w-32"></td>
+                        <td className="border border-black w-32"></td>
+                        <td className="border border-black w-24"></td>
+                        <td className="border border-black w-32"></td>
+                        <td className="border border-black w-32"></td>
+                        <td className="border border-black w-24"></td>
+                        <td className="border border-black w-24"></td>
+                      </tr>
+                    )
+                  )}
+                </React.Fragment>
+              ))}
             </tbody>
           </table>
         </div>
+
+        <div className="two-column grid grid-cols-2 gap-6 pt-3 px-5">
+          <div>
+            <table className="border border-black w-full">
+              <tbody className="w-full">
+                <tr>
+                  <td className="border border-black px-2 py-1 font-semibold">
+                    TOTAL EXPENSE
+                  </td>
+                  <td className="border border-black px-2 py-1 font-bold">
+                    {printData?.id.form_data[0].totalExpense}
+                  </td>
+                </tr>
+
+                <tr>
+                  <td className="border border-black px-2 py-1 font-semibold">
+                    CASH Advance
+                  </td>
+                  <td className="border border-black px-2 py-1 font-bold">
+                    {printData?.id.form_data[0].cashAdvance}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="border border-black px-2 py-1 font-semibold">
+                    Short
+                  </td>
+                  <td className="border border-black px-2 py-1 font-bold">
+                    {printData?.id.form_data[0].short}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div>
+            <table className="border border-black w-full">
+              <tbody>
+                <tr>
+                  <td className="border border-black px-2 py-1 font-semibold">
+                    NAME OF EMPLOYEE
+                  </td>
+                  <td className="border border-black px-2 py-1 font-bold">
+                    {printData?.user.data.lastName},{" "}
+                    {printData?.user.data.firstName}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="border border-black px-2 py-1 font-semibold">
+                    SIGNATURE
+                  </td>
+                  <td className="border border-black px-2 py-1 font-bold h-20">
+                    <img
+                      src={printData?.user.data.signature}
+                      className="h-16"
+                      alt="Signature"
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td className="border border-black px-2 py-1 font-semibold">
+                    EMPLOYEE NO.
+                  </td>
+                  <td className="border border-black px-2 py-1 font-bold">
+                    {printData?.user.data.employee_id}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
         <div className="mt-4 ">
           <div className="flex flex-wrap justify-start ">

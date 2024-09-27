@@ -37,9 +37,9 @@ const requestType = [
   { title: "Discount Request", path: "/request/dr" },
 ];
 const schema = z.object({
-  department: z.string(),
   cashAmount: z.string(),
   liquidationDate: z.string(),
+  emp_status: z.string(),
   remarks: z.string(),
   totalBoatFare: z.string(),
   totalHotel: z.string(),
@@ -51,16 +51,13 @@ const schema = z.object({
   approver: z.string(),
   items: z.array(
     z.object({
-      cashDate: z.string().nonempty("Cash date is required"),
-      day: z.string().nonempty("Day is required"),
-      itinerary: z.string().nonempty("Itinerary is required"),
-      from: z.string().nonempty("From  is required"),
-      to: z.string().nonempty("To is required"),
-      hotel: z.string().optional(),
-      rate: z.string().optional(),
-      amount: z.string().optional(),
-      perDiem: z.string().optional(),
-      remarks: z.string().optional(),
+      brand: z.string().nonempty("Brand is required"),
+      model: z.string().nonempty("Model  is required"),
+      unit: z.string().nonempty("Unit/Part/Job Description is required"),
+      partno: z.string().optional(),
+      labor: z.string().optional(),
+      spotcash: z.string().optional(),
+      discountedPrice: z.string().optional(),
     })
   ),
 });
@@ -74,29 +71,23 @@ const brancheList = [
 ];
 type FormData = z.infer<typeof schema>;
 type TableDataItem = {
-  cashDate: string;
-  day: string;
-  from: string;
-  to: string;
-  activity: string;
-  hotel: string;
-  rate: string;
-  amount: string;
-  perDiem: string;
-  remarks: string;
+  brand: string;
+  model: string;
+  unit: string;
+  partno: string;
+  labor: string;
+  spotcash: string;
+  discountedPrice: string;
 };
 
 const initialTableData: TableDataItem[] = Array.from({ length: 1 }, () => ({
-  cashDate: "",
-  day: "",
-  from: "",
-  to: "",
-  activity: "",
-  hotel: "",
-  rate: "",
-  amount: "",
-  perDiem: "",
-  remarks: "",
+  brand: "",
+  model: "",
+  unit: "",
+  partno: "",
+  labor: "",
+  spotcash: "",
+  discountedPrice: "",
 }));
 
 const tableStyle = "border border-black p-2";
@@ -108,7 +99,7 @@ const tableInput =
   "w-full h-full bg-white px-2 py-1 bg-white  autofill-input focus:outline-0";
 const itemDiv = "flex flex-col ";
 const buttonStyle = "h-[45px] w-[150px] rounded-[12px] text-white";
-const CreateApplicationCash = (props: Props) => {
+const CreateDiscount = (props: Props) => {
   const [totalBoatFare, setTotalBoatFare] = useState(0);
   const [totalHotel, setTotalHotel] = useState(0);
   const [formData, setFormData] = useState<any>(null);
@@ -121,6 +112,11 @@ const CreateApplicationCash = (props: Props) => {
   const [selectedApproverList, setSelectedApproverList] = useState<
     number | null
   >(null);
+  const [totalAmount, setTotalAmount] = useState({
+    totalLabor: 0,
+    totalSpotCash: 0,
+    totalDiscountedPrice: 0,
+  });
   const [selectedApprover, setSelectedApprover] = useState<{ name: string }[]>(
     []
   );
@@ -140,6 +136,7 @@ const CreateApplicationCash = (props: Props) => {
   const [initialApprovedBy, setInitialApprovedBy] = useState<Approver[]>([]);
   const [showAddCustomModal, setShowAddCustomModal] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
   const {
     formState: { errors: formErrors },
   } = useForm<FormData>();
@@ -149,29 +146,23 @@ const CreateApplicationCash = (props: Props) => {
 
   const [items, setItems] = useState<
     {
-      cashDate: string;
-      day: string;
-      from: string;
-      to: string;
-      activity: string;
-      hotel: string;
-      rate: string;
-      amount: string;
-      perDiem: string;
-      remarks: string;
+      brand: string;
+      model: string;
+      unit: string;
+      partno: string;
+      labor: string;
+      spotcash: string;
+      discountedPrice: string;
     }[]
   >([
     {
-      cashDate: "",
-      day: "",
-      from: "",
-      to: "",
-      activity: "",
-      hotel: "",
-      rate: "",
-      amount: "",
-      perDiem: "",
-      remarks: "",
+      brand: "",
+      model: "",
+      unit: "",
+      partno: "",
+      labor: "",
+      spotcash: "",
+      discountedPrice: "",
     },
   ]);
 
@@ -208,6 +199,22 @@ const CreateApplicationCash = (props: Props) => {
       setCustomApprovers([]); // Ensure that customApprovers is always an array
     }
   }; */
+  const getTotalAmount = () => {
+    const totalLabor = tableData.reduce(
+      (acc, item) => acc + Number(item.labor || 0),
+      0
+    );
+    const totalSpotCash = tableData.reduce(
+      (acc, item) => acc + Number(item.spotcash || 0),
+      0
+    );
+    const totalDiscountedPrice = tableData.reduce(
+      (acc, item) => acc + Number(item.discountedPrice || 0),
+      0
+    );
+
+    return { totalLabor, totalSpotCash, totalDiscountedPrice };
+  };
 
   const handleOpenConfirmationModal = () => {
     setShowConfirmationModal(true);
@@ -217,18 +224,6 @@ const CreateApplicationCash = (props: Props) => {
   const handleCloseConfirmationModal = () => {
     setShowConfirmationModal(false);
   };
-
-  const totalPerDiem = items.reduce(
-    (total, item) => total + parseFloat(String(item.perDiem) || "0"),
-    0
-  );
-
-  const calculateTotal = () => {
-    const total =
-      totalBoatFare + totalHotel + totalPerDiem + totalFare + totalContingency;
-    return total.toFixed(2);
-  };
-
   const {
     register,
     handleSubmit,
@@ -242,6 +237,7 @@ const CreateApplicationCash = (props: Props) => {
   const [selectedRequestType, setSelectedRequestType] =
     useState("/request/afca");
   console.log(validationErrors);
+
   const handleChange = (
     index: number,
     field: keyof TableDataItem,
@@ -250,8 +246,8 @@ const CreateApplicationCash = (props: Props) => {
     const newData = [...tableData];
     newData[index][field] = value;
 
-    // Check if the value is empty for 'from' and 'to' fields
-    if (field === "from" || field === "to") {
+    // Validation for required fields 'brand' and 'model'
+    if (field === "brand" || field === "model") {
       if (!value.trim()) {
         setValidationErrors((prevErrors) => ({
           ...prevErrors,
@@ -266,23 +262,46 @@ const CreateApplicationCash = (props: Props) => {
       }
     }
 
+    // Update table data
     setItems(newData);
+
+    // Calculate total amounts for labor, spotcash, and discountedPrice
+    const totalLabor = newData.reduce(
+      (acc, item) => acc + (parseFloat(item.labor) || 0),
+      0
+    );
+    const totalSpotCash = newData.reduce(
+      (acc, item) => acc + (parseFloat(item.spotcash) || 0),
+      0
+    );
+    const totalDiscountedPrice = newData.reduce(
+      (acc, item) => acc + (parseFloat(item.discountedPrice) || 0),
+      0
+    );
+
+    // Update total amounts in the state
+    setTotalAmount({
+      totalLabor,
+      totalSpotCash,
+      totalDiscountedPrice,
+    });
   };
 
+  useEffect(() => {
+    const totals = getTotalAmount();
+    setTotalAmount(totals);
+  }, [tableData]);
   const handleAddRow = () => {
     setTableData([
       ...tableData,
       {
-        cashDate: "",
-        day: "",
-        from: "",
-        to: "",
-        activity: "",
-        hotel: "",
-        rate: "",
-        amount: "",
-        perDiem: "",
-        remarks: "",
+        brand: "",
+        model: "",
+        unit: "",
+        partno: "",
+        labor: "",
+        spotcash: "",
+        discountedPrice: "",
       },
     ]);
   };
@@ -301,26 +320,15 @@ const CreateApplicationCash = (props: Props) => {
     setTableData([
       ...tableData,
       {
-        cashDate: "",
-        day: "",
-        from: "",
-        to: "",
-        activity: "",
-        hotel: "",
-        rate: "",
-        amount: "",
-        perDiem: "",
-        remarks: "",
+        brand: "",
+        model: "",
+        unit: "",
+        partno: "",
+        labor: "",
+        spotcash: "",
+        discountedPrice: "",
       },
     ]);
-  };
-
-  const calculateTotalPerDiem = (items: TableDataItem[]) => {
-    const totalPerDiem = items.reduce(
-      (total, item) => total + parseFloat(item.perDiem || "0"),
-      0
-    );
-    return totalPerDiem.toFixed(2);
   };
 
   const onSubmit = async (data: FormData) => {
@@ -341,35 +349,10 @@ const CreateApplicationCash = (props: Props) => {
       }
 
       // Calculate total per diem
-      const totalPerDiem = items.reduce(
-        (total, item) => total + parseFloat(item.perDiem || "0"),
-        0
-      );
 
       // Calculate total amount
-      const total =
-        parseFloat(data.totalBoatFare || "0") +
-        parseFloat(data.totalHotel || "0") +
-        parseFloat(data.totalPerDiem || "0") +
-        parseFloat(data.totalFare || "0") +
-        parseFloat(data.totalContingency || "0");
-
-      // Calculate grand total
-      const grand_total = (total + totalPerDiem).toFixed(2);
 
       // Validate if any item fields are empty
-      const emptyItems: number[] = [];
-      items.forEach((item, index) => {
-        if (!item.cashDate || !item.from || !item.to) {
-          emptyItems.push(index);
-        }
-      });
-
-      if (emptyItems.length > 0) {
-        emptyItems.forEach((index) => {});
-
-        return;
-      }
 
       const formData = new FormData();
 
@@ -384,7 +367,7 @@ const CreateApplicationCash = (props: Props) => {
         : [];
       formData.append("noted_by", JSON.stringify(notedByIds));
       formData.append("approved_by", JSON.stringify(approvedByIds));
-      formData.append("form_type", "Application For Cash Advance");
+      formData.append("form_type", "Discount Requisition Form");
       formData.append("user_id", userId);
 
       formData.append(
@@ -392,26 +375,19 @@ const CreateApplicationCash = (props: Props) => {
         JSON.stringify([
           {
             branch: branch_code,
-            grand_total: grand_total,
-            department: data.department,
+            employement_status: data.emp_status,
+            total_labor: totalAmount.totalLabor,
+            total_spotcash: totalAmount.totalSpotCash,
+            total_discount: totalAmount.totalDiscountedPrice,
             remarks: data.remarks,
-            liquidationDate: data.liquidationDate,
-            totalBoatFare: data.totalBoatFare,
-            totalHotel: data.totalHotel,
-            totalperDiem: totalPerDiem,
-            totalFare: data.totalFare,
-            totalContingency: data.totalContingency,
             items: items.map((item) => ({
-              cashDate: item.cashDate,
-              day: item.day,
-              from: item.from,
-              to: item.to,
-              activity: item.activity,
-              hotel: item.hotel,
-              rate: item.rate,
-              amount: item.amount,
-              perDiem: item.perDiem,
-              remarks: item.remarks,
+              brand: item.brand,
+              model: item.model,
+              unit: item.unit,
+              partno: item.partno,
+              labor: item.labor,
+              spotcash: item.spotcash,
+              discountedPrice: item.discountedPrice,
             })),
           },
         ])
@@ -565,9 +541,9 @@ const CreateApplicationCash = (props: Props) => {
           <div>
             <h1 className=" text-[24px] text-left py-4 text-primary font-bold flex mr-2">
               <span className="mr-2 underline decoration-2 underline-offset-8">
-                Application
+                Discount
               </span>{" "}
-              For Cash Advance
+            Requisition Form
             </h1>
           </div>
           <div className="my-2  ">
@@ -582,357 +558,222 @@ const CreateApplicationCash = (props: Props) => {
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="px-[35px] mt-4 ">
             <div className="grid xl:grid-cols-4 md:grid-cols-2 gap-8 justify-between ">
-              <div className={`${itemDiv}`}>
-                <p className="font-semibold">Department</p>
-                <input
-                  type="text"
-                  {...register("department", { required: true })}
-                  className={`${inputStyle} h-[44px]`}
-                />
-                {errors.department && formSubmitted && (
-                  <p className="text-red-500">Department is required</p>
-                )}
-              </div>
-
-              <div className={`${itemDiv}`}>
-                <p>Usage/Remarks</p>
-                <textarea
-                  {...register("remarks")}
-                  className={`${inputStyle} h-[100px]`}
-                />
-              </div>
-              <div className={`${itemDiv}`}>
-                <p className="font-semibold">Liquidation Date</p>
-                <input
-                  type="date"
-                  {...register("liquidationDate", { required: true })}
-                  className={`${inputStyle} h-[44px]`}
-                />
-                {errors.liquidationDate && formSubmitted && (
-                  <p className="text-red-500">Liquidation Date is required</p>
-                )}
+              <div className="flex flex-col sm:flex-row justify-between">
+                <div className="">
+                  <p className="font-bold">Purpose:</p>
+                  <div className="flex flex-col space-y-2 mt-2 ">
+                    <div>
+                      <input
+                        type="radio"
+                        id="proba"
+                        value="Proba"
+                        className="size-4 ml-1"
+                        {...register("emp_status", { required: true })}
+                      />
+                      <label className="font-semibold ml-2">PROBA</label>
+                    </div>
+                    <div>
+                      <input
+                        type="radio"
+                        id="regular"
+                        value="Regular"
+                        className="size-4 ml-1"
+                        {...register("emp_status", { required: true })}
+                      />
+                      <label className="font-semibold ml-2">REGULAR</label>
+                    </div>
+                  </div>
+                  {errors.emp_status && formSubmitted && (
+                    <p className="text-red-500">Purpose is required</p>
+                  )}
+                </div>
               </div>
             </div>
 
             <div className="mt-4 w-full overflow-x-auto md:overflow-auto">
               <div className="w-full border-collapse border border-black">
                 <div className="table-container">
-                  <table className="border-collapse w-full border border-black ">
+                  <table className="border-collapse w-full border border-black">
                     <thead className="bg-[#8EC7F7]">
                       <tr>
-                        <th className={`${tableStyle}`}>Date</th>
-                        <th className={`${tableStyle}`}>Day</th>
-                        <th className={`${tableStyle}`}>From</th>
-                        <th className={`${tableStyle}`}>To</th>
-                        <th className={`${tableStyle}`}>Activity</th>
-                        <th className={`${tableStyle}`}>Hotel</th>
-                        <th className={`${tableStyle}`}>Rate</th>
-                        <th className={`${tableStyle}`}>Amount</th>
-                        <th className={`${tableStyle}`}>Per Diem</th>
-                        <th className={`${tableStyle}`}>Remarks</th>
+                        <th className={`${tableStyle}`}>Brand</th>
+                        <th className={`${tableStyle}`}>Model</th>
+                        <th className={`${tableStyle}`}>
+                          Unit/Part/Job/Description
+                        </th>
+                        <th className={`${tableStyle}`}>
+                          Part NO./Job Order No.
+                        </th>
+                        <th className={`${tableStyle}`}>Labor Charge</th>
+                        <th className={`${tableStyle}`}>Net Spotcash</th>
+                        <th className={`${tableStyle}`}>Discounted Price</th>
                       </tr>
                     </thead>
                     <tbody>
                       {tableData.map((item, index) => (
                         <tr key={index} className="border border-black">
-                          <td className="p-1 border border-black ">
-                            <input
-                              type="date"
-                              value={item.cashDate}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                const day = [
-                                  "Sun",
-                                  "Mon",
-                                  "Tue",
-                                  "Wed",
-                                  "Thu",
-                                  "Fri",
-                                  "Sat",
-                                ][new Date(value).getDay()];
-                                handleChange(index, "cashDate", value);
-                                handleChange(index, "day", day);
-                              }}
-                              className={`${tableInput} bg-[#F9f9f9]`}
-                            />
-                            {validationErrors[`items.${index}.date`] &&
-                              formSubmitted && (
-                                <p className="text-red-500">
-                                  {validationErrors[`items.${index}.date`]}
-                                </p>
-                              )}
-                            {!item.cashDate &&
-                              formSubmitted &&
-                              !validationErrors[`item.${index}.date`] && (
-                                <p className="text-red-500">Date Required</p>
-                              )}
-                          </td>
-                          <td className="p-1 border border-black ">
+                          {/* Brand Input */}
+                          <td className="p-1 border border-black">
                             <input
                               type="text"
-                              value={item.day}
-                              readOnly
-                              className={`${tableInput}`}
-                            />
-                          </td>
-                          <td className="p-1 border border-black ">
-                            <input
-                              type="text"
-                              value={item.from}
+                              value={item.brand}
                               onChange={(e) =>
-                                handleChange(index, "from", e.target.value)
+                                handleChange(index, "brand", e.target.value)
                               }
                               className={`${inputStyle2}`}
                               style={{ minHeight: "50px", maxHeight: "400px" }}
                               onFocus={() =>
-                                handleTextareaHeight(index, "from")
+                                handleTextareaHeight(index, "brand")
                               }
                               onBlur={() =>
-                                handleTextareaHeight(index, "from")
+                                handleTextareaHeight(index, "brand")
                               }
                               onInput={() =>
-                                handleTextareaHeight(index, "from")
+                                handleTextareaHeight(index, "brand")
                               }
                             />
-                            {validationErrors[`items.${index}.from`] &&
+                            {/* Error Handling */}
+                            {validationErrors[`items.${index}.brand`] &&
                               formSubmitted && (
                                 <p className="text-red-500">
-                                  {validationErrors[`items.${index}.from`]}
+                                  {validationErrors[`items.${index}.brand`]}
                                 </p>
                               )}
-                            {!item.from &&
+                            {!item.brand &&
                               formSubmitted &&
-                              !validationErrors[`items.${index}.from`] && (
-                                <p className="text-red-500">From Required</p>
+                              !validationErrors[`items.${index}.brand`] && (
+                                <p className="text-red-500">Brand Required</p>
                               )}
                           </td>
 
-                          <td className="p-1 border border-black ">
+                          {/* Other Columns */}
+                          {/* Model Input */}
+                          <td className="p-1 border border-black">
                             <input
                               type="text"
-                              value={item.to}
+                              value={item.model}
                               onChange={(e) =>
-                                handleChange(index, "to", e.target.value)
+                                handleChange(index, "model", e.target.value)
                               }
                               className={`${inputStyle2}`}
                               style={{ minHeight: "50px", maxHeight: "400px" }}
                               onFocus={() =>
-                                handleTextareaHeight(index, "to")
+                                handleTextareaHeight(index, "model")
                               }
                               onBlur={() =>
-                                handleTextareaHeight(index, "to")
+                                handleTextareaHeight(index, "model")
                               }
                               onInput={() =>
-                                handleTextareaHeight(index, "to")
+                                handleTextareaHeight(index, "model")
                               }
                             />
-                            {validationErrors[`items.${index}.to`] &&
-                              formSubmitted && (
-                                <p className="text-red-500">
-                                  {validationErrors[`items.${index}.to`]}
-                                </p>
-                              )}
-                            {!item.to &&
-                              formSubmitted &&
-                              !validationErrors[`items.${index}.to`] && (
-                                <p className="text-red-500">To Required</p>
-                              )}
                           </td>
-                          <td className="p-1 border border-black ">
+
+                          {/* Unit Input */}
+                          <td className="p-1 border border-black">
                             <textarea
-                              id={`activity-${index}`}
-                              value={item.activity}
+                              value={item.unit}
                               onChange={(e) =>
-                                handleChange(index, "activity", e.target.value)
+                                handleChange(index, "unit", e.target.value)
                               }
                               className={`${inputStyle2}`}
                               style={{ minHeight: "50px", maxHeight: "400px" }}
                               onFocus={() =>
-                                handleTextareaHeight(index, "activity")
+                                handleTextareaHeight(index, "unit")
                               }
-                              onBlur={() =>
-                                handleTextareaHeight(index, "activity")
-                              }
+                              onBlur={() => handleTextareaHeight(index, "unit")}
                               onInput={() =>
-                                handleTextareaHeight(index, "activity")
+                                handleTextareaHeight(index, "unit")
                               }
                             />
                           </td>
+
+                          {/* Part No Input */}
                           <td className="p-1 border border-black">
                             <textarea
-                              value={item.hotel}
+                              value={item.partno}
                               onChange={(e) =>
-                                handleChange(index, "hotel", e.target.value)
+                                handleChange(index, "partno", e.target.value)
                               }
                               className={`${tableInput}`}
                               style={{ minHeight: "50px", maxHeight: "400px" }}
                               onFocus={() =>
-                                handleTextareaHeight(index, "hotel")
+                                handleTextareaHeight(index, "partno")
                               }
                               onBlur={() =>
-                                handleTextareaHeight(index, "hotel")
+                                handleTextareaHeight(index, "partno")
                               }
                               onInput={() =>
-                                handleTextareaHeight(index, "hotel")
+                                handleTextareaHeight(index, "partno")
                               }
                             />
                           </td>
+
+                          {/* Labor Charge Input */}
                           <td className="p-1 border border-black">
                             <input
                               type="number"
-                              value={item.rate}
+                              value={item.labor}
                               onChange={(e) =>
-                                handleChange(index, "rate", e.target.value)
+                                handleChange(index, "labor", e.target.value)
                               }
                               className={`${tableInput}`}
                             />
                           </td>
+
+                          {/* Spotcash Input */}
                           <td className="p-1 border border-black">
                             <input
                               type="number"
-                              value={item.amount}
+                              value={item.spotcash}
                               onChange={(e) =>
-                                handleChange(index, "amount", e.target.value)
+                                handleChange(index, "spotcash", e.target.value)
                               }
                               className={`${tableInput}`}
                             />
                           </td>
+
+                          {/* Discounted Price Input */}
                           <td className="p-1 border border-black">
                             <input
                               type="number"
-                              value={item.perDiem}
+                              value={item.discountedPrice}
                               onChange={(e) =>
-                                handleChange(index, "perDiem", e.target.value)
+                                handleChange(
+                                  index,
+                                  "discountedPrice",
+                                  e.target.value
+                                )
                               }
                               className={`${tableInput}`}
-                            />
-                          </td>
-                          <td className="p-1 border border-black">
-                            <textarea
-                              id={`remarks-${index}`}
-                              value={item.remarks}
-                              onChange={(e) =>
-                                handleChange(index, "remarks", e.target.value)
-                              }
-                              className={`${inputStyle2} `}
-                              style={{ minHeight: "50px", maxHeight: "400px" }}
-                              onFocus={() =>
-                                handleTextareaHeight(index, "remarks")
-                              }
-                              onBlur={() =>
-                                handleTextareaHeight(index, "remarks")
-                              }
-                              onInput={() =>
-                                handleTextareaHeight(index, "remarks")
-                              }
                             />
                           </td>
                         </tr>
                       ))}
                     </tbody>
+
+                    {/* Footer to display totals */}
+                    <tfoot className="bg-gray-100">
+                      <tr>
+                        <td colSpan={4} className="text-right font-bold p-2">
+                          Totals:
+                        </td>
+                        <td className="p-2 border border-black text-center font-bold">
+                          {totalAmount.totalLabor}
+                        </td>
+                        <td className="p-2 border border-black text-center font-bold">
+                          {totalAmount.totalSpotCash}
+                        </td>
+                        <td className="p-2 border border-black text-center font-bold">
+                          {totalAmount.totalDiscountedPrice}
+                        </td>
+                      </tr>
+                    </tfoot>
                   </table>
                 </div>
               </div>
             </div>
-            <div className="flex justify-between overflow-x-auto ">
-              <div>
-                <table className="border border-black  mt-10">
-                  <tr>
-                    <th colSpan={2} className="bg-[#8EC7F7] ">
-                      <p className="font-semibold text-[12px] p-2">
-                        SUMMARY OF EXPENSES TO BE INCURRED (for C/A)
-                      </p>
-                    </th>
-                  </tr>
-                  <tr>
-                    <td className={`${tableStyle}`}>
-                      <p className="font-semibold  ">BOAT FARE</p>
-                    </td>
-                    <td className={`${tableStyle}`}>
-                      <input
-                        type="number"
-                        {...register("totalBoatFare", { required: true })}
-                        className="bg-white font-bold text-center"
-                        value={totalBoatFare.toFixed(2)}
-                        onChange={handleBoatFareChange}
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                      />
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className={`${tableStyle}`}>
-                      <p className="font-semibold">HOTEL</p>
-                    </td>
-                    <td className={`${tableStyle}`}>
-                      <input
-                        type="number"
-                        {...register("totalHotel", { required: true })}
-                        className="bg-white font-bold text-center"
-                        value={totalHotel.toFixed(2)}
-                        onChange={handleHotelChange}
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                      />
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className={`${tableStyle}`}>
-                      <p className="font-semibold">PER DIEM</p>
-                    </td>
-                    <td className={`${tableStyle} text-center`}>
-                      <p className="font-bold">{totalPerDiem.toFixed(2)}</p>
-                    </td>
-                  </tr>
 
-                  <tr>
-                    <td className={`${tableStyle}`}>
-                      <p className="font-semibold  ">FARE</p>
-                    </td>
-                    <td className={`${tableStyle}`}>
-                      <input
-                        type="number"
-                        {...register("totalFare", { required: true })}
-                        className="bg-white font-bold text-center"
-                        value={totalFare.toFixed(2)}
-                        onChange={handleFareChange}
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                      />
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className={`${tableStyle}`}>
-                      <p className="font-semibold  ">CONTINGENCY</p>
-                    </td>
-                    <td className={`${tableStyle}`}>
-                      <input
-                        type="number"
-                        {...register("totalContingency", { required: true })}
-                        className="bg-white font-bold text-center"
-                        value={totalContingency.toFixed(2)}
-                        onChange={handleContingencyChange}
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                      />
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className={`${tableStyle} h-8`}></td>
-                    <td className={`${tableStyle}`}></td>
-                  </tr>
-                  <tr>
-                    <td className={`${tableStyle} h-14 font-bold`}>TOTAL</td>
-                    <td className={`${tableStyle} text-center `}>
-                      <p className="bg-white font-bold ">
-                        {" "}
-                        ₱{calculateTotal()}{" "}
-                      </p>
-                    </td>
-                  </tr>
-                </table>
-              </div>
-            </div>
             <div className="flex justify-between flex-col md:flex-row">
               <div className="w-full max-w-md  p-4">
                 <p className="font-semibold">Attachments:</p>
@@ -1065,4 +906,4 @@ const CreateApplicationCash = (props: Props) => {
   );
 };
 
-export default CreateApplicationCash;
+export default CreateDiscount;
