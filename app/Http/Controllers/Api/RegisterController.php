@@ -24,6 +24,7 @@ class RegisterController extends Controller
                 "Audit Manager",
                 "Audit Staff",
                 "Audit Supervisor",
+                "Automation Staff",
                 "AVP - Finance",
                 "AVP - Sales and Marketing",
                 "Branch Supervisor/Manager",
@@ -39,7 +40,7 @@ class RegisterController extends Controller
                 "Payroll Staff",
                 "Sales Representative",
                 "Senior Web Developer",
-                "Vice - President",
+                "Vice President",
                 "User"
               ];
               

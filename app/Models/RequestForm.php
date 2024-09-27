@@ -13,16 +13,21 @@ class RequestForm extends Model
         'form_type',
         'form_data',
         'user_id',
-        'approvers_id',
-        'attachment'
+        'noted_by',
+        'attachment',
+        'approved_by',
+        'branch_code',
+        'request_code',
     ];
 
     protected $attributes = [
         'status' => 'Pending',
     ];
-
+    
     protected $casts = [
-        'attachment' => 'array'
+        'attachment' => 'array',
+        'approved_by' => 'array',
+        'noted_by' => 'array',
     ];
 
 
@@ -37,6 +42,8 @@ class RequestForm extends Model
     {
         $this->attributes['form_data'] = json_encode($value);
         $this->attributes['attachment'] = json_encode($value);
+        $this->attributes['noted_by'] = json_encode($value);
+        $this->attributes['approved_by'] = json_encode($value);
     }
 
     // Relationship definition

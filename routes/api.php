@@ -69,18 +69,29 @@ Route::get('/view-approvers/{userID}', [ApproverController::class, 'getApprovers
 Route::get('/approvers/{id}', [ApproverController::class, 'show']);
 });
 Route::get('/view-approvers', [ApproverController::class, 'index']);
+Route::get('/getStaff', [ApproverController::class, 'getStaff']);
+Route::get('/getAVP', [ApproverController::class, 'getAVP']);
 Route::get("view-branch", [BranchController::class,"viewBranch"])->name('view.branch');
+Route::get("get-avpstaff-branch", [ApproverController::class,"getAVPFinanceStaffs"])->name('get.avp.finance.staff');
+Route::get("get-avpstaff-branch/{id}", [ApproverController::class,"getAVPFinanceStaff"])->name('get.avp.finance.staff');
+Route::put("update-avpstaff-branch/{id}", [ApproverController::class,"updateAVPFinanceStaff"])->name('update.avp.finance.staff');
+Route::delete("delete-avpstaff-branch/{id}", [ApproverController::class,"deleteAVPFinanceStaff"])->name('delete.avp.finance.staff');
+
+
 //AREA MANAGER
 Route::post("create-area-manager", [AreaManagerController::class,"createAreaManager"])->name('create.area.manager');
 Route::post("update-area-manager/{id}", [AreaManagerController::class,"updateAreaManager"])->name('update.area.manager');
 Route::get("view-area-manager/{id}", [AreaManagerController::class,"viewAreaManager"])->name('view.area.manager');
 Route::get("view-area-managers", [AreaManagerController::class,"viewAllAreaManagers"])->name('view.area.managers');
+
 Route::delete("delete-area-manager/{id}", [AreaManagerController::class,"deleteAreaManager"])->name('delete.area.manager');
 
 //APPROVAL PROCESS
-Route::put("request-forms/{request_form_id}/process", [ApprovalProcessController::class, 'processRequestForm'])->name('process.request.form');//APPROVAL PROCESS
+Route::post("request-forms/{request_form_id}/process", [ApprovalProcessController::class, 'processRequestForm'])->name('process.request.form');//APPROVAL PROCESS
 Route::get('request-forms/for-approval/{user_id}', [ApprovalProcessController::class, 'getRequestFormsForApproval'])->name('get.request.form.for.approval');
 Route::get('request-forms/{request_form_id}', [ApprovalProcessController::class, 'viewSingleRequestForm'])->name('view.single.request.form.for.approval');
+Route::post("add-avpstaff", [ApproverController::class,"createAVPFinance"])->name('create.avp.finance.staff');
+Route::post("add-avpstaff-branch", [ApproverController::class,"createAVPFinanceStaff"])->name('create.avp.finance..branch');
 
 //attachment
 Route::post('/attachments', [AttachmentController::class, 'store']);

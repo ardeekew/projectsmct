@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Log;
 use App\Notifications\ReturnRequestNotification;
 use App\Notifications\PreviousReturnRequestNotification;
 use App\Events\NotificationEvent;
-
+use App\Models\Branch;
 
 
 class ApprovalProcessController extends Controller
@@ -27,8 +27,38 @@ class ApprovalProcessController extends Controller
             'user_id' => 'required|exists:users,id',
             'action' => 'required|in:approve,disapprove',
             'comment' => 'nullable|string',
+            'attachment.*' => 'nullable|file|mimes:pdf,png,jpg,jpeg'
         ]);
 
+        if (DB::table('a_v_p_finance_staff')->where('staff_id', $request->user_id)->exists()) {
+            $request->validate([
+                'comment' => 'required|string',
+            ]);
+        }
+
+        $currentUser = User::findOrFail($request->user_id);
+
+        // Add conditional validation for VP-Staff requiring an attachment
+        if ($currentUser->position == 'Vice President') {
+            $request->validate([
+                'attachment' => 'required|array', // Ensure it's an array
+                'attachment.*' => 'required|file|mimes:pdf,png,jpg,jpeg'
+            ]);
+        }
+
+        // Initialize attachment variable
+        $attachmentPaths = null; // Set default to null
+
+        if ($request->hasFile('attachment')) {
+            $attachmentPaths = []; // Initialize as an array if files exist
+            foreach ($request->file('attachment') as $file) {
+                // Store each file and collect paths
+                $path = $file->store('attachments', 'public');
+                $attachmentPaths[] = $path;
+            }
+        }
+
+        // If no files were uploaded, $attachmentPaths will be null
         $user_id = $validated['user_id'];
         $action = $validated['action'];
         $comment = $validated['comment'];
@@ -54,7 +84,7 @@ class ApprovalProcessController extends Controller
                 ->orderBy('level')
                 ->first();
 
-            if ($currentApprovalLevel->user_id !== $user_id) {
+            if ((int) $currentApprovalLevel->user_id !== (int) $user_id) {
                 return response()->json([
                     'message' => 'It is not your turn to approve this request form.',
                 ], 403);
@@ -63,6 +93,7 @@ class ApprovalProcessController extends Controller
             $approvalProcess->update([
                 'status' => $action === 'approve' ? 'Approved' : 'Disapproved',
                 'comment' => $comment,
+                'attachment' => $attachmentPaths // Will be null if no attachments were uploaded
             ]);
 
             if ($action === 'approve') {
@@ -92,7 +123,6 @@ class ApprovalProcessController extends Controller
                     // Broadcast the notification count update
                     $notificationCount = $nextApprover->unreadNotifications()->count();
                     broadcast(new NotificationEvent($nextApprover, $notificationCount));
-
                 } else {
                     $requestForm->status = 'Approved';
                     $formtype = $requestForm->form_type;
@@ -117,7 +147,7 @@ class ApprovalProcessController extends Controller
 
                 // Broadcast the notification count update
                 $notificationCount = $employee->unreadNotifications()->count();
-                broadcast(new NotificationEvent($employee, $notificationCount));
+                event(new NotificationEvent($employee, $notificationCount));
 
                 // Notify all previous approvers and update their status to "Rejected by [name]"
                 $previousApprovalProcesses = ApprovalProcess::where('request_form_id', $request_form_id)
@@ -132,7 +162,6 @@ class ApprovalProcessController extends Controller
                     // Update the previous approver's status to "Rejected by [name]"
                     $previousApprovalProcess->update([
                         'status' => "Rejected by $approverFirstname $approverLastname",
-                     
                     ]);
 
                     $requesterFirstname = $employee->firstName;
@@ -141,7 +170,7 @@ class ApprovalProcessController extends Controller
 
                     // Broadcast the notification count update
                     $notificationCount = $previousApprover->unreadNotifications()->count();
-                    broadcast(new NotificationEvent($previousApprover, $notificationCount));
+                    event(new NotificationEvent($previousApprover, $notificationCount));
                 }
             }
 
@@ -160,6 +189,7 @@ class ApprovalProcessController extends Controller
             ], 500);
         }
     }
+
     public function getRequestFormsForApproval($user_id)
     {
         try {
@@ -171,13 +201,9 @@ class ApprovalProcessController extends Controller
 
             // Process each approval process
             $transformedApprovalProcesses = $approvalProcesses->map(function ($approvalProcess) use ($user_id) {
+
                 $requestForm = $approvalProcess->requestForm;
                 $requester = $requestForm->user; // Eager loaded user
-
-                // Check if any previous level is disapproved
-                $previousLevelsDisapproved = $requestForm->approvalProcess
-                    ->where('level', '<', $approvalProcess->level)
-                    ->contains('status', 'Disapproved');
 
                 // Check if all previous levels are approved
                 $previousLevelsApproved = $requestForm->approvalProcess
@@ -214,9 +240,78 @@ class ApprovalProcessController extends Controller
                     ->orderBy('level')
                     ->first()?->user; // Get the next approver
 
+                // Fetch approvers details
+                $notedByIds = $requestForm->noted_by ?? [];
+                $approvedByIds = $requestForm->approved_by ?? [];
+
+                // Combine all approvers and other involved user IDs
+                $allUserIds = $requestForm->approvalProcess
+                    ->pluck('user_id')
+                    ->merge($notedByIds)
+                    ->merge($approvedByIds)
+                    ->unique()
+                    ->values();
+
+                // Fetch all approvers in one query
+                $allApprovers = User::whereIn('id', $allUserIds)
+                    ->select('id', 'firstName', 'lastName', 'position', 'signature', 'branch')
+                    ->get()
+                    ->keyBy('id');
+
+                // Fetch all approval statuses and comments in one query
+                $approvalData = ApprovalProcess::whereIn('user_id', $allUserIds)
+                    ->where('request_form_id', $requestForm->id)
+                    ->get()
+                    ->keyBy('user_id');
+
+                $attachments = $approvalData->pluck('attachment')->filter()->values()->all();
+
+                // Helper function to format approver data with status and comment
+                $formatApproverData = function ($userId) use ($allApprovers, $approvalData) {
+                    if (isset($allApprovers[$userId])) {
+                        $user = $allApprovers[$userId];
+                        $approval = $approvalData[$userId] ?? null;
+
+                        return [
+                            'id' => $user->id,
+                            'firstName' => $user->firstName,
+                            'lastName' => $user->lastName,
+                            'status' => $approval->status ?? '',
+                            'comment' => $approval->comment ?? '',
+                            'position' => $user->position,
+                            'signature' => $user->signature
+                        ];
+                    }
+                    return null;
+                };
+
+                // Format noted_by users
+                $formattedNotedBy = collect($notedByIds)
+                    ->map($formatApproverData)
+                    ->filter()
+                    ->values()
+                    ->all();
+
+                // Format approved_by users
+                $formattedApprovedBy = collect($approvedByIds)
+                    ->map($formatApproverData)
+                    ->filter()
+                    ->values()
+                    ->all();
+
+                // Format other approvers who are not listed in noted_by or approved_by
+                $otherUserIds = $allUserIds->diff($notedByIds)->diff($approvedByIds);
+                $formattedOtherApprovers = collect($otherUserIds)
+                    ->map($formatApproverData)
+                    ->filter()
+                    ->values()
+                    ->all();
+
                 // Prepare the response format
                 $approver = $approvalProcess->user; // Eager loaded approver
-
+                $branch = $requestForm->branch_code;
+                $branchNa = Branch::find($branch);
+                $branchName = $branchNa->branch_code;
                 // Determine pending approver
                 $pendingApprover = null;
                 if ($isUserTurn && $isLastApprover) {
@@ -236,9 +331,13 @@ class ApprovalProcessController extends Controller
                     'updated_at' => $approvalProcess->updated_at,
                     'user_id' => $requestForm->user_id,
                     'requested_by' => ($requester ? "{$requester->firstName} {$requester->lastName}" : "Unknown"), // Handle null requester
-                    'approvers_id' => $approvalProcess->user_id, // Include approvers id
+                    'noted_by' => $formattedNotedBy,
+                    'approved_by' => $formattedApprovedBy,
+                    'avp_staff' => $formattedOtherApprovers, // Include other approvers not listed in noted_by or approved_by
                     'pending_approver' => $pendingApprover, // Update pending approver logic
                     'attachment' => $requestForm->attachment,
+                    'request_code' => "$branchName-$requestForm->request_code",
+                    'approved_attachment' => $attachments,
                 ];
             })->filter(); // Filter out null values
 
@@ -257,7 +356,6 @@ class ApprovalProcessController extends Controller
             ], 500);
         }
     }
-
 
 
     //vIEW INDIVIDUAL REQUEST TO APPROVE
@@ -309,6 +407,7 @@ class ApprovalProcessController extends Controller
             foreach ($notedByIds as $userId) {
                 if (isset($notedBy[$userId])) {
                     $formattedNotedBy[] = [
+
                         'firstname' => $notedBy[$userId]->firstName,
                         'lastname' => $notedBy[$userId]->lastName,
                         'status' => $notedStatus[$userId] ?? '',

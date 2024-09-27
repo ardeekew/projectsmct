@@ -38,7 +38,10 @@ class NotificationEvent implements ShouldBroadcast, ShouldDispatchAfterCommit
             new PrivateChannel('user.' . $this->user_id),
         ];
     }
-
+    public function via($notifiable)
+    {
+        return ['broadcast'];
+    }
     public function broadcastWith()
     {
         return [

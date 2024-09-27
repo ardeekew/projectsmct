@@ -16,6 +16,7 @@ class ApprovalProcess extends Model
         'level',
         'status',
         'comment',
+        'attachment',
         
     ];
 

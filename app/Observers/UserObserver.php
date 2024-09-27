@@ -14,7 +14,7 @@ class UserObserver
     public function updated(User $user): void
     {
         // Log the ID of the user being updated
-        Log::info('User updated: ' . $user->id);
+        /* Log::info('User updated: ' . $user->id);
 
         if ($user->isDirty('role')) {
             if ($user->role === 'approver') {
@@ -25,7 +25,7 @@ class UserObserver
                 // Delete the Approver record if the role changes to User
                 Approver::where('user_id', $user->id)->delete();
             }
-        }
+        } */
     }
 
     /**

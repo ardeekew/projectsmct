@@ -490,7 +490,7 @@ public function updateProfileUser(Request $request, $id)
 }
     
 
-    public function updateRole(Request $request, $id = null)
+    public function updateRole(Request $request)
     {
         try {
             // Validate request
