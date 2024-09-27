@@ -52,12 +52,12 @@ const schema = z.object({
   items: z.array(
     z.object({
       brand: z.string().nonempty("Brand is required"),
-      model: z.string().nonempty("Model  is required"),
+      model: z.string().nonempty("Model is required"),
       unit: z.string().nonempty("Unit/Part/Job Description is required"),
       partno: z.string().optional(),
       labor: z.string().optional(),
-      spotcash: z.string().optional(),
-      discountedPrice: z.string().optional(),
+      spotcash: z.string().nonempty("Spot cash is required"),
+      discountedPrice: z.string().nonempty("Discounted price is required"),
     })
   ),
 });
@@ -337,7 +337,9 @@ const CreateDiscount = (props: Props) => {
       const token = localStorage.getItem("token");
       const userId = localStorage.getItem("id");
       const branch_code = localStorage.getItem("branch_code");
-
+      if (items.some((item) => !item.brand || !item.model || !item.unit)) {       
+        return;
+      }
       if (!token || !userId) {
         console.error("Token or userId not found");
         return;
@@ -347,7 +349,11 @@ const CreateDiscount = (props: Props) => {
         setLoading(false); // Stop loading state
         return; // Prevent form submission
       }
-
+        if (notedBy.length === 0 || approvedBy.length === 0) {
+        alert("Please select an approver.");
+        setLoading(false); // Stop loading state
+        return; // Prevent form submission
+      }
       // Calculate total per diem
 
       // Calculate total amount
@@ -667,6 +673,17 @@ const CreateDiscount = (props: Props) => {
                                 handleTextareaHeight(index, "model")
                               }
                             />
+                             {validationErrors[`items.${index}.model`] &&
+                              formSubmitted && (
+                                <p className="text-red-500">
+                                  {validationErrors[`items.${index}.model`]}
+                                </p>
+                              )}
+                            {!item.model &&
+                              formSubmitted &&
+                              !validationErrors[`items.${index}.model`] && (
+                                <p className="text-red-500">Model Required</p>
+                              )}
                           </td>
 
                           {/* Unit Input */}
@@ -686,6 +703,17 @@ const CreateDiscount = (props: Props) => {
                                 handleTextareaHeight(index, "unit")
                               }
                             />
+                             {validationErrors[`items.${index}.unit`] &&
+                              formSubmitted && (
+                                <p className="text-red-500">
+                                  {validationErrors[`items.${index}.unit`]}
+                                </p>
+                              )}
+                            {!item.unit &&
+                              formSubmitted &&
+                              !validationErrors[`items.${index}.unit`] && (
+                                <p className="text-red-500">Unit Required</p>
+                              )}
                           </td>
 
                           {/* Part No Input */}
@@ -731,6 +759,17 @@ const CreateDiscount = (props: Props) => {
                               }
                               className={`${tableInput}`}
                             />
+                             {validationErrors[`items.${index}.spotcash`] &&
+                              formSubmitted && (
+                                <p className="text-red-500">
+                                  {validationErrors[`items.${index}.spotcash`]}
+                                </p>
+                              )}
+                            {!item.spotcash &&
+                              formSubmitted &&
+                              !validationErrors[`items.${index}.spotcash`] && (
+                                <p className="text-red-500">Spot Cash Required</p>
+                              )}
                           </td>
 
                           {/* Discounted Price Input */}
@@ -747,6 +786,17 @@ const CreateDiscount = (props: Props) => {
                               }
                               className={`${tableInput}`}
                             />
+                                {validationErrors[`items.${index}.discountedPrice`] &&
+                              formSubmitted && (
+                                <p className="text-red-500">
+                                  {validationErrors[`items.${index}.discountedPrice`]}
+                                </p>
+                              )}
+                            {!item.discountedPrice &&
+                              formSubmitted &&
+                              !validationErrors[`items.${index}.discountedPrice`] && (
+                                <p className="text-red-500">Discounted Price Required</p>
+                              )}
                           </td>
                         </tr>
                       ))}

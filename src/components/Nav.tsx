@@ -15,6 +15,8 @@ import { useUser } from "../context/UserContext";
 import axios from "axios";
 import { format } from "date-fns";
 import { useSpring, animated } from "@react-spring/web"; // Import useSpring and animated from @react-spring/web
+import Pusher from "pusher-js";
+import { set } from "react-hook-form";
 
 interface NavProps {
   darkMode: boolean;
@@ -60,25 +62,25 @@ const Nav: React.FC<NavProps> = ({
 
   useEffect(() => {
     const checkAuth = () => {
-      const token = localStorage.getItem('token');
-      const expiresAt = localStorage.getItem('expires_at');
+      const token = localStorage.getItem("token");
+      const expiresAt = localStorage.getItem("expires_at");
 
       if (!token || !expiresAt) {
         // Token or expiration time is missing, clear data and redirect to login
-        localStorage.removeItem('token');
-        localStorage.removeItem('expires_at');
-        navigate('/login'); // Redirect to login page
+        localStorage.removeItem("token");
+        localStorage.removeItem("expires_at");
+        navigate("/login"); // Redirect to login page
         return;
       }
 
       // Check if the token has expired
       const expirationDate = new Date(expiresAt);
       if (new Date() > expirationDate) {
-        alert('Your token has expired. Please log in again.'); 
-     
-        localStorage.removeItem('token');
-        localStorage.removeItem('expires_at');
-        navigate('/login'); // Redirect to login page
+        alert("Your token has expired. Please log in again.");
+
+        localStorage.removeItem("token");
+        localStorage.removeItem("expires_at");
+        navigate("/login"); // Redirect to login page
       }
     };
 
@@ -101,18 +103,46 @@ const Nav: React.FC<NavProps> = ({
       setIsOpenNotif(false);
     }
   };
-
+  const handleOpenNotification = async () => {
+    if (isOpenNotif) {
+      try {
+        const response = await axios.put(
+          `http://122.53.61.91:6002/api/notifications/mark-all-as-read`
+        );
+        if (response.data.success) {
+          setNotifications((prevNotifications) =>
+            prevNotifications.map((notif) => ({
+              ...notif,
+              read_at: new Date().toISOString(),
+            }))
+          );
+          setUnreadCount(0);
+        } else {
+          alert(
+            "Failed to mark all notifications as read. Please try again later."
+          );
+        }
+      } catch (error) {
+        console.error("Error marking all notifications as read: ", error);
+        alert(
+          "Failed to mark all notifications as read. Please try again later."
+        );
+      }
+    }
+  };
   const handleNotificationClick = async (notifId: string) => {
-   
     if (!notifId) {
       console.error("Notification ID is undefined");
       return;
     }
 
     try {
-      const response = await axios.put(
-        `http://122.53.61.91:6002/api/notifications/${notifId}/mark-as-read`
-      );
+      const url = `http://122.53.61.91:6002/api/notifications/${notifId}/mark-as-read`;
+      console.log("API URL:", url); // Log the URL for debugging
+
+      const response = await axios.put(url);
+
+      console.log("API Response:", response); // Log full API response
 
       if (response.data.success) {
         setNotifications((prevNotifications) =>
@@ -168,9 +198,10 @@ const Nav: React.FC<NavProps> = ({
   }, [updateUserInfo]);
 
   useEffect(() => {
-    const fetchNotifications = async () => {
-      const id = localStorage.getItem("id");
+    const id = localStorage.getItem("id");
 
+    // Fetch initial notifications
+    const fetchNotifications = async () => {
       try {
         const response = await axios.get(
           `http://122.53.61.91:6002/api/notifications/${id}/all`
@@ -188,14 +219,58 @@ const Nav: React.FC<NavProps> = ({
       }
     };
 
-    // Initial fetch
+    // Fetch initial notifications on mount
     fetchNotifications();
 
-    // Set up polling interval
-    const intervalId = setInterval(fetchNotifications, 5000); // Poll every 5 seconds
+    // Enable Pusher logging for debugging
+    Pusher.logToConsole = true;
 
-    return () => clearInterval(intervalId);
+    // Initialize Pusher instance
+    const pusher = new Pusher("dd9d4765fc958213199b", {
+      cluster: "ap1",
+    });
+
+    // Subscribe to the user's notification channel
+    const channel = pusher.subscribe(`notification${id}`);
+
+    // Listen for notification-event
+    channel.bind("notification-event", (newNotification: any) => {
+      console.log("New notification received:", newNotification);
+
+      // Destructure the required properties from newNotification
+      const { message, user_id, date, type, read_at } = newNotification;
+
+      // Update the notifications state with the new notification
+      setNotifications((prevNotifications) => [
+        {
+          notification_id: `notif-${Date.now()}`, // Generate a unique ID
+          read_at,
+          type,
+          data: {
+            message,
+            user_id,
+            created_at: date,
+          },
+        },
+        ...prevNotifications,
+      ]);
+      // Increment unread count if it's unread
+      if (!newNotification.read_at) {
+        setUnreadCount((prevCount) => prevCount + 1);
+      }
+    });
+
+    // Cleanup function to unsubscribe from Pusher when component unmounts
+    return () => {
+      channel.unbind("notification-event"); // Unbind the specific event listener
+      pusher.unsubscribe(`notification${id}`); // Unsubscribe from the channel
+    };
   }, []);
+
+  // This useEffect will log the updated notifications state every time it changes
+  useEffect(() => {
+    console.log("Updated notifications:", notifications);
+  }, [notifications]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -234,7 +309,54 @@ const Nav: React.FC<NavProps> = ({
   const profilePictureUrl = profilePicture
     ? `http://122.53.61.91:6002/storage/${profilePicture.replace(/\\/g, "/")}`
     : Avatar;
+  const markAllAsRead = async () => {
+    try {
+      const id = localStorage.getItem("id");
+      const unreadNotifications = notifications.filter(
+        (notif) => !notif.read_at
+      );
 
+      // Loop through unread notifications and mark them as read
+      await Promise.all(
+        unreadNotifications.map(async (notif) => {
+          const response = await axios.put(
+            `http://122.53.61.91:6002/api/notifications/mark-all-as-read/${id}`
+          );
+
+          if (response.data.success) {
+            // Update the notification's `read_at` in the local state
+            setNotifications((prevNotifications) =>
+              prevNotifications.map((n) =>
+                n.notification_id === notif.notification_id
+                  ? { ...n, read_at: new Date().toISOString() }
+                  : n
+              )
+            );
+          } else {
+            console.error(
+              `Failed to mark notification ${notif.notification_id} as read`
+            );
+          }
+        })
+      );
+
+      // Update unread count to 0
+      setUnreadCount(0);
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+      alert(
+        "Failed to mark all notifications as read. Please try again later."
+      );
+    }
+  };
+
+  // Use effect to mark all as read when the dropdown is opened
+  useEffect(() => {
+    if (isOpenNotif) {
+      markAllAsRead();
+    }
+  }, [isOpenNotif]);
+  console.log(isOpenNotif);
   return (
     <div className={`nav-container ${darkMode ? "dark" : "white"}`}>
       {/* Toggle light and dark mode */}
@@ -323,7 +445,10 @@ const Nav: React.FC<NavProps> = ({
                 className={`size-[30px] cursor-pointer ${
                   isOpenNotif ? "text-yellow" : "text-gray-400"
                 }`}
-                onClick={() => setIsOpenNotif(!isOpenNotif)}
+                onClick={() => {
+                  setIsOpenNotif(!isOpenNotif);
+                  handleOpenNotification();
+                }}
               />
               {/* Notification Count */}
               {unreadCount > 0 && (
@@ -362,24 +487,48 @@ const Nav: React.FC<NavProps> = ({
                     </li>
                   ) : (
                     notifications.map((notif) => {
+                      // Ensure the notification structure is valid
+                      const message =
+                        notif.data?.message || "No message available";
+                      const createdAt =
+                        notif.data?.created_at || new Date().toISOString();
+                      const notificationId =
+                        notif.notification_id || "unknown-id";
+
                       // Determine the URL based on notif.type
                       const linkTo =
-                        notif.type === "App\\Notifications\\ApprovalProcessNotification" ||
-                        notif.type === "App\\Notifications\\PreviousReturnRequestNotification"
+                        notif.type ===
+                          "App\\Notifications\\ApprovalProcessNotification" ||
+                        notif.type ===
+                          "App\\Notifications\\PreviousReturnRequestNotification"
                           ? "/request/approver"
-                          : notif.type === "App\\Notifications\\EmployeeNotification" ||
-                            notif.type === "App\\Notifications\\ReturnRequestNotification"
+                          : notif.type ===
+                              "App\\Notifications\\EmployeeNotification" ||
+                            notif.type ===
+                              "App\\Notifications\\ReturnRequestNotification"
                           ? "/request"
                           : "/profile";
 
+                      // Determine text color based on notif.type
+                      const textColor =
+                        notif.type ===
+                        "App\\Notifications\\EmployeeNotification"
+                          ? "text-green"
+                          : notif.type ===
+                              "App\\Notifications\\PreviousReturnRequestNotification" ||
+                            notif.type ===
+                              "App\\Notifications\\ReturnRequestNotification"
+                          ? "text-red-500"
+                          : "text-primary";
+
                       return (
-                        <Link to={linkTo} key={notif.notification_id}>
+                        <Link to={linkTo} key={notificationId}>
                           <li
                             className={`px-4 py-4 hover:bg-[#E0E0F9] cursor-pointer border-b flex items-center`}
                             onClick={() =>
-                              handleNotificationClick(notif.notification_id)
+                             setIsOpenNotif(false)
                             }
-                            aria-label={`Notification: ${notif.data.message}`}
+                            aria-label={`Notification: ${message}`}
                           >
                             <div className="w-12 h-12 flex items-center justify-center bg-black rounded-full">
                               {notif.read_at ? (
@@ -390,14 +539,14 @@ const Nav: React.FC<NavProps> = ({
                             </div>
                             <div className="ml-4 flex-1">
                               <p
-                                className={` ${notif.type === "App\\Notifications\\EmployeeNotification"? "text-green" : notif.type === "App\\Notifications\\PreviousReturnRequestNotification" || notif.type === "App\\Notifications\\ReturnRequestNotification"? "text-red-500" :"text-primary" } text-sm ${
+                                className={`${textColor} text-sm ${
                                   notif.read_at ? "" : "font-bold"
                                 } text-center`}
                               >
-                                {notif.data.message}
+                                {message}
                               </p>
                               <p className="text-gray-400 text-sm text-center">
-                                {formatDate(notif.data.created_at)}
+                                {formatDate(createdAt)}
                               </p>
                             </div>
                           </li>
