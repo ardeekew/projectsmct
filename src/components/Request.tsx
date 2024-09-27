@@ -395,7 +395,7 @@ const Request = (props: Props) => {
   const closeModal = () => {
     setModalIsOpen(false);
   };
-console.log(requests)
+
   return (
     <div className="bg-graybg dark:bg-blackbg w-full h-lvh pt-4 px-10 md:px-10 lg:px-30">
       <Link to="/request/sr">

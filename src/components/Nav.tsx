@@ -138,13 +138,10 @@ const Nav: React.FC<NavProps> = ({
 
     try {
       const url = `http://122.53.61.91:6002/api/notifications/${notifId}/mark-as-read`;
-      console.log("API URL:", url); // Log the URL for debugging
+     
 
       const response = await axios.put(url);
-
-      console.log("API Response:", response); // Log full API response
-
-      if (response.data.success) {
+        if (response.data.success) {
         setNotifications((prevNotifications) =>
           prevNotifications.map((notif) =>
             notif.notification_id === notifId
@@ -235,8 +232,7 @@ const Nav: React.FC<NavProps> = ({
 
     // Listen for notification-event
     channel.bind("notification-event", (newNotification: any) => {
-      console.log("New notification received:", newNotification);
-
+     
       // Destructure the required properties from newNotification
       const { message, user_id, date, type, read_at } = newNotification;
 
@@ -267,10 +263,8 @@ const Nav: React.FC<NavProps> = ({
     };
   }, []);
 
-  // This useEffect will log the updated notifications state every time it changes
-  useEffect(() => {
-    console.log("Updated notifications:", notifications);
-  }, [notifications]);
+
+
 
   useEffect(() => {
     const handleResize = () => {
@@ -356,7 +350,7 @@ const Nav: React.FC<NavProps> = ({
       markAllAsRead();
     }
   }, [isOpenNotif]);
-  console.log(isOpenNotif);
+
   return (
     <div className={`nav-container ${darkMode ? "dark" : "white"}`}>
       {/* Toggle light and dark mode */}

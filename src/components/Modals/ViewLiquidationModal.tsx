@@ -558,7 +558,7 @@ const ViewLiquidationModal: React.FC<Props> = ({
       newWindow.focus();
     }
   };
-  console.log(record);
+  
   return (
     <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 z-50">
       <div className="p-4 relative w-full px-10 md:mx-0 z-10 md:w-1/2 lg:w-2/3 space-y-auto h-4/5 overflow-scroll bg-white border-black rounded-t-lg shadow-lg">
